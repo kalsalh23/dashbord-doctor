@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UserPlus, Users, FolderOpen, PencilLine } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
-import { Button, Card, EmptyState, SearchInput, SkeletonRows, Avatar, PageHeader } from '../../components/ui'
+import { Button, Card, EmptyState, SearchInput, SkeletonRows, Avatar, PageHeader, Tabs } from '../../components/ui'
 import PatientFormModal from '../../components/PatientFormModal'
-import { ageFrom, formatDateShort, genderLabel } from '../../lib/format'
+import { ageFrom, formatDateShort, genderLabel, todayStr } from '../../lib/format'
 
 export default function Patients({ doctorMode = false }) {
   const { profile } = useApp()
   const [q, setQ] = useState('')
   const [rows, setRows] = useState(null)
+  const [todayIds, setTodayIds] = useState(null) // patients with an active appointment today
+  const [scope, setScope] = useState('today') // doctor default: today's patients
   const [formOpen, setFormOpen] = useState(false)
   const nav = useNavigate()
 
@@ -33,10 +35,28 @@ export default function Patients({ doctorMode = false }) {
     return () => clearTimeout(t)
   }, [load, q])
 
+  // today's patients (active appointments) — used by the doctor's default view
+  useEffect(() => {
+    if (!doctorMode || !profile?.clinic_id) return
+    supabase
+      .from('appointments')
+      .select('patient_id, status')
+      .eq('clinic_id', profile.clinic_id)
+      .eq('appointment_date', todayStr())
+      .in('status', ['confirmed', 'new', 'arrived', 'waiting', 'in_consultation'])
+      .then(({ data }) => setTodayIds(new Set((data || []).map((a) => a.patient_id))))
+  }, [doctorMode, profile?.clinic_id])
+
   const lastVisit = (p) => {
     const ds = (p.visits || []).map((v) => v.visit_date).sort()
     return ds.length ? ds[ds.length - 1] : null
   }
+
+  const shown = useMemo(() => {
+    if (!doctorMode || scope !== 'today' || !rows) return rows
+    if (!todayIds) return rows
+    return rows.filter((p) => todayIds.has(p.id))
+  }, [rows, doctorMode, scope, todayIds])
 
   return (
     <div>
@@ -57,14 +77,33 @@ export default function Patients({ doctorMode = false }) {
         <SearchInput value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث بالاسم أو رقم الهاتف..." />
       </div>
 
+      {doctorMode && (
+        <div className="mb-4">
+          <Tabs
+            value={scope}
+            onChange={setScope}
+            tabs={[
+              { value: 'today', label: 'مرضى اليوم', count: todayIds ? todayIds.size : undefined },
+              { value: 'all', label: 'كل المرضى', count: rows ? rows.length : undefined },
+            ]}
+          />
+        </div>
+      )}
+
       <Card bodyClass="!p-0">
         {rows === null ? (
           <div className="p-4"><SkeletonRows rows={6} /></div>
-        ) : rows.length === 0 ? (
+        ) : shown.length === 0 ? (
           <EmptyState
             icon={Users}
-            title={q ? 'لا توجد نتائج مطابقة' : 'لا يوجد مرضى بعد'}
-            message={q ? 'تأكد من الاسم أو رقم الهاتف وحاول مرة أخرى' : 'ابدأ بإضافة أول مريض للعيادة'}
+            title={q ? 'لا توجد نتائج مطابقة' : doctorMode && scope === 'today' ? 'لا يوجد مرضى موعد لهم اليوم' : 'لا يوجد مرضى بعد'}
+            message={
+              q
+                ? 'تأكد من الاسم أو رقم الهاتف وحاول مرة أخرى'
+                : doctorMode && scope === 'today'
+                  ? 'سيظهر هنا مرضى مواعيدهم اليوم — بدّل إلى «كل المرضى» للبحث في الأرشيف'
+                  : 'ابدأ بإضافة أول مريض للعيادة'
+            }
             action={
               !doctorMode && !q && (
                 <Button size="sm" onClick={() => setFormOpen(true)}>إضافة مريض</Button>
@@ -85,7 +124,7 @@ export default function Patients({ doctorMode = false }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {rows.map((p) => (
+                {shown.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50/60">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
@@ -118,7 +157,7 @@ export default function Patients({ doctorMode = false }) {
 
             {/* mobile cards */}
             <ul className="divide-y divide-slate-100 md:hidden">
-              {rows.map((p) => (
+              {shown.map((p) => (
                 <li key={p.id}>
                   <button onClick={() => nav(`${p.id}`)} className="flex w-full items-center gap-3 px-4 py-3 text-start">
                     <Avatar name={p.full_name} />

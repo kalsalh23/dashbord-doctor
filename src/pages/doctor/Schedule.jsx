@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, ChevronLeft, CalendarDays, Stethoscope, FolderOpen, Clock } from 'lucide-react'
+import { ChevronRight, ChevronLeft, CalendarDays, Stethoscope, FolderOpen } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Badge, APPT_STATUS, Button, EmptyState, SkeletonRows, Avatar, Tabs, PageHeader } from '../../components/ui'
 import { useSchedules } from '../../lib/hooks'
-import { todayStr, addDays, formatDateLong, dayLabel, timeToMin } from '../../lib/format'
+import { todayStr, addDays, formatDateLong, dayLabel, timeToMin, getWeekday, weekdayName } from '../../lib/format'
 import { slotsForDay } from '../../lib/slots'
 
 export default function Schedule() {
@@ -14,6 +14,7 @@ export default function Schedule() {
   const [date, setDate] = useState(todayStr())
   const [appts, setAppts] = useState(null)
   const [filter, setFilter] = useState('patient') // patient = active queue, all, done
+  const [dayCounts, setDayCounts] = useState({})
   const nav = useNavigate()
 
   const load = useCallback(async () => {
@@ -30,6 +31,25 @@ export default function Schedule() {
   useEffect(() => {
     load()
   }, [load])
+
+  // appointment counts for the upcoming 14 days (day-strip badges)
+  useEffect(() => {
+    if (!profile?.clinic_id) return
+    supabase
+      .from('appointments')
+      .select('appointment_date, status')
+      .eq('clinic_id', profile.clinic_id)
+      .gte('appointment_date', todayStr())
+      .lte('appointment_date', addDays(todayStr(), 13))
+      .not('status', 'in', '(cancelled,no_show)')
+      .then(({ data }) => {
+        const m = {}
+        for (const a of data || []) m[a.appointment_date] = (m[a.appointment_date] || 0) + 1
+        setDayCounts(m)
+      })
+  }, [profile?.clinic_id, appts])
+
+  const strip = useMemo(() => Array.from({ length: 14 }, (_, i) => addDays(todayStr(), i)), [])
 
   const closed = useMemo(
     () => slotsForDay({ schedules, settings: null, dateStr: date }).closed && schedules.length > 0,
@@ -65,7 +85,6 @@ export default function Schedule() {
             <Button variant="secondary" size="icon" onClick={() => setDate((d) => addDays(d, -1))} aria-label="اليوم السابق">
               <ChevronRight size={16} />
             </Button>
-            <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="input-base !w-auto" />
             <Button variant="secondary" size="icon" onClick={() => setDate((d) => addDays(d, 1))} aria-label="اليوم التالي">
               <ChevronLeft size={16} />
             </Button>
@@ -75,6 +94,47 @@ export default function Schedule() {
           </div>
         }
       />
+
+      {/* day strip — prominent one-tap navigation across 14 days */}
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1.5">
+        {strip.map((d) => {
+          const selected = d === date
+          const count = dayCounts[d] || 0
+          return (
+            <button
+              key={d}
+              onClick={() => setDate(d)}
+              className={`flex h-[68px] w-[72px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border transition-colors ${
+                selected
+                  ? 'border-primary-700 bg-primary-700 text-white shadow-sm'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300'
+              }`}
+            >
+              <span className={`text-[10px] font-semibold ${selected ? 'text-primary-100' : 'text-slate-400'}`}>
+                {weekdayName(getWeekday(d))}
+              </span>
+              <span className="text-lg font-bold leading-6">{Number(d.slice(8, 10))}</span>
+              <span
+                className={`min-w-4 rounded-full px-1 text-[9px] font-bold ${
+                  count > 0
+                    ? selected
+                      ? 'bg-white text-primary-800'
+                      : 'bg-primary-100 text-primary-800'
+                    : 'bg-transparent text-slate-300'
+                }`}
+              >
+                {count > 0 ? count : '·'}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* precise date jump */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-slate-500">انتقال لتاريخ محدد:</span>
+        <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="input-base !w-auto" />
+      </div>
 
       <div className="mb-4">
         <Tabs
@@ -131,8 +191,7 @@ export default function Schedule() {
       </Card>
 
       {closed && (
-        <p className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-400">
-          <Clock size={12} />
+        <p className="mt-3 text-[11px] text-slate-400">
           أيام العمل تُضبط من إعدادات العيادة.
         </p>
       )}
