@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Pill, ChevronDown, Search } from 'lucide-react'
+import { FileText, Pill, ChevronDown } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
-import { Card, EmptyState, SkeletonRows, PageHeader, SearchInput, Tag } from '../../components/ui'
-import { formatDateShort } from '../../lib/format'
+import { Card, EmptyState, SkeletonRows, PageHeader, SearchInput, Tag, Tabs } from '../../components/ui'
+import { formatDateShort, todayStr } from '../../lib/format'
 
 export default function VisitsLog() {
   const { profile } = useApp()
   const [visits, setVisits] = useState(null)
   const [q, setQ] = useState('')
+  const [scope, setScope] = useState('today')
   const [expanded, setExpanded] = useState(null)
   const nav = useNavigate()
 
@@ -29,20 +30,37 @@ export default function VisitsLog() {
     load()
   }, [load])
 
+  const todayCount = useMemo(() => (visits || []).filter((v) => v.visit_date === todayStr()).length, [visits])
+
   const shown = useMemo(() => {
+    let list = visits || []
+    if (scope === 'today') list = list.filter((v) => v.visit_date === todayStr())
     const term = q.trim()
-    if (!term) return visits || []
-    return (visits || []).filter(
-      (v) =>
-        (v.patient?.full_name || '').includes(term) ||
-        (v.diagnosis || '').includes(term) ||
-        (v.chief_complaint || '').includes(term)
-    )
-  }, [visits, q])
+    if (term) {
+      list = list.filter(
+        (v) =>
+          (v.patient?.full_name || '').includes(term) ||
+          (v.diagnosis || '').includes(term) ||
+          (v.chief_complaint || '').includes(term)
+      )
+    }
+    return list
+  }, [visits, scope, q])
 
   return (
     <div className="max-w-3xl">
       <PageHeader title="سجل الكشوفات" subtitle="جميع الزيارات الطبية المسجلة في العيادة" />
+
+      <div className="mb-4">
+        <Tabs
+          value={scope}
+          onChange={setScope}
+          tabs={[
+            { value: 'today', label: 'زيارات اليوم', count: visits ? todayCount : undefined },
+            { value: 'all', label: 'الكل', count: visits ? visits.length : undefined },
+          ]}
+        />
+      </div>
 
       <div className="mb-4">
         <SearchInput value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث باسم المريض أو التشخيص أو الشكوى..." />
@@ -54,8 +72,14 @@ export default function VisitsLog() {
         <Card>
           <EmptyState
             icon={FileText}
-            title={q ? 'لا توجد نتائج مطابقة' : 'لا توجد كشوفات بعد'}
-            message={q ? 'جرّب كلمة بحث أخرى' : 'ستظهر هنا كل زيارة يتم إنهاؤها من شاشة الكشف'}
+            title={q ? 'لا توجد نتائج مطابقة' : scope === 'today' ? 'لا توجد زيارات اليوم بعد' : 'لا توجد كشوفات بعد'}
+            message={
+              q
+                ? 'جرّب كلمة بحث أخرى'
+                : scope === 'today'
+                  ? 'ستظهر هنا الزيارات التي تم إنهاؤها اليوم — بدّل إلى «الكل» للسجل الكامل'
+                  : 'ستظهر هنا كل زيارة يتم إنهاؤها من شاشة الكشف'
+            }
           />
         </Card>
       ) : (
