@@ -14,6 +14,10 @@ import FollowUps from './pages/reception/FollowUps'
 import Settings from './pages/reception/Settings'
 import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import Consultation from './pages/doctor/Consultation'
+import Schedule from './pages/doctor/Schedule'
+import VisitsLog from './pages/doctor/VisitsLog'
+import DoctorFollowUps from './pages/doctor/DoctorFollowUps'
+import Favorites from './pages/doctor/Favorites'
 import SuperPanel from './pages/super/SuperPanel'
 
 function FullSpinner() {
@@ -135,8 +139,12 @@ function AppRoutes() {
             <Route path="/reception/follow-ups" element={<RequireRole role="reception"><FollowUps /></RequireRole>} />
             <Route path="/reception/settings" element={<RequireRole role="reception"><Settings /></RequireRole>} />
             <Route path="/doctor" element={<RequireRole role="doctor"><DoctorDashboard /></RequireRole>} />
+            <Route path="/doctor/schedule" element={<RequireRole role="doctor"><Schedule /></RequireRole>} />
             <Route path="/doctor/patients" element={<RequireRole role="doctor"><Patients doctorMode /></RequireRole>} />
             <Route path="/doctor/patients/:id" element={<RequireRole role="doctor"><PatientProfile /></RequireRole>} />
+            <Route path="/doctor/visits" element={<RequireRole role="doctor"><VisitsLog /></RequireRole>} />
+            <Route path="/doctor/follow-ups" element={<RequireRole role="doctor"><DoctorFollowUps /></RequireRole>} />
+            <Route path="/doctor/favorites" element={<RequireRole role="doctor"><Favorites /></RequireRole>} />
             <Route path="/doctor/consultation/:appointmentId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
             <Route path="/doctor/consultation/new/:patientId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
           </Route>

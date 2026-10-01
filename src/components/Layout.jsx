@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, Wallet, Repeat, Settings, Stethoscope,
-  Bell, LogOut, Menu, X, MoreHorizontal, Activity, Shield,
+  Bell, LogOut, Menu, X, MoreHorizontal, Activity, Shield, FileText, Pill,
 } from 'lucide-react'
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
@@ -21,8 +21,12 @@ const NAV = {
     { to: '/reception/settings', label: 'الإعدادات', icon: Settings, adminOnly: true },
   ],
   doctor: [
-    { to: '/doctor', label: 'قائمة الانتظار', icon: LayoutDashboard, end: true },
+    { to: '/doctor', label: 'لوحة اليوم', icon: LayoutDashboard, end: true },
+    { to: '/doctor/schedule', label: 'جدول المواعيد', icon: CalendarDays },
     { to: '/doctor/patients', label: 'المرضى', icon: Users },
+    { to: '/doctor/visits', label: 'سجل الكشوفات', icon: FileText },
+    { to: '/doctor/follow-ups', label: 'متابعاتي', icon: Repeat },
+    { to: '/doctor/favorites', label: 'أدويتي الشائعة', icon: Pill },
   ],
   super: [
     { to: '/super', label: 'لوحة إدارة النظام', icon: Shield, end: true },

@@ -42,6 +42,7 @@ export default function Consultation() {
   const [needsFollowUp, setNeedsFollowUp] = useState(null)
   const [followDays, setFollowDays] = useState(null)
   const [sendingFu, setSendingFu] = useState(false)
+  const [favorites, setFavorites] = useState([])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -81,6 +82,27 @@ export default function Consultation() {
   useEffect(() => {
     load()
   }, [load])
+
+  // doctor's frequently prescribed medications for one-tap entry
+  useEffect(() => {
+    if (!profile?.id) return
+    supabase
+      .from('doctor_favorite_medications')
+      .select('id, name, dosage, duration, instructions')
+      .eq('doctor_id', profile.id)
+      .order('created_at')
+      .then(({ data }) => setFavorites(data || []))
+  }, [profile?.id])
+
+  const addFavorite = (f) => {
+    setMeds((ms) => {
+      // replace a completely empty default row if present
+      const emptyIdx = ms.findIndex((m) => !m.name.trim())
+      const row = { name: f.name, dosage: f.dosage || '', duration: f.duration || '', instructions: f.instructions || '' }
+      if (emptyIdx >= 0) return ms.map((m, i) => (i === emptyIdx ? row : m))
+      return [...ms, row]
+    })
+  }
 
   const startConsultation = async () => {
     if (!appointment) return setStarted(true)
@@ -410,6 +432,26 @@ export default function Consultation() {
               </Button>
             }
           >
+            {favorites.length > 0 && (
+              <div className="mb-4 border-b border-slate-100 pb-4">
+                <p className="mb-2 text-[11px] font-bold text-slate-400">أدويتك الشائعة — اضغط للإدراج السريع</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {favorites.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => addFavorite(f)}
+                      className="inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-800 transition-colors hover:bg-primary-100"
+                      title={[f.dosage, f.duration, f.instructions].filter(Boolean).join(' · ')}
+                    >
+                      <Pill size={12} />
+                      {f.name}
+                      {f.dosage ? ` · ${f.dosage}` : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {meds.length === 0 ? (
               <p className="py-3 text-center text-xs text-slate-400">لا توجد أدوية — أضف دواءً إذا لزم</p>
             ) : (
