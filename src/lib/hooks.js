@@ -38,7 +38,13 @@ export function friendlyDbError(err) {
   if (msg.includes('duplicate key') || err?.code === '23505') {
     return 'هذا الموعد محجوز الآن، اختر وقتًا آخر'
   }
-  if (msg.includes('row-level security')) {
+  if (msg.includes('EMAIL_EXISTS')) {
+    return 'البريد الإلكتروني مستخدم مسبقًا'
+  }
+  if (msg.includes('WEAK_PASSWORD')) {
+    return 'كلمة المرور قصيرة — 6 أحرف على الأقل'
+  }
+  if (msg.includes('FORBIDDEN') || msg.includes('row-level security')) {
     return 'لا تملك صلاحية تنفيذ هذا الإجراء'
   }
   return 'حدث خطأ غير متوقع، حاول مرة أخرى'

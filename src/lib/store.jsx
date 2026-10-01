@@ -19,7 +19,7 @@ export function AppProvider({ children }) {
   const loadUserData = useCallback(async (userId) => {
     const { data: prof } = await supabase
       .from('profiles')
-      .select('*, clinic:clinics(name, specialty)')
+      .select('*, clinic:clinics(name, specialty, is_active)')
       .eq('id', userId)
       .single()
     setProfile(prof || null)
@@ -70,12 +70,14 @@ export function AppProvider({ children }) {
     setSettings(st || null)
   }, [profile?.clinic_id])
 
-  // admins can switch between the reception and doctor interfaces
-  const effectiveRole = profile?.role === 'admin' ? mode : profile?.role || null
+  // admins (clinic admin & super admin) can switch between the reception and doctor interfaces
+  const isSuper = profile?.role === 'super_admin'
+  const isAdminLevel = profile?.role === 'admin' || isSuper
+  const effectiveRole = isAdminLevel ? mode : profile?.role || null
 
   const switchMode = useCallback(
     (m) => {
-      if (!profile || profile.role !== 'admin') return
+      if (!profile || !(profile.role === 'admin' || profile.role === 'super_admin')) return
       setMode(m)
       localStorage.setItem('ui_mode', m)
     },
@@ -90,6 +92,8 @@ export function AppProvider({ children }) {
       settings,
       effectiveRole,
       isAdmin: profile?.role === 'admin',
+      isSuper,
+      isAdminLevel,
       mode: effectiveRole,
       switchMode,
       refreshSettings,
@@ -98,7 +102,7 @@ export function AppProvider({ children }) {
       toast,
       toasts,
     }),
-    [session, profile, settings, effectiveRole, mode, toasts, switchMode, refreshSettings, login, logout, toast]
+    [session, profile, settings, effectiveRole, isSuper, isAdminLevel, mode, toasts, switchMode, refreshSettings, login, logout, toast]
   )
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>

@@ -13,6 +13,7 @@ import FollowUps from './pages/reception/FollowUps'
 import Settings from './pages/reception/Settings'
 import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import Consultation from './pages/doctor/Consultation'
+import SuperPanel from './pages/super/SuperPanel'
 
 function FullSpinner() {
   return (
@@ -24,14 +25,49 @@ function FullSpinner() {
 }
 
 function homeFor(role) {
-  return role === 'doctor' ? '/doctor' : '/reception'
+  if (role === 'doctor') return '/doctor'
+  if (role === 'super_admin') return '/super'
+  return '/reception'
 }
 
 function RequireAuth() {
-  const { session } = useApp()
+  const { session, profile } = useApp()
   if (session === undefined) return <FullSpinner />
   if (!session) return <Navigate to="/login" replace />
+  if (profile === null) return <FullSpinner />
+  // suspended clinic: block staff (super admin keeps access to the control panel)
+  if (profile.clinic && profile.clinic.is_active === false && profile.role !== 'super_admin') {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 text-center">
+        <div className="max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-card">
+          <div className="mb-3 text-3xl">🔒</div>
+          <h1 className="text-base font-bold text-slate-800">تم إيقاف هذه العيادة مؤقتًا</h1>
+          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+            يرجى مراجعة إدارة النظام. يمكن لمدير النظام إعادة تنشيط العيادة من لوحة الإدارة.
+          </p>
+          <LogoutButton />
+        </div>
+      </div>
+    )
+  }
   return <Layout />
+}
+
+function LogoutButton() {
+  const { logout } = useApp()
+  return (
+    <button onClick={logout} className="mt-5 h-10 w-full rounded-xl bg-primary-700 text-sm font-bold text-white hover:bg-primary-800">
+      تسجيل الخروج
+    </button>
+  )
+}
+
+function RequireSuper({ children }) {
+  const { session, profile } = useApp()
+  if (session === undefined || profile === null) return <FullSpinner />
+  if (!session) return <Navigate to="/login" replace />
+  if (profile.role !== 'super_admin') return <Navigate to={homeFor(profile.role)} replace />
+  return children
 }
 
 function RequireRole({ role, children }) {
@@ -44,10 +80,11 @@ function RequireRole({ role, children }) {
 }
 
 function HomeRedirect() {
-  const { session, effectiveRole } = useApp()
+  const { session, profile, effectiveRole } = useApp()
   if (session === undefined) return <FullSpinner />
   if (!session) return <Navigate to="/login" replace />
-  return <Navigate to={homeFor(effectiveRole)} replace />
+  if (!profile) return <FullSpinner />
+  return <Navigate to={homeFor(profile.role)} replace />
 }
 
 function AppRoutes() {
@@ -70,6 +107,8 @@ function AppRoutes() {
           <Route path="/doctor/patients/:id" element={<RequireRole role="doctor"><PatientProfile /></RequireRole>} />
           <Route path="/doctor/consultation/:appointmentId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
           <Route path="/doctor/consultation/new/:patientId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
+          {/* super admin control panel */}
+          <Route path="/super" element={<RequireSuper><SuperPanel /></RequireSuper>} />
         </Route>
         <Route path="/" element={<HomeRedirect />} />
         <Route path="*" element={<HomeRedirect />} />

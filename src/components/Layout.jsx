@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, Wallet, Repeat, Settings, Stethoscope,
-  Bell, LogOut, Menu, X, MoreHorizontal, Activity,
+  Bell, LogOut, Menu, X, MoreHorizontal, Activity, Shield,
 } from 'lucide-react'
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
@@ -21,6 +21,9 @@ const NAV = {
   doctor: [
     { to: '/doctor', label: 'قائمة الانتظار', icon: LayoutDashboard, end: true },
     { to: '/doctor/patients', label: 'المرضى', icon: Users },
+  ],
+  super: [
+    { to: '/super', label: 'لوحة إدارة النظام', icon: Shield, end: true },
   ],
 }
 
@@ -129,11 +132,13 @@ function NotificationsBell() {
 }
 
 function UserMenu({ inline }) {
-  const { profile, logout, isAdmin, mode, switchMode } = useApp()
+  const { profile, logout, isSuper, isAdmin, mode, switchMode } = useApp()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const nav = useNavigate()
+  const loc = useLocation()
   useOutsideClose(ref, () => setOpen(false))
+  const roleLabel = isSuper ? 'مدير النظام' : isAdmin ? 'مدير العيادة' : mode === 'doctor' ? 'طبيب' : 'استقبال'
 
   return (
     <div className="relative" ref={ref}>
@@ -144,31 +149,36 @@ function UserMenu({ inline }) {
         <Avatar name={profile?.full_name} className="h-8 w-8 text-xs" />
         <span className="hidden text-start sm:block">
           <span className="block max-w-36 truncate text-xs font-bold text-slate-700">{profile?.full_name}</span>
-          <span className="block text-[10px] text-slate-400">
-            {isAdmin ? 'مدير النظام' : mode === 'doctor' ? 'طبيب' : 'استقبال'}
-          </span>
+          <span className="block text-[10px] text-slate-400">{roleLabel}</span>
         </span>
       </button>
       {open && (
         <div className={`absolute end-0 z-40 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg ${inline ? 'bottom-12' : 'top-12'}`}>
-          {isAdmin && (
+          {(isSuper || isAdmin) && (
             <>
               <div className="px-3 pb-1 pt-2 text-[10px] font-bold text-slate-400">واجهة العمل</div>
               {[
+                ...(isSuper ? [{ m: 'super', label: 'لوحة إدارة النظام', super: true }] : []),
                 { m: 'reception', label: 'واجهة الاستقبال' },
                 { m: 'doctor', label: 'واجهة الطبيب' },
               ].map((o) => (
                 <button
                   key={o.m}
                   onClick={() => {
-                    switchMode(o.m)
-                    setOpen(false)
-                    nav(o.m === 'doctor' ? '/doctor' : '/reception')
+                    if (o.super) {
+                      setOpen(false)
+                      nav('/super')
+                    } else {
+                      switchMode(o.m)
+                      setOpen(false)
+                      nav(o.m === 'doctor' ? '/doctor' : '/reception')
+                    }
                   }}
-                  className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-slate-50 ${mode === o.m ? 'font-bold text-primary-700' : 'text-slate-600'}`}
+                  className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-slate-50 ${
+                    (o.super && loc.pathname.startsWith('/super')) || (!o.super && mode === o.m) ? 'font-bold text-primary-700' : 'text-slate-600'
+                  }`}
                 >
                   {o.label}
-                  {mode === o.m && <Badge map={{ x: { label: 'الحالية', cls: 'bg-primary-50 text-primary-700 border-primary-200' } }} value="x" />}
                 </button>
               ))}
               <div className="my-1 border-t border-slate-100" />
@@ -203,10 +213,12 @@ function Brand() {
 }
 
 export default function Layout() {
-  const { effectiveRole, profile, logout } = useApp()
+  const { effectiveRole, profile, logout, isSuper, isAdmin } = useApp()
   const [mobileMore, setMobileMore] = useState(false)
   const loc = useLocation()
-  const navItems = NAV[effectiveRole] || NAV.reception
+  let navItems = NAV[effectiveRole] || NAV.reception
+  if (isSuper) navItems = [...NAV.super, ...(NAV[effectiveRole] || []).filter((i) => isAdmin || !i.adminOnly)]
+  else navItems = navItems.filter((i) => isAdmin || !i.adminOnly)
   const mobileMain = navItems.slice(0, 4)
   const mobileMoreItems = navItems.slice(4)
 

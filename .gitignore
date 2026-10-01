@@ -7,3 +7,6 @@ npm-install.log
 signup-result.json
 *.local
 .DS_Store
+
+.vercel
+.env*
