@@ -18,6 +18,7 @@ import Schedule from './pages/doctor/Schedule'
 import VisitsLog from './pages/doctor/VisitsLog'
 import DoctorFollowUps from './pages/doctor/DoctorFollowUps'
 import Favorites from './pages/doctor/Favorites'
+import DoctorSettings from './pages/doctor/DoctorSettings'
 import SuperPanel from './pages/super/SuperPanel'
 
 function FullSpinner() {
@@ -145,6 +146,7 @@ function AppRoutes() {
             <Route path="/doctor/visits" element={<RequireRole role="doctor"><VisitsLog /></RequireRole>} />
             <Route path="/doctor/follow-ups" element={<RequireRole role="doctor"><DoctorFollowUps /></RequireRole>} />
             <Route path="/doctor/favorites" element={<RequireRole role="doctor"><Favorites /></RequireRole>} />
+            <Route path="/doctor/settings" element={<RequireRole role="doctor"><DoctorSettings /></RequireRole>} />
             <Route path="/doctor/consultation/:appointmentId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
             <Route path="/doctor/consultation/new/:patientId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
           </Route>

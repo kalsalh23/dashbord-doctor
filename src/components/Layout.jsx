@@ -27,6 +27,7 @@ const NAV = {
     { to: '/doctor/visits', label: 'سجل الكشوفات', icon: FileText },
     { to: '/doctor/follow-ups', label: 'متابعاتي', icon: Repeat },
     { to: '/doctor/favorites', label: 'أدويتي الشائعة', icon: Pill },
+    { to: '/doctor/settings', label: 'إعداداتي', icon: Settings },
   ],
   super: [
     { to: '/super', label: 'لوحة إدارة النظام', icon: Shield, end: true },
@@ -152,7 +153,7 @@ function UserMenu({ inline }) {
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2.5 rounded-lg p-1.5 hover:bg-slate-100"
       >
-        <Avatar name={profile?.full_name} className="h-8 w-8 text-xs" />
+        <Avatar name={profile?.full_name} src={profile?.avatar_url} className="h-8 w-8 text-xs" />
         <span className="hidden text-start sm:block">
           <span className="block max-w-36 truncate text-xs font-bold text-slate-700">{profile?.full_name}</span>
           <span className="block text-[10px] text-slate-400">{roleLabel}</span>
@@ -335,7 +336,7 @@ export default function Layout() {
                 </button>
               </div>
               <div className="mb-2 flex items-center gap-2.5 rounded-xl bg-slate-50 px-3 py-2.5">
-                <Avatar name={profile?.full_name} className="h-9 w-9 text-xs" />
+                <Avatar name={profile?.full_name} src={profile?.avatar_url} className="h-9 w-9 text-xs" />
                 <div className="min-w-0">
                   <p className="truncate text-xs font-bold text-slate-700">{profile?.full_name}</p>
                   <p className="text-[10px] text-slate-400">{isSuper ? 'مدير النظام' : isAdmin ? 'مدير العيادة' : effectiveRole === 'doctor' ? 'طبيب' : 'استقبال'}</p>

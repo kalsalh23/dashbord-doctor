@@ -279,7 +279,16 @@ export function Tabs({ tabs, value, onChange, className = '' }) {
   )
 }
 
-export function Avatar({ name, className = 'h-10 w-10 text-sm' }) {
+export function Avatar({ name, src, className = 'h-10 w-10 text-sm' }) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name || 'صورة'}
+        className={`shrink-0 rounded-full object-cover ring-1 ring-slate-200 ${className}`}
+      />
+    )
+  }
   const letter = (name || '؟').trim().charAt(0)
   return (
     <span className={`inline-flex shrink-0 select-none items-center justify-center rounded-full bg-primary-50 font-bold text-primary-800 ring-1 ring-primary-100 ${className}`}>

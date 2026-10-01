@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, ChevronLeft, CalendarDays, Stethoscope, FolderOpen } from 'lucide-react'
+import { ChevronRight, ChevronLeft, CalendarDays, Stethoscope, FolderOpen, History } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Badge, APPT_STATUS, Button, EmptyState, SkeletonRows, Avatar, Tabs, PageHeader } from '../../components/ui'
+import LastVisitModal from '../../components/LastVisitModal'
 import { useSchedules } from '../../lib/hooks'
 import { todayStr, addDays, formatDateLong, dayLabel, timeToMin, getWeekday, weekdayName } from '../../lib/format'
 import { slotsForDay } from '../../lib/slots'
@@ -15,6 +16,7 @@ export default function Schedule() {
   const [appts, setAppts] = useState(null)
   const [filter, setFilter] = useState('patient') // patient = active queue, all, done
   const [dayCounts, setDayCounts] = useState({})
+  const [lastVisitFor, setLastVisitFor] = useState(null)
   const nav = useNavigate()
 
   const load = useCallback(async () => {
@@ -169,6 +171,9 @@ export default function Schedule() {
                   <p className="text-[11px] text-slate-400" dir="ltr">{a.patient?.phone}</p>
                 </div>
                 <Badge map={APPT_STATUS} value={a.status} />
+                <Button size="sm" variant="ghost" onClick={() => setLastVisitFor(a.patient)} title="عرض آخر زيارة">
+                  <History size={14} />
+                </Button>
                 {['arrived', 'waiting'].includes(a.status) && (
                   <Button size="sm" onClick={() => startConsult(a)}>
                     <Stethoscope size={14} />
@@ -189,6 +194,8 @@ export default function Schedule() {
           </ul>
         )}
       </Card>
+
+      <LastVisitModal open={!!lastVisitFor} onClose={() => setLastVisitFor(null)} patient={lastVisitFor} />
 
       {closed && (
         <p className="mt-3 text-[11px] text-slate-400">

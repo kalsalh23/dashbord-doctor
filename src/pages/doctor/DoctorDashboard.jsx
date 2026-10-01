@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Hourglass, Stethoscope, CalendarDays, FolderOpen } from 'lucide-react'
+import { Hourglass, Stethoscope, CalendarDays, FolderOpen, History } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, SkeletonRows, Avatar, Badge, APPT_STATUS, PageHeader } from '../../components/ui'
+import LastVisitModal from '../../components/LastVisitModal'
 import { todayStr, timeToMin, ageFrom, nowMinutes, minToTime } from '../../lib/format'
 
 const SELECT = 'id, patient_id, appointment_date, start_time, end_time, status, updated_at, patient:patients(id, full_name, phone, date_of_birth, gender)'
@@ -11,6 +12,7 @@ const SELECT = 'id, patient_id, appointment_date, start_time, end_time, status, 
 export default function DoctorDashboard() {
   const { profile } = useApp()
   const [appts, setAppts] = useState(null)
+  const [lastVisitFor, setLastVisitFor] = useState(null) // patient object for the quick-view modal
   const nav = useNavigate()
 
   const load = useCallback(async () => {
@@ -108,6 +110,10 @@ export default function DoctorDashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button size="sm" variant="secondary" onClick={() => setLastVisitFor(a.patient)}>
+                    <History size={14} />
+                    آخر زيارة
+                  </Button>
                   <Button size="sm" variant="secondary" onClick={() => nav(`/doctor/patients/${a.patient_id}`)}>
                     <FolderOpen size={14} />
                     الملف
@@ -122,6 +128,8 @@ export default function DoctorDashboard() {
           </ul>
         )}
       </div>
+
+      <LastVisitModal open={!!lastVisitFor} onClose={() => setLastVisitFor(null)} patient={lastVisitFor} />
 
       {/* today's upcoming */}
       <div>

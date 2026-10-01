@@ -70,6 +70,25 @@ export function AppProvider({ children }) {
     setSettings(st || null)
   }, [profile?.clinic_id])
 
+  // re-fetch the signed-in user's profile (name/avatar changes)
+  const refreshProfile = useCallback(async () => {
+    if (!session?.user) return
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('*, clinic:clinics(name, specialty, is_active)')
+      .eq('id', session.user.id)
+      .single()
+    if (prof) setProfile(prof)
+  }, [session?.user])
+
+  // pick up settings changes (e.g. doctor updated the consultation price) when the tab regains focus
+  useEffect(() => {
+    if (!profile?.clinic_id) return
+    const onFocus = () => refreshSettings()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [profile?.clinic_id, refreshSettings])
+
   // admins (clinic admin & super admin) can switch between the reception and doctor interfaces
   const isSuper = profile?.role === 'super_admin'
   const isAdminLevel = profile?.role === 'admin' || isSuper
@@ -97,12 +116,13 @@ export function AppProvider({ children }) {
       mode: effectiveRole,
       switchMode,
       refreshSettings,
+      refreshProfile,
       login,
       logout,
       toast,
       toasts,
     }),
-    [session, profile, settings, effectiveRole, isSuper, isAdminLevel, mode, toasts, switchMode, refreshSettings, login, logout, toast]
+    [session, profile, settings, effectiveRole, isSuper, isAdminLevel, mode, toasts, switchMode, refreshSettings, refreshProfile, login, logout, toast]
   )
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>
