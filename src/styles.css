@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply text-slate-800;
+  }
+  body {
+    @apply bg-slate-50 antialiased;
+  }
+  input,
+  select,
+  textarea {
+    @apply text-sm;
+  }
+  /* latin digits inside number-ish inputs stay readable */
+  input[type='time'],
+  input[type='date'],
+  input[type='number'] {
+    direction: ltr;
+    text-align: right;
+  }
+}
+
+@layer components {
+  .input-base {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-100 disabled:text-slate-400;
+  }
+  .label-base {
+    @apply mb-1.5 block text-xs font-semibold text-slate-600;
+  }
+}
+
+/* thin, calm scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* safe-area for the mobile bottom nav */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
