@@ -33,16 +33,16 @@ export async function fetchBookedMap(clinicId, dateStr) {
   return map
 }
 
-export function friendlyDbError(err) {
+export function friendlyDbError(err, duplicateMsg) {
   const msg = err?.message || ''
-  if (msg.includes('duplicate key') || err?.code === '23505') {
-    return 'هذا الموعد محجوز الآن، اختر وقتًا آخر'
-  }
   if (msg.includes('EMAIL_EXISTS')) {
     return 'البريد الإلكتروني مستخدم مسبقًا'
   }
   if (msg.includes('WEAK_PASSWORD')) {
     return 'كلمة المرور قصيرة — 6 أحرف على الأقل'
+  }
+  if (msg.includes('duplicate key') || err?.code === '23505') {
+    return duplicateMsg || 'هذه البيانات مستخدمة مسبقًا'
   }
   if (msg.includes('FORBIDDEN') || msg.includes('row-level security')) {
     return 'لا تملك صلاحية تنفيذ هذا الإجراء'

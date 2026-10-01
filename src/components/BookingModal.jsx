@@ -131,7 +131,7 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
       }))
     }
     setSaving(false)
-    if (error) return toast('error', friendlyDbError(error))
+    if (error) return toast('error', friendlyDbError(error, 'هذا الموعد محجوز الآن، اختر وقتًا آخر'))
     audit(profile.clinic_id, moveAppointment ? 'move_appointment' : 'book_appointment', 'appointments', moveAppointment?.id, { date, ...slot })
     toast('success', moveAppointment ? 'تم تعديل الموعد بنجاح' : 'تم حجز الموعد بنجاح')
     onBooked?.()
