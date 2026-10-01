@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
+import { APP_SCOPE } from '../lib/scope'
 import { Avatar, Badge } from './ui'
 import { todayStr, formatDateLong } from '../lib/format'
 
@@ -154,7 +155,7 @@ function UserMenu({ inline }) {
       </button>
       {open && (
         <div className={`absolute end-0 z-40 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg ${inline ? 'bottom-12' : 'top-12'}`}>
-          {(isSuper || isAdmin) && (
+          {(isSuper || isAdmin) && APP_SCOPE !== 'owner' && (
             <>
               <div className="px-3 pb-1 pt-2 text-[10px] font-bold text-slate-400">واجهة العمل</div>
               {[
@@ -199,6 +200,19 @@ function UserMenu({ inline }) {
 
 function Brand() {
   const { profile } = useApp()
+  if (APP_SCOPE === 'owner') {
+    return (
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 text-white shadow-sm">
+          <Shield size={18} />
+        </span>
+        <div className="min-w-0">
+          <div className="truncate text-sm font-bold text-slate-800">لوحة إدارة المنصة</div>
+          <div className="text-[10px] text-slate-400">إدارة العيادات والحسابات</div>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="flex items-center gap-2.5">
       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-700 text-white shadow-sm">
@@ -217,8 +231,11 @@ export default function Layout() {
   const [mobileMore, setMobileMore] = useState(false)
   const loc = useLocation()
   let navItems = NAV[effectiveRole] || NAV.reception
-  if (isSuper) navItems = [...NAV.super, ...(NAV[effectiveRole] || []).filter((i) => isAdmin || !i.adminOnly)]
-  else navItems = navItems.filter((i) => isAdmin || !i.adminOnly)
+  if (APP_SCOPE === 'owner') {
+    navItems = NAV.super
+  } else {
+    navItems = navItems.filter((i) => isAdmin || !i.adminOnly)
+  }
   const mobileMain = navItems.slice(0, 4)
   const mobileMoreItems = navItems.slice(4)
 
