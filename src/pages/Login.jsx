@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Activity, Loader2 } from 'lucide-react'
+import { Activity, Loader2, MessageCircle } from 'lucide-react'
 import { useApp } from '../lib/store'
 import { useNavigate, Navigate } from 'react-router-dom'
+import { LOGIN_SUPPORT_MESSAGE, supportWhatsAppLink, SUPPORT_WHATSAPP, DEVELOPER_NAME, DEVELOPER_PHONE } from '../lib/config'
 
 export default function Login() {
   const { login, session, effectiveRole } = useApp()
@@ -88,11 +89,30 @@ export default function Login() {
             {loading && <Loader2 size={16} className="animate-spin" />}
             تسجيل الدخول
           </button>
+
+          <a
+            href={supportWhatsAppLink(LOGIN_SUPPORT_MESSAGE(email.trim()))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-bold text-emerald-800 transition-colors hover:bg-emerald-100"
+          >
+            <MessageCircle size={15} />
+            نسيت الحساب أو كلمة المرور؟ تواصل مع الدعم عبر واتساب
+          </a>
         </form>
 
-        <p className="mt-6 text-center text-[11px] text-slate-400">
-          الوصول محمي — جميع البيانات مخصصة لعيادتك فقط
-        </p>
+        <div className="mt-6 text-center">
+          <p className="text-[11px] text-slate-400">
+            الوصول محمي — جميع البيانات مخصصة لعيادتك فقط
+          </p>
+          <p className="mt-2 text-[11px] text-slate-400">
+            تطوير: <span className="font-semibold text-slate-500">{DEVELOPER_NAME}</span>
+            {' · '}
+            <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noopener noreferrer" dir="ltr" className="text-slate-400 underline decoration-slate-200 hover:text-primary-700">
+              {DEVELOPER_PHONE}
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   )

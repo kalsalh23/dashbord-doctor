@@ -7,6 +7,7 @@ import {
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
+import { DEVELOPER_NAME } from '../lib/config'
 import { Avatar, Badge } from './ui'
 import { todayStr, formatDateLong } from '../lib/format'
 
@@ -268,6 +269,7 @@ export default function Layout() {
         </nav>
         <div className="border-t border-slate-100 p-3">
           <UserMenu inline />
+          <p className="mt-2 text-center text-[10px] text-slate-300">تطوير: {DEVELOPER_NAME}</p>
         </div>
       </aside>
 
