@@ -171,8 +171,9 @@ export default function Schedule() {
                   <p className="text-[11px] text-slate-400" dir="ltr">{a.patient?.phone}</p>
                 </div>
                 <Badge map={APPT_STATUS} value={a.status} />
-                <Button size="sm" variant="ghost" onClick={() => setLastVisitFor(a.patient)} title="عرض آخر زيارة">
+                <Button size="sm" variant="secondary" onClick={() => setLastVisitFor(a.patient)} title="عرض آخر زيارة">
                   <History size={14} />
+                  آخر زيارة
                 </Button>
                 {['arrived', 'waiting'].includes(a.status) && (
                   <Button size="sm" onClick={() => startConsult(a)}>
