@@ -281,9 +281,7 @@ export default function Layout() {
           <p className="hidden text-xs font-medium text-slate-400 lg:block">{formatDateLong(todayStr())}</p>
           <div className="flex items-center gap-1.5">
             <NotificationsBell />
-            <div className="hidden sm:block">
-              <UserMenu />
-            </div>
+            <UserMenu />
           </div>
         </header>
 
@@ -295,7 +293,7 @@ export default function Layout() {
 
         {/* -------- mobile bottom nav -------- */}
         <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white lg:hidden">
-          <div className="grid grid-cols-5">
+          <div className={`grid ${mobileMain.length + 1 >= 5 ? 'grid-cols-5' : mobileMain.length + 1 === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
             {mobileMain.map((item) => (
               <NavLink
                 key={item.to}
@@ -309,17 +307,13 @@ export default function Layout() {
                 {item.label}
               </NavLink>
             ))}
-            {mobileMoreItems.length > 0 ? (
-              <button
-                onClick={() => setMobileMore(true)}
-                className="flex flex-col items-center gap-1 py-2 text-[10px] font-semibold text-slate-500"
-              >
-                <MoreHorizontal size={20} />
-                المزيد
-              </button>
-            ) : (
-              <span />
-            )}
+            <button
+              onClick={() => setMobileMore(true)}
+              className="flex flex-col items-center gap-1 py-2 text-[10px] font-semibold text-slate-500"
+            >
+              <MoreHorizontal size={20} />
+              المزيد
+            </button>
           </div>
         </nav>
 
@@ -333,6 +327,13 @@ export default function Layout() {
                 <button onClick={() => setMobileMore(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
                   <X size={18} />
                 </button>
+              </div>
+              <div className="mb-2 flex items-center gap-2.5 rounded-xl bg-slate-50 px-3 py-2.5">
+                <Avatar name={profile?.full_name} className="h-9 w-9 text-xs" />
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold text-slate-700">{profile?.full_name}</p>
+                  <p className="text-[10px] text-slate-400">{isSuper ? 'مدير النظام' : isAdmin ? 'مدير العيادة' : effectiveRole === 'doctor' ? 'طبيب' : 'استقبال'}</p>
+                </div>
               </div>
               <div className="space-y-1">
                 {mobileMoreItems.map((item) => (
