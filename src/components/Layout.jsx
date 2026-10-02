@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, Wallet, Repeat, Settings, Stethoscope,
-  Bell, LogOut, Menu, X, MoreHorizontal, Activity, Shield, FileText, Pill,
+  Bell, BellRing, LogOut, Menu, X, MoreHorizontal, Activity, Shield, FileText, Pill,
 } from 'lucide-react'
+import { subscribeStaffPush } from '../lib/staffPush'
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
@@ -135,6 +136,36 @@ function NotificationsBell() {
         </div>
       )}
     </div>
+  )
+}
+
+function ExternalPushButton() {
+  const [state, setState] = useState(() =>
+    typeof Notification !== 'undefined' && Notification.permission === 'granted' && localStorage.getItem('staff_push_on') === '1' ? 'on' : 'off',
+  )
+  const [busy, setBusy] = useState(false)
+
+  const enable = async () => {
+    setBusy(true)
+    const r = await subscribeStaffPush()
+    setBusy(false)
+    if (r === 'ok') {
+      localStorage.setItem('staff_push_on', '1')
+      setState('on')
+    }
+  }
+
+  return (
+    <button
+      onClick={enable}
+      disabled={state === 'on' || busy}
+      title={state === 'on' ? 'إشعارات طلبات المواعيد مفعّلة على هذا الجهاز' : 'تفعيل إشعار طلبات المواعيد الواردة من دليل طيبة'}
+      aria-label="تفعيل إشعارات الحجوزات"
+      className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-60"
+    >
+      <BellRing size={19} />
+      {state === 'on' && <span className="absolute bottom-1.5 left-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+    </button>
   )
 }
 
@@ -287,6 +318,7 @@ export default function Layout() {
           </div>
           <p className="hidden text-xs font-medium text-slate-400 lg:block">{formatDateLong(todayStr())}</p>
           <div className="flex items-center gap-1.5">
+            <ExternalPushButton />
             <NotificationsBell />
             <UserMenu />
           </div>

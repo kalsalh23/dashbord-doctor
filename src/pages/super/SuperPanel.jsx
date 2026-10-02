@@ -19,8 +19,19 @@ const ROLE_BADGE = {
   super_admin: { label: 'مدير النظام', cls: 'bg-slate-100 text-slate-600 border-slate-200' },
 }
 
+const SPECIALTIES = [
+  { key: 'general', label: 'طب عام' },
+  { key: 'dentistry', label: 'طب الأسنان' },
+  { key: 'derma', label: 'الجلدية' },
+  { key: 'peds', label: 'الأطفال' },
+  { key: 'internal', label: 'الباطنية' },
+  { key: 'neuro', label: 'الأعصاب' },
+  { key: 'ortho', label: 'العظام' },
+  { key: 'ent', label: 'الأنف والأذن والحنجرة' },
+]
+
 const EMPTY_CLINIC_FORM = {
-  name: '', specialty: '', phone: '', address: '', doctor_name: '', consultation_price: 0,
+  name: '', specialty_key: 'general', phone: '', address: '', doctor_name: '', consultation_price: 0,
 }
 const EMPTY_USER_FORM = { full_name: '', email: '', password: '', phone: '', role: 'doctor' }
 
@@ -84,7 +95,7 @@ export default function SuperPanel() {
       clinic
         ? {
             name: clinic.name || '',
-            specialty: clinic.specialty || '',
+            specialty_key: clinic.specialty_key || 'general',
             phone: clinic.phone || '',
             address: clinic.address || '',
             doctor_name: '',
@@ -100,24 +111,28 @@ export default function SuperPanel() {
     setSavingClinic(true)
     try {
       if (clinicModal?.editing) {
+        const specLabel = SPECIALTIES.find((s) => s.key === clinicForm.specialty_key)?.label || ''
         const { error } = await supabase
           .from('clinics')
           .update({
             name: clinicForm.name.trim(),
-            specialty: clinicForm.specialty.trim() || null,
+            specialty: clinicForm.specialty_key === 'general' ? (clinicModal.editing.specialty || specLabel) : specLabel,
+            specialty_key: clinicForm.specialty_key,
             phone: clinicForm.phone.trim() || null,
             address: clinicForm.address.trim() || null,
           })
           .eq('id', clinicModal.editing.id)
         if (error) throw error
       } else {
+        const specLabel = SPECIALTIES.find((s) => s.key === clinicForm.specialty_key)?.label || ''
         const { data, error } = await supabase.rpc('super_create_clinic', {
           p_name: clinicForm.name.trim(),
-          p_specialty: clinicForm.specialty.trim() || null,
+          p_specialty: specLabel,
           p_phone: clinicForm.phone.trim() || null,
           p_address: clinicForm.address.trim() || null,
           p_consultation_price: Number(clinicForm.consultation_price) || 0,
           p_doctor_name: clinicForm.doctor_name.trim() || null,
+          p_specialty_key: clinicForm.specialty_key,
         })
         if (error) throw error
         toast('success', 'تم إنشاء العيادة بنجاح — أضف الآن حساب الطبيب')
@@ -353,8 +368,12 @@ export default function SuperPanel() {
           <Field label="اسم الطبيب" hint="يظهر في رسائل التذكير">
             <Input value={clinicForm.doctor_name} onChange={(e) => setClinicForm({ ...clinicForm, doctor_name: e.target.value })} placeholder="د. ..." />
           </Field>
-          <Field label="التخصص">
-            <Input value={clinicForm.specialty} onChange={(e) => setClinicForm({ ...clinicForm, specialty: e.target.value })} placeholder="طب عام، جلدية..." />
+          <Field label="التخصص" hint="يحدد أدوات الواجهة الخاصة بالعيادة">
+            <Select value={clinicForm.specialty_key} onChange={(e) => setClinicForm({ ...clinicForm, specialty_key: e.target.value })}>
+              {SPECIALTIES.map((s) => (
+                <option key={s.key} value={s.key}>{s.label}</option>
+              ))}
+            </Select>
           </Field>
           <Field label="هاتف العيادة">
             <Input value={clinicForm.phone} onChange={(e) => setClinicForm({ ...clinicForm, phone: e.target.value })} dir="ltr" />

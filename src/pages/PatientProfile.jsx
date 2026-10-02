@@ -30,6 +30,7 @@ export default function PatientProfile() {
   const [visits, setVisits] = useState(null)
   const [attachments, setAttachments] = useState([])
   const [todayAppt, setTodayAppt] = useState(null)
+  const [dentalHistory, setDentalHistory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(params.get('edit') === '1')
   const [medOpen, setMedOpen] = useState(false)
@@ -41,7 +42,8 @@ export default function PatientProfile() {
   const load = useCallback(async () => {
     if (!profile?.clinic_id || !id) return
     setLoading(true)
-    const [pRes, miRes, vRes, attRes, apptRes] = await Promise.all([
+    const isDental = profile?.clinic?.specialty_key === 'dentistry'
+    const [pRes, miRes, vRes, attRes, apptRes, dentalRes] = await Promise.all([
       supabase.from('patients').select('*').eq('id', id).single(),
       supabase.from('medical_information').select('*').eq('patient_id', id).maybeSingle(),
       supabase
@@ -59,12 +61,21 @@ export default function PatientProfile() {
         .in('status', ['confirmed', 'arrived', 'waiting', 'in_consultation'])
         .order('appointment_date', { ascending: false })
         .limit(1),
+      isDental
+        ? supabase
+            .from('dental_chart_entries')
+            .select('*, visit:visits(visit_date)')
+            .eq('patient_id', id)
+            .order('created_at', { ascending: false })
+            .limit(100)
+        : Promise.resolve({ data: null }),
     ])
     setPatient(pRes.data || null)
     setMedInfo(miRes.data || null)
     setVisits(vRes.data || [])
     setAttachments(attRes.data || [])
     setTodayAppt(apptRes.data?.[0] || null)
+    setDentalHistory(dentalRes.data || [])
     setLoading(false)
   }, [id, profile?.clinic_id])
 
@@ -73,6 +84,7 @@ export default function PatientProfile() {
   }, [load])
 
   const isDoctor = effectiveRole === 'doctor'
+  const isDentalClinic = profile?.clinic?.specialty_key === 'dentistry'
 
   const startConsultation = () => {
     if (todayAppt) {
@@ -249,6 +261,28 @@ export default function PatientProfile() {
           </div>
         )}
       </div>
+
+      {/* dental history (dentistry clinics) */}
+      {isDentalClinic && dentalHistory && dentalHistory.length > 0 && (
+        <div className="mb-5">
+          <h2 className="mb-2 text-sm font-bold text-slate-700">سجل الأسنان</h2>
+          <Card bodyClass="!p-0">
+            <ul className="divide-y divide-slate-100">
+              {dentalHistory.slice(0, 15).map((e) => (
+                <li key={e.id} className="flex items-center gap-3 px-4 py-2.5 sm:px-5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-xs font-bold text-primary-800">
+                    {e.tooth_no}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-700">{e.procedure}{e.notes ? <span className="font-medium text-slate-500"> · {e.notes}</span> : null}</p>
+                    <p className="text-[10px] text-slate-400">{e.visit?.visit_date ? formatDateShort(e.visit.visit_date) : ''}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      )}
 
       {/* attachments */}
       <div className="mb-8">

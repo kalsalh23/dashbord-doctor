@@ -8,6 +8,17 @@ import { weekdayName } from '../../lib/format'
 
 const DEFAULTS = { start_time: '17:00', end_time: '21:00' }
 
+const SPECIALTIES = [
+  { key: 'general', label: 'طب عام' },
+  { key: 'dentistry', label: 'طب الأسنان' },
+  { key: 'derma', label: 'الجلدية' },
+  { key: 'peds', label: 'الأطفال' },
+  { key: 'internal', label: 'الباطنية' },
+  { key: 'neuro', label: 'الأعصاب' },
+  { key: 'ortho', label: 'العظام' },
+  { key: 'ent', label: 'الأنف والأذن والحنجرة' },
+]
+
 export default function Settings() {
   const { profile, settings, toast, refreshSettings } = useApp()
   const [schedules, reloadSchedules] = useSchedules()
@@ -23,7 +34,7 @@ export default function Settings() {
     setClinic(settings)
     setForm({
       name: profile.clinic?.name || '',
-      specialty: profile.clinic?.specialty || '',
+      specialty_key: profile.clinic?.specialty_key || 'general',
       phone: profile.clinic?.phone || '',
       address: profile.clinic?.address || '',
       doctor_name: settings.doctor_name || '',
@@ -100,7 +111,13 @@ export default function Settings() {
     // clinic
     const { error: e1 } = await supabase
       .from('clinics')
-      .update({ name: form.name.trim(), specialty: form.specialty.trim(), phone: form.phone.trim(), address: form.address.trim() })
+      .update({
+        name: form.name.trim(),
+        specialty: SPECIALTIES.find((s) => s.key === form.specialty_key)?.label || null,
+        specialty_key: form.specialty_key,
+        phone: form.phone.trim(),
+        address: form.address.trim(),
+      })
       .eq('id', profile.clinic_id)
     // settings
     const { error: e2 } = await supabase
@@ -152,8 +169,12 @@ export default function Settings() {
             <Field label="اسم الطبيب">
               <Input value={form.doctor_name} onChange={setF('doctor_name')} placeholder="د. ..." />
             </Field>
-            <Field label="التخصص">
-              <Input value={form.specialty} onChange={setF('specialty')} />
+            <Field label="التخصص" hint="يحدد الأدوات الخاصة التي تظهر في واجهة الطبيب">
+              <Select value={form.specialty_key} onChange={setF('specialty_key')}>
+                {SPECIALTIES.map((s) => (
+                  <option key={s.key} value={s.key}>{s.label}</option>
+                ))}
+              </Select>
             </Field>
             <Field label="هاتف العيادة">
               <Input value={form.phone} onChange={setF('phone')} dir="ltr" />

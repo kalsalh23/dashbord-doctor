@@ -19,7 +19,7 @@ export function AppProvider({ children }) {
   const loadUserData = useCallback(async (userId) => {
     const { data: prof } = await supabase
       .from('profiles')
-      .select('*, clinic:clinics(name, specialty, is_active)')
+      .select('*, clinic:clinics(name, specialty, specialty_key, is_active)')
       .eq('id', userId)
       .single()
     setProfile(prof || null)
@@ -75,7 +75,7 @@ export function AppProvider({ children }) {
     if (!session?.user) return
     const { data: prof } = await supabase
       .from('profiles')
-      .select('*, clinic:clinics(name, specialty, is_active)')
+      .select('*, clinic:clinics(name, specialty, specialty_key, is_active)')
       .eq('id', session.user.id)
       .single()
     if (prof) setProfile(prof)

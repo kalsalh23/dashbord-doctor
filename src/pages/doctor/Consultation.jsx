@@ -7,6 +7,7 @@ import {
 import { useApp, audit, notify } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, Field, Input, Textarea, Spinner, EmptyState, Tag } from '../../components/ui'
+import DentalChart from '../../components/DentalChart'
 import { useSchedules, friendlyDbError } from '../../lib/hooks'
 import { addDays, getWeekday, ageFrom, formatDateShort, todayStr } from '../../lib/format'
 
@@ -43,6 +44,9 @@ export default function Consultation() {
   const [followDays, setFollowDays] = useState(null)
   const [sendingFu, setSendingFu] = useState(false)
   const [favorites, setFavorites] = useState([])
+  const [dentalEntries, setDentalEntries] = useState([])
+
+  const isDental = profile?.clinic?.specialty_key === 'dentistry'
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -157,6 +161,23 @@ export default function Consultation() {
       if (mErr) {
         setSaving(false)
         return toast('error', 'تم حفظ الزيارة لكن تعذر حفظ الأدوية: ' + mErr.message)
+      }
+    }
+    if (isDental && dentalEntries.length > 0) {
+      const { error: dErr } = await supabase.from('dental_chart_entries').insert(
+        dentalEntries.map((e) => ({
+          clinic_id: profile.clinic_id,
+          patient_id: patient.id,
+          visit_id: visit.id,
+          tooth_no: e.tooth_no,
+          procedure: e.procedure,
+          notes: e.notes || null,
+          created_by: profile.id,
+        }))
+      )
+      if (dErr) {
+        setSaving(false)
+        return toast('error', 'تم حفظ الزيارة لكن تعذر حفظ مخطط الأسنان: ' + dErr.message)
       }
     }
     if (appointment) {
@@ -422,6 +443,16 @@ export default function Consultation() {
               </Field>
             </div>
           </Card>
+
+          {isDental && (
+            <Card title="مخطط الأسنان" subtitle="اضغط على السن لتحديد الإجراء — الألوان: برتقالي عولج سابقاً، أخضر زيارة اليوم">
+              <DentalChart
+                patientId={patient.id}
+                entries={dentalEntries}
+                onEntriesChange={setDentalEntries}
+              />
+            </Card>
+          )}
 
           <Card
             title="الأدوية الموصوفة"
