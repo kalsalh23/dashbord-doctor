@@ -4,6 +4,7 @@ import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Avatar, Button, Card, Field, Input, PageHeader } from '../../components/ui'
 import { friendlyDbError } from '../../lib/hooks'
+import PushSetupCard from '../../components/PushSetupCard'
 
 export default function DoctorSettings() {
   const { profile, settings, toast, refreshSettings, refreshProfile } = useApp()
@@ -130,6 +131,8 @@ export default function DoctorSettings() {
             عند تغيير السعر يظهر السعر الجديد لموظف الاستقبال تلقائياً في الحجوزات وصفحة المدفوعات.
           </p>
         </Card>
+
+        <PushSetupCard />
 
         <div className="flex justify-end pb-4">
           <Button size="lg" onClick={save} loading={saving}>

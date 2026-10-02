@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { Button, Card, Field, Input, Select, Textarea, Toggle, Modal, PageHeader, Spinner } from '../../components/ui'
 import { useSchedules } from '../../lib/hooks'
 import { weekdayName } from '../../lib/format'
+import PushSetupCard from '../../components/PushSetupCard'
 
 const DEFAULTS = { start_time: '17:00', end_time: '21:00' }
 
@@ -281,6 +282,8 @@ export default function Settings() {
           ))}
         </ul>
       </Modal>
+
+      <PushSetupCard />
     </div>
   )
 }
