@@ -435,7 +435,7 @@ export default function Consultation() {
               <Field label="الأعراض">
                 <Textarea value={form.symptoms} onChange={setF('symptoms')} rows={2} />
               </Field>
-              <Field label="الفحص السريري">
+              <Field label={isDental ? 'الفحص الفمي' : 'الفحص السريري'}>
                 <Textarea value={form.physical_examination} onChange={setF('physical_examination')} rows={2} />
               </Field>
               <Field label="التشخيص" required>

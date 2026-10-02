@@ -19,6 +19,7 @@ import VisitsLog from './pages/doctor/VisitsLog'
 import DoctorFollowUps from './pages/doctor/DoctorFollowUps'
 import Favorites from './pages/doctor/Favorites'
 import DoctorSettings from './pages/doctor/DoctorSettings'
+import DentalDashboard from './pages/doctor/DentalDashboard'
 import SuperPanel from './pages/super/SuperPanel'
 
 function FullSpinner() {
@@ -114,6 +115,14 @@ function HomeRedirect() {
   return <Navigate to={homeFor(profile.role)} replace />
 }
 
+// the doctor's home screen is chosen by HIS specialty — each specialty gets its own panel
+function DoctorHome() {
+  const { profile } = useApp()
+  const specialtyKey = profile?.specialty_key || profile?.clinic?.specialty_key || 'general'
+  if (specialtyKey === 'dentistry') return <DentalDashboard />
+  return <DoctorDashboard />
+}
+
 function AppRoutes() {
   const { toasts } = useApp()
   return (
@@ -139,7 +148,7 @@ function AppRoutes() {
             <Route path="/reception/payments" element={<RequireRole role="reception"><Payments /></RequireRole>} />
             <Route path="/reception/follow-ups" element={<RequireRole role="reception"><FollowUps /></RequireRole>} />
             <Route path="/reception/settings" element={<RequireRole role="reception"><Settings /></RequireRole>} />
-            <Route path="/doctor" element={<RequireRole role="doctor"><DoctorDashboard /></RequireRole>} />
+            <Route path="/doctor" element={<RequireRole role="doctor"><DoctorHome /></RequireRole>} />
             <Route path="/doctor/schedule" element={<RequireRole role="doctor"><Schedule /></RequireRole>} />
             <Route path="/doctor/patients" element={<RequireRole role="doctor"><Patients doctorMode /></RequireRole>} />
             <Route path="/doctor/patients/:id" element={<RequireRole role="doctor"><PatientProfile /></RequireRole>} />
