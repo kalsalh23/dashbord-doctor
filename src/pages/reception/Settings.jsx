@@ -4,21 +4,12 @@ import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, Field, Input, Select, Textarea, Toggle, Modal, PageHeader, Spinner } from '../../components/ui'
 import { useSchedules } from '../../lib/hooks'
+import { SPECIALTIES } from '../../lib/specialties'
 import { weekdayName } from '../../lib/format'
 import PushSetupCard from '../../components/PushSetupCard'
 
 const DEFAULTS = { start_time: '17:00', end_time: '21:00' }
 
-const SPECIALTIES = [
-  { key: 'general', label: 'طب عام' },
-  { key: 'dentistry', label: 'طب الأسنان' },
-  { key: 'derma', label: 'الجلدية' },
-  { key: 'peds', label: 'الأطفال' },
-  { key: 'internal', label: 'الباطنية' },
-  { key: 'neuro', label: 'الأعصاب' },
-  { key: 'ortho', label: 'العظام' },
-  { key: 'ent', label: 'الأنف والأذن والحنجرة' },
-]
 
 export default function Settings() {
   const { profile, settings, toast, refreshSettings } = useApp()

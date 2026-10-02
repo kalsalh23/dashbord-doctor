@@ -384,6 +384,19 @@ function VisitCard({ visit, latest = false, expanded = false, onToggle }) {
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{r.value}</p>
               </div>
             ))}
+                    {visit.specialty_data && Object.keys(visit.specialty_data).length > 0 && (
+            <div>
+              <p className="mb-1.5 text-[11px] font-bold text-slate-400">بيانات التخصص</p>
+              <ul className="space-y-1">
+                {Object.entries(visit.specialty_data).map(([label, value]) => (
+                  <li key={label} className="flex gap-2 rounded-lg bg-slate-50 px-3 py-1.5 text-xs">
+                    <span className="font-bold text-slate-500">{label}:</span>
+                    <span className="font-semibold text-slate-700">{String(value)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {meds.length > 0 && (
             <div>
               <p className="mb-1.5 text-[11px] font-bold text-slate-400">الأدوية الموصوفة</p>

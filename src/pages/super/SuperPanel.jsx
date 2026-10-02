@@ -11,6 +11,7 @@ import {
 } from '../../components/ui'
 import { money, formatDateShort } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
+import { SPECIALTIES } from '../../lib/specialties'
 
 const ROLE_BADGE = {
   doctor: { label: 'طبيب', cls: 'bg-teal-50 text-teal-800 border-teal-200' },
@@ -19,16 +20,6 @@ const ROLE_BADGE = {
   super_admin: { label: 'مدير النظام', cls: 'bg-slate-100 text-slate-600 border-slate-200' },
 }
 
-const SPECIALTIES = [
-  { key: 'general', label: 'طب عام' },
-  { key: 'dentistry', label: 'طب الأسنان' },
-  { key: 'derma', label: 'الجلدية' },
-  { key: 'peds', label: 'الأطفال' },
-  { key: 'internal', label: 'الباطنية' },
-  { key: 'neuro', label: 'الأعصاب' },
-  { key: 'ortho', label: 'العظام' },
-  { key: 'ent', label: 'الأنف والأذن والحنجرة' },
-]
 
 const EMPTY_CLINIC_FORM = {
   name: '', specialty_key: 'general', phone: '', address: '', doctor_name: '', consultation_price: 0,

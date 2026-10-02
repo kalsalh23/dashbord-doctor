@@ -1,0 +1,1 @@
+select pg_get_functiondef(p.oid) as def from pg_proc p where p.proname='staff_push_register';

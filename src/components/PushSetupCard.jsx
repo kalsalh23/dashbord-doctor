@@ -1,71 +1,52 @@
-import { useEffect, useState } from 'react'
-import QRCode from 'qrcode'
-import { BellRing, Copy, ExternalLink } from 'lucide-react'
-import { useApp } from '../lib/store'
+import { useState } from 'react'
+import { BellRing, Check } from 'lucide-react'
+import { subscribeStaffPush } from '../lib/staffPush'
 import { Card, Button } from './ui'
 
-/**
- * External push setup: staff install the free ntfy app and subscribe to the
- * clinic topic — from then on every notification reaches their phone instantly,
- * even when this app is closed.
- */
+/** تفعيل الإشعارات الفورية على هذا الجهاز — Web Push قياسي مجاني بلا حدود */
 export default function PushSetupCard() {
-  const { profile, toast } = useApp()
-  const [qr, setQr] = useState('')
-  const topic = profile?.clinic_id ? 'clinica-' + profile.clinic_id : ''
-  const url = topic ? 'https://ntfy.sh/' + topic : ''
+  const [state, setState] = useState(
+    typeof Notification !== 'undefined' && Notification.permission === 'granted' && localStorage.getItem('staff_push_on') === '1'
+      ? 'on'
+      : 'off'
+  )
+  const [busy, setBusy] = useState(false)
 
-  useEffect(() => {
-    if (!url) return
-    QRCode.toDataURL(url, { width: 220, margin: 1, color: { dark: '#0f766e', light: '#ffffff' } }).then(setQr)
-  }, [url])
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(topic)
-      toast('success', 'تم نسخ اسم القناة')
-    } catch {
-      toast('error', 'تعذر النسخ — انسخه يدوياً: ' + topic)
+  const enable = async () => {
+    setBusy(true)
+    const r = await subscribeStaffPush()
+    setBusy(false)
+    if (r === 'ok') {
+      localStorage.setItem('staff_push_on', '1')
+      setState('on')
+    } else if (r === 'denied') {
+      alert('تم رفض إذن الإشعارات — فعّله من إعدادات المتصفح لهذا الموقع')
+    } else if (r === 'unsupported') {
+      alert('هذا المتصفح لا يدعم الإشعارات الفورية')
+    } else {
+      alert('تعذر التفعيل — أعد المحاولة')
     }
   }
 
-  if (!topic) return null
-
   return (
-    <Card title="الإشعارات الفورية على الجوال" subtitle="استلم إشعارات العيادة فوراً حتى لو كان التطبيق مغلقًا">
-      <div className="flex flex-wrap items-start gap-5">
-        <div className="text-center">
-          {qr ? (
-            <img src={qr} alt="رمز الاشتراك" className="h-32 w-32 rounded-lg border border-slate-200" />
-          ) : (
-            <div className="h-32 w-32 animate-pulse rounded-lg bg-slate-100" />
-          )}
-          <p className="mt-1 text-[10px] text-slate-400">امسح بجوال الفريق</p>
-        </div>
+    <Card title="الإشعارات الفورية على هذا الجهاز" subtitle="استلم إشعارات العيادة فوراً حتى لو كان التطبيق مغلقاً — مجاني وبلا حدود">
+      <div className="flex items-center gap-4">
+        <span className={`flex h-14 w-14 items-center justify-center rounded-2xl ${state === 'on' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+          {state === 'on' ? <Check size={26} /> : <BellRing size={26} />}
+        </span>
         <div className="min-w-0 flex-1">
-          <ol className="list-inside list-decimal space-y-1.5 text-xs leading-relaxed text-slate-600">
-            <li>ثبّت تطبيق <b className="text-slate-800">ntfy</b> من متجر التطبيقات (مجاني)</li>
-            <li>افتح التطبيق واضغط <b className="text-slate-800">Subscribe</b></li>
-            <li>الصق اسم القناة أو امسح الرمز أعلاه</li>
-          </ol>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <code className="rounded-lg bg-slate-100 px-2.5 py-1.5 text-[11px] font-bold text-slate-600" dir="ltr">{topic}</code>
-            <Button size="sm" variant="secondary" onClick={copy}>
-              <Copy size={13} />
-              نسخ
-            </Button>
-            <a href={url} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" variant="ghost">
-                <ExternalLink size={13} />
-                فتح القناة
-              </Button>
-            </a>
-          </div>
-          <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-400">
-            <BellRing size={13} className="mt-0.5 shrink-0 text-primary-500" />
-            كل إشعار في النظام (طلب حجز، قبول، متابعة جديدة، إلغاء...) يصل فوراً لكل من اشترك بهذه القناة.
+          <p className="text-sm font-bold text-slate-800">
+            {state === 'on' ? 'الإشعارات مفعّلة على هذا الجهاز ✅' : 'الإشعارات غير مفعّلة'}
+          </p>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-slate-400">
+            كل إشعار في النظام (طلب حجز جديد من دليل طبي، قبول، نقل مريض، متابعة، إلغاء) يظهر فوراً على شاشة هذا الجهاز.
           </p>
         </div>
+        {state !== 'on' && (
+          <Button onClick={enable} loading={busy}>
+            تفعيل الإشعارات
+          </Button>
+        )}
       </div>
     </Card>
   )

@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 
-const VAPID_PUBLIC = import.meta.env.VAPID_PUBLIC_KEY_CLIENT || 'BERjrZV05Z5fDHC62Q5uTnuOQxbNzjwTlQa29gU97KIEsuJ68bwAS-HxJIkvu3YO_v6idMDN-v2zS1wAdSND7Wc'
+const VAPID_PUBLIC = "BMNqQjOfG4UIvG0YmDdiECuuNbyBJwJY9iPopDTNIk-_41GT_n6TGTX77N28UkKsInoY7YjoKwI_TkSgznKSi7c" || import.meta.env.VAPID_PUBLIC_KEY_CLIENT
 
 function urlBase64ToUint8Array(base64) {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)
@@ -28,12 +28,28 @@ export async function subscribeStaffPush() {
     const j = sub.toJSON()
     if (!j.endpoint || !j.keys?.p256dh || !j.keys?.auth) return 'error'
 
-    const { data, error } = await supabase.rpc('staff_push_register', {
-      p_endpoint: j.endpoint,
-      p_p256dh: j.keys.p256dh,
-      p_auth: j.keys.auth,
-    })
-    if (error || !data?.ok) return 'error'
+    // من هذا الجهاز نحتاج معرفة المستخدم وعيادته ودوره لتوجيه الإشعارات
+    const { data: prof, error: pErr } = await supabase
+      .from('profiles')
+      .select('id, role, clinic_id')
+      .eq('id', (await supabase.auth.getUser()).data.user?.id)
+      .single()
+    if (pErr || !prof) return 'error'
+
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .upsert(
+        {
+          user_id: prof.id,
+          clinic_id: prof.clinic_id,
+          role: prof.role,
+          endpoint: j.endpoint,
+          p256dh: j.keys.p256dh,
+          auth: j.keys.auth,
+        },
+        { onConflict: 'endpoint' }
+      )
+    if (error) return 'error'
     return 'ok'
   } catch {
     return 'error'

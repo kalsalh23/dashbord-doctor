@@ -1,0 +1,1 @@
+select p.proname, n.nspname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.proname like '%push%' or p.proname like '%staff%';

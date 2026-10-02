@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase'
 import { Button, Card, Field, Input, Textarea, Spinner, EmptyState, Tag } from '../../components/ui'
 import DentalChart from '../../components/DentalChart'
 import { useSchedules, friendlyDbError } from '../../lib/hooks'
+import { specialtyByKey } from '../../lib/specialties'
 import { addDays, getWeekday, ageFrom, formatDateShort, todayStr } from '../../lib/format'
 
 const EMPTY_FORM = {
@@ -45,11 +46,13 @@ export default function Consultation() {
   const [sendingFu, setSendingFu] = useState(false)
   const [favorites, setFavorites] = useState([])
   const [dentalEntries, setDentalEntries] = useState([])
+  const [specData, setSpecData] = useState({})
 
   // the doctor's own specialty (set on his account) drives his tools;
   // falls back to the clinic's specialty for admins viewing doctor mode
   const specialtyKey = profile?.specialty_key || profile?.clinic?.specialty_key || 'general'
   const isDental = specialtyKey === 'dentistry'
+  const spec = specialtyByKey(specialtyKey)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -142,6 +145,7 @@ export default function Consultation() {
       diagnosis: form.diagnosis.trim(),
       treatment_plan: form.treatment_plan.trim() || null,
       medical_notes: form.medical_notes.trim() || null,
+      specialty_data: Object.keys(specData).length ? specData : null,
     }
     const { data: visit, error: vErr } = await supabase.from('visits').insert(visitPayload).select().single()
     if (vErr) {
@@ -435,9 +439,24 @@ export default function Consultation() {
               <Field label="الأعراض">
                 <Textarea value={form.symptoms} onChange={setF('symptoms')} rows={2} />
               </Field>
-              <Field label={isDental ? 'الفحص الفمي' : 'الفحص السريري'}>
+              <Field label={spec.examLabel || "الفحص السريري"}>
                 <Textarea value={form.physical_examination} onChange={setF('physical_examination')} rows={2} />
               </Field>
+              {spec.fields?.length > 0 && (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                  <p className="mb-2 text-[11px] font-bold text-slate-500">بيانات {spec.label} الخاصة</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {spec.fields.map((f) => (
+                      <Field key={f.key} label={f.label}>
+                        <Input
+                          value={specData[f.label] || ''}
+                          onChange={(e) => setSpecData((d) => ({ ...d, [f.label]: e.target.value }))}
+                        />
+                      </Field>
+                    ))}
+                  </div>
+                </div>
+              )}
               <Field label="التشخيص" required>
                 <Textarea value={form.diagnosis} onChange={setF('diagnosis')} rows={2} />
               </Field>
