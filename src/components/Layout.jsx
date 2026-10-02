@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, Wallet, Repeat, Settings, Stethoscope,
-  Bell, BellRing, LogOut, Menu, X, MoreHorizontal, Activity, Shield, FileText, Pill,
+  Bell, BellRing, LogOut, Menu, X, MoreHorizontal, Activity, Shield, FileText, Pill, Receipt,
 } from 'lucide-react'
 import { subscribeStaffPush } from '../lib/staffPush'
 import { useApp } from '../lib/store'
@@ -18,6 +18,7 @@ const NAV = {
     { to: '/reception/appointments', label: 'المواعيد', icon: CalendarDays },
     { to: '/reception/patients', label: 'المرضى', icon: Users },
     { to: '/reception/payments', label: 'المدفوعات', icon: Wallet },
+    { to: '/reception/expenses', label: 'المصاريف', icon: Receipt },
     { to: '/reception/follow-ups', label: 'طلبات المتابعة', icon: Repeat, badge: 'followUps' },
     { to: '/reception/settings', label: 'الإعدادات', icon: Settings, adminOnly: true },
   ],

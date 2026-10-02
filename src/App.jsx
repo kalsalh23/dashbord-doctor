@@ -11,6 +11,7 @@ import Patients from './pages/reception/Patients'
 import PatientProfile from './pages/PatientProfile'
 import Payments from './pages/reception/Payments'
 import FollowUps from './pages/reception/FollowUps'
+import Expenses from './pages/reception/Expenses'
 import Settings from './pages/reception/Settings'
 import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import Consultation from './pages/doctor/Consultation'
@@ -146,6 +147,7 @@ function AppRoutes() {
             <Route path="/reception/patients" element={<RequireRole role="reception"><Patients /></RequireRole>} />
             <Route path="/reception/patients/:id" element={<RequireRole role="reception"><PatientProfile /></RequireRole>} />
             <Route path="/reception/payments" element={<RequireRole role="reception"><Payments /></RequireRole>} />
+            <Route path="/reception/expenses" element={<RequireRole role="reception"><Expenses /></RequireRole>} />
             <Route path="/reception/follow-ups" element={<RequireRole role="reception"><FollowUps /></RequireRole>} />
             <Route path="/reception/settings" element={<RequireRole role="reception"><Settings /></RequireRole>} />
             <Route path="/doctor" element={<RequireRole role="doctor"><DoctorHome /></RequireRole>} />

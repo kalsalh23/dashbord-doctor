@@ -20,15 +20,13 @@ export default async (req, res) => {
   if (!SUPABASE_URL || !SUPABASE_ANON) return json(res, 500, { error: 'supabase env missing' })
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON)
-  const { data, error } = await sb
-    .from('appointments')
-    .select('start_time')
-    .eq('clinic_id', clinicId)
-    .eq('appointment_date', date)
-    .not('status', 'in', '("cancelled","no_show")')
-
+  const { data, error } = await sb.rpc('bridge_taken_times', {
+    p_secret: BRIDGE_SECRET,
+    p_clinic_id: clinicId,
+    p_date: date,
+  })
   if (error) return json(res, 500, { error: error.message })
 
-  const times = [...new Set((data || []).map((a) => (a.start_time || '').slice(0, 5)).filter(Boolean))].sort()
+  const times = [...new Set((data || []).map((x) => (x || '').slice(0, 5)).filter(Boolean))].sort()
   return json(res, 200, { times })
 }
