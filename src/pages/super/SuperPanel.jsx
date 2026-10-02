@@ -33,7 +33,7 @@ const SPECIALTIES = [
 const EMPTY_CLINIC_FORM = {
   name: '', specialty_key: 'general', phone: '', address: '', doctor_name: '', consultation_price: 0,
 }
-const EMPTY_USER_FORM = { full_name: '', email: '', password: '', phone: '', role: 'doctor' }
+const EMPTY_USER_FORM = { full_name: '', email: '', password: '', phone: '', role: 'doctor', specialty_key: 'general' }
 
 export default function SuperPanel() {
   const { profile, toast } = useApp()
@@ -162,6 +162,7 @@ export default function SuperPanel() {
         p_role: f.role,
         p_clinic_id: userModalFor.id,
         p_phone: f.phone.trim() || null,
+        p_specialty_key: f.role === 'doctor' ? f.specialty_key : 'general',
       })
       if (error) throw error
       toast('success', `تم إنشاء حساب ${f.role === 'doctor' ? 'الطبيب' : 'الموظف'} — سلّم البريد وكلمة المرور للعيادة`)
@@ -324,9 +325,12 @@ export default function SuperPanel() {
                       {users.map((u) => (
                         <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
                           <div className="min-w-0">
-                            <p className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                            <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-700">
                               {u.full_name}
                               <Badge map={ROLE_BADGE} value={u.role} />
+                              {u.role === 'doctor' && u.specialty_key && u.specialty_key !== 'general' && (
+                                <Tag tone="teal">{SPECIALTIES.find((s) => s.key === u.specialty_key)?.label || u.specialty_key}</Tag>
+                              )}
                               {u.id === profile.id && <Tag>أنت</Tag>}
                             </p>
                             <p className="text-[11px] text-slate-400" dir="ltr">{u.email}{u.phone ? ` · ${u.phone}` : ''}</p>
@@ -410,6 +414,15 @@ export default function SuperPanel() {
               <option value="admin">مدير عيادة (وصول كامل لعيادته)</option>
             </Select>
           </Field>
+          {userForm.role === 'doctor' && (
+            <Field label="اختصاص الطبيب" required hint="يحدد لوحته والأدوات التي تظهر له (مثل مخطط الأسنان)" className="sm:col-span-2">
+              <Select value={userForm.specialty_key} onChange={(e) => setUserForm({ ...userForm, specialty_key: e.target.value })}>
+                {SPECIALTIES.map((s) => (
+                  <option key={s.key} value={s.key}>{s.label}</option>
+                ))}
+              </Select>
+            </Field>
+          )}
           <Field label="الاسم الكامل" required className="sm:col-span-2">
             <Input value={userForm.full_name} onChange={(e) => setUserForm({ ...userForm, full_name: e.target.value })} placeholder="د. أحمد السالم" />
           </Field>

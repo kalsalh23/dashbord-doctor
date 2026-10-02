@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { Card, Badge, APPT_STATUS, Button, EmptyState, SkeletonRows, Avatar, Tabs } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
 import AppointmentActions from '../../components/AppointmentActions'
+import PlatformRequests from '../../components/PlatformRequests'
 import { useSchedules } from '../../lib/hooks'
 import { todayStr, addDays, formatDateLong, dayLabel, getWeekday, timeToMin } from '../../lib/format'
 import { slotsForDay, breakRanges } from '../../lib/slots'
@@ -78,6 +79,8 @@ export default function Appointments() {
           حجز موعد
         </Button>
       </div>
+
+      <PlatformRequests onChanged={load} />
 
       {/* date navigator */}
       <div className="mb-4 flex flex-wrap items-center gap-2">

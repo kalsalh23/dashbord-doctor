@@ -46,7 +46,10 @@ export default function Consultation() {
   const [favorites, setFavorites] = useState([])
   const [dentalEntries, setDentalEntries] = useState([])
 
-  const isDental = profile?.clinic?.specialty_key === 'dentistry'
+  // the doctor's own specialty (set on his account) drives his tools;
+  // falls back to the clinic's specialty for admins viewing doctor mode
+  const specialtyKey = profile?.specialty_key || profile?.clinic?.specialty_key || 'general'
+  const isDental = specialtyKey === 'dentistry'
 
   const load = useCallback(async () => {
     setLoading(true)

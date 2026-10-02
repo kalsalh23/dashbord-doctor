@@ -84,7 +84,9 @@ export default function PatientProfile() {
   }, [load])
 
   const isDoctor = effectiveRole === 'doctor'
-  const isDentalClinic = profile?.clinic?.specialty_key === 'dentistry'
+  // per-doctor specialty first, then the clinic's
+  const specialtyKey = profile?.specialty_key || profile?.clinic?.specialty_key || 'general'
+  const isDentalClinic = specialtyKey === 'dentistry'
 
   const startConsultation = () => {
     if (todayAppt) {
