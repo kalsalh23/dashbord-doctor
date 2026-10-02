@@ -9,20 +9,55 @@ const PROCEDURES = [
   'تركيبة (تلبيسة)', 'طوق أسنان', 'تبييض', 'زراعة', 'تقويم', 'جراحة',
 ]
 
-// FDI permanent-teeth layout: patient's right appears on the left of the screen
+// FDI permanent teeth: patient's right on the left of the screen
 const UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28]
 const LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]
 
+const W = 470
+const H = 330
+
+// position each tooth evenly along the arch by ARC LENGTH (not angle),
+// so teeth near the jaw edges spread out naturally like a real mouth
+function archPos(i, n, { cy, rx, ry, flip }) {
+  const K = 600
+  const pt = (t) => ({
+    x: W / 2 + rx * Math.cos(t),
+    y: flip ? cy + ry * Math.sin(t) : cy - ry * Math.sin(t),
+  })
+  const segLen = (a, b) => {
+    const p1 = pt(a)
+    const p2 = pt(b)
+    return Math.hypot(p2.x - p1.x, p2.y - p1.y)
+  }
+  // cumulative lengths sampling t from π → 0
+  const cum = [0]
+  for (let s = 1; s <= K; s++) {
+    const t1 = Math.PI * (1 - (s - 1) / K)
+    const t2 = Math.PI * (1 - s / K)
+    cum.push(cum[s - 1] + segLen(t1, t2))
+  }
+  const total = cum[K]
+  // target arc length for tooth i (centered within its slot)
+  const target = (total * (i + 0.5)) / n
+  let s = cum.findIndex((c) => c >= target)
+  if (s < 1) s = 1
+  const t = Math.PI * (1 - (s - 0.5) / K)
+  const { x, y } = pt(t)
+  const rot = 90 - (t * 180) / Math.PI
+  return { x, y, rot }
+}
+
 /**
- * Odontogram (dental chart) for dentistry clinics.
+ * Odontogram — a live jaw visualization for dentistry clinics.
  * props:
  *  - patientId
  *  - entries        staged entries for THIS visit [{tooth_no, procedure, notes}]
  *  - onEntriesChange(next)
  */
 export default function DentalChart({ patientId, entries, onEntriesChange }) {
-  const [history, setHistory] = useState([]) // entries from previous visits
+  const [history, setHistory] = useState([])
   const [activeTooth, setActiveTooth] = useState(null)
+  const [hover, setHover] = useState(null)
   const [draft, setDraft] = useState({ procedure: '', notes: '' })
 
   useEffect(() => {
@@ -35,7 +70,6 @@ export default function DentalChart({ patientId, entries, onEntriesChange }) {
       .then(({ data }) => setHistory(data || []))
   }, [patientId])
 
-  // latest previous-visit record per tooth
   const historyByTooth = useMemo(() => {
     const m = {}
     for (const e of history) {
@@ -69,64 +103,85 @@ export default function DentalChart({ patientId, entries, onEntriesChange }) {
     setActiveTooth(null)
   }
 
-  const Tooth = ({ no, upper }) => {
-    const staged = stagedByTooth[no]
-    const past = historyByTooth[no]
-    const shape = upper ? 'rounded-t-lg rounded-b-[4px]' : 'rounded-b-lg rounded-t-[4px]'
-    return (
-      <button
-        type="button"
-        onClick={() => openTooth(no)}
-        className={`flex h-11 w-8 shrink-0 flex-col items-center justify-end pb-1 border-2 transition-colors ${shape} ${
-          staged
-            ? 'border-primary-700 bg-primary-600 text-white'
-            : past
-              ? 'border-amber-300 bg-amber-100 text-amber-900'
-              : 'border-slate-200 bg-slate-50 text-slate-400 hover:border-primary-400 hover:bg-white'
-        }`}
-        title={staged ? `اليوم: ${staged.procedure}` : past ? `سابقاً: ${past.procedure}` : `السن ${no}`}
-      >
-        <span className="text-[12px] font-bold leading-4">{no}</span>
-        {(staged || past) && (
-          <span className={`mt-0.5 h-1.5 w-1.5 rounded-full ${staged ? 'bg-white' : 'bg-amber-500'}`} />
-        )}
-      </button>
-    )
+  const toothFill = (no) => {
+    if (stagedByTooth[no]) return '#0d9488'
+    if (historyByTooth[no]) return '#fef3c7'
+    return '#f8fafc'
+  }
+  const toothStroke = (no) => {
+    if (stagedByTooth[no]) return '#0f766e'
+    if (historyByTooth[no]) return '#fcd34d'
+    return '#cbd5e1'
   }
 
-  const Arch = ({ teeth, upper, label }) => (
-    <div className="flex items-center gap-2">
-      <span className="w-10 shrink-0 text-end text-[10px] font-bold text-slate-300">{label}</span>
-      <div className="flex items-center gap-[3px]">
-        {teeth.slice(0, 8).map((no) => <Tooth key={no} no={no} upper={upper} />)}
-        <span className="mx-1 h-12 w-px bg-slate-200" />
-        {teeth.slice(8).map((no) => <Tooth key={no} no={no} upper={upper} />)}
-      </div>
-      <span className="w-10" />
-    </div>
-  )
+  const renderArch = (teeth, { cy, rx, ry, flip }) =>
+    teeth.map((no, i) => {
+      const { x, y, rot } = archPos(i, teeth.length, { cy, rx, ry, flip })
+      const isActive = activeTooth === no
+      const isHover = hover === no
+      return (
+        <g
+          key={no}
+          transform={`translate(${x},${y}) rotate(${rot})`}
+          onClick={() => openTooth(no)}
+          onMouseEnter={() => setHover(no)}
+          onMouseLeave={() => setHover(null)}
+          style={{ cursor: 'pointer' }}
+        >
+          <title>
+            {`السن ${no}${stagedByTooth[no] ? ' — اليوم: ' + stagedByTooth[no].procedure : ''}${
+              !stagedByTooth[no] && historyByTooth[no] ? ' — سابقاً: ' + historyByTooth[no].procedure : ''
+            }`}
+          </title>
+          <rect
+            x={-12}
+            y={flip ? -16 : -14}
+            width={24}
+            height={28}
+            rx={10}
+            fill={toothFill(no)}
+            stroke={isActive || isHover ? '#0f766e' : toothStroke(no)}
+            strokeWidth={isActive || isHover ? 3 : 2}
+          />
+          {/* keep the tooth number upright regardless of the arch rotation */}
+          <text
+            transform={`rotate(${-rot})`}
+            y={5}
+            textAnchor="middle"
+            fontSize={11}
+            fontWeight={700}
+            fill={stagedByTooth[no] ? '#ffffff' : historyByTooth[no] ? '#92400e' : '#64748b'}
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >
+            {no}
+          </text>
+        </g>
+      )
+    })
 
   return (
     <div>
-      {/* the chart scrolls horizontally on narrow screens instead of breaking */}
-      <div className="overflow-x-auto pb-1">
-        <div className="mx-auto w-max space-y-2.5">
-          <Arch teeth={UPPER} upper label="علوي" />
-          <div className="ms-12 h-px bg-slate-100" style={{ width: 'calc(100% - 3.5rem)' }} />
-          <Arch teeth={LOWER} upper={false} label="سفلي" />
-        </div>
+      {/* live jaw visualization */}
+      <div className="rounded-xl bg-gradient-to-b from-slate-50 to-white p-2">
+        <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block h-auto w-full max-w-xl" role="img" aria-label="مخطط الفكين العلوي والسفلي">
+          {/* gum arcs */}
+          <path d={`M ${W / 2 - 188} ${118} A 188 84 0 0 1 ${W / 2 + 185} ${120}`} fill="none" stroke="#e2e8f0" strokeWidth={10} strokeLinecap="round" />
+          <path d={`M ${W / 2 - 188} ${218} A 188 84 0 0 0 ${W / 2 + 185} ${230}`} fill="none" stroke="#e2e8f0" strokeWidth={10} strokeLinecap="round" />
+          {renderArch(UPPER, { cy: 116, rx: 170, ry: 80, flip: false })}
+          {renderArch(LOWER, { cy: 218, rx: 170, ry: 80, flip: true })}
+        </svg>
       </div>
 
       {/* legend */}
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-semibold text-slate-400">
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-semibold text-slate-400">
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-[4px] border-2 border-slate-200 bg-slate-50" /> سليم
+          <span className="inline-block h-3 w-3 rounded-[5px] border-2 border-slate-300 bg-slate-50" /> سليم
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-[4px] border-2 border-amber-300 bg-amber-100" /> عولج سابقاً
+          <span className="inline-block h-3 w-3 rounded-[5px] border-2 border-amber-300 bg-amber-100" /> عولج سابقاً
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-[4px] border-2 border-primary-700 bg-primary-600" /> زيارة اليوم
+          <span className="inline-block h-3 w-3 rounded-[5px] border-2 border-primary-700 bg-primary-600" /> زيارة اليوم
         </span>
         <span className="text-slate-300">·</span>
         <span>اضغط على أي سن لتسجيل إجراء</span>
