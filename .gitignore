@@ -13,3 +13,10 @@ signup-result.json
 
 vapid-keys.json
 push-secret.txt
+
+credentials-private.txt
+owner-pw.txt
+scripts/set-owner-pw.cjs
+scripts/finish-rotation.cjs
+scripts/rotate-secrets.cjs
+apply-pw.query
