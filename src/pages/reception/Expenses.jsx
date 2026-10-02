@@ -22,6 +22,8 @@ const EMPTY = { title: '', amount: '', category: 'supplies', expense_date: '', n
 
 export default function Expenses() {
   const { profile, settings, toast, isAdmin } = useApp()
+  // the doctor (clinic owner), admins and the super admin manage expenses; plain reception can't see this page
+  const canDelete = isAdmin || ['doctor', 'super_admin'].includes(profile?.role)
   const [rows, setRows] = useState(null)
   const [tab, setTab] = useState('month')
   const [modal, setModal] = useState(false)
@@ -156,7 +158,7 @@ export default function Expenses() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-rose-600">{money(e.amount, currency)}</span>
-                  {isAdmin && (
+                  {canDelete && (
                     <Button size="sm" variant="ghost" onClick={() => setDeleting(e)} title="حذف">
                       <Trash2 size={14} className="text-rose-500" />
                     </Button>

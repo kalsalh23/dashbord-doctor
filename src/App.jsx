@@ -147,7 +147,6 @@ function AppRoutes() {
             <Route path="/reception/patients" element={<RequireRole role="reception"><Patients /></RequireRole>} />
             <Route path="/reception/patients/:id" element={<RequireRole role="reception"><PatientProfile /></RequireRole>} />
             <Route path="/reception/payments" element={<RequireRole role="reception"><Payments /></RequireRole>} />
-            <Route path="/reception/expenses" element={<RequireRole role="reception"><Expenses /></RequireRole>} />
             <Route path="/reception/follow-ups" element={<RequireRole role="reception"><FollowUps /></RequireRole>} />
             <Route path="/reception/settings" element={<RequireRole role="reception"><Settings /></RequireRole>} />
             <Route path="/doctor" element={<RequireRole role="doctor"><DoctorHome /></RequireRole>} />
@@ -157,6 +156,7 @@ function AppRoutes() {
             <Route path="/doctor/visits" element={<RequireRole role="doctor"><VisitsLog /></RequireRole>} />
             <Route path="/doctor/follow-ups" element={<RequireRole role="doctor"><DoctorFollowUps /></RequireRole>} />
             <Route path="/doctor/favorites" element={<RequireRole role="doctor"><Favorites /></RequireRole>} />
+            <Route path="/doctor/expenses" element={<RequireRole role="doctor"><Expenses /></RequireRole>} />
             <Route path="/doctor/settings" element={<RequireRole role="doctor"><DoctorSettings /></RequireRole>} />
             <Route path="/doctor/consultation/:appointmentId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
             <Route path="/doctor/consultation/new/:patientId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
