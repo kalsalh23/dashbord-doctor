@@ -1,0 +1,1 @@
+update public.clinics set is_active = true where name = 'عيادة النور'; select name, is_active from public.clinics order by created_at;
