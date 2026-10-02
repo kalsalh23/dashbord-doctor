@@ -10,3 +10,6 @@ signup-result.json
 
 .vercel
 .env*
+
+vapid-keys.json
+push-secret.txt

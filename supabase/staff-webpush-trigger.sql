@@ -6,7 +6,7 @@ security definer
 set search_path = public, net, extensions
 as $$
 declare
-  v_secret text := 'PUSH_SECRET_oz2y1q3nz4';
+  v_secret text := 'PUSH_SECRET_9ed4199c2859459c86fc2216';
 begin
   if new.clinic_id is null then
     return new;
