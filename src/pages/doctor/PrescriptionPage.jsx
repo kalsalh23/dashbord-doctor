@@ -60,6 +60,7 @@ export default function PrescriptionPage() {
         </div>
       </div>
 
+      <div className="print-area">
       <PrescriptionSheet
         clinic={profile?.clinic}
         settings={settings}
@@ -68,6 +69,7 @@ export default function PrescriptionPage() {
         meds={data.medications || []}
         doctorName={data.doctor?.full_name || profile?.full_name}
       />
+      </div>
 
       <p className="mx-auto mt-3 max-w-[820px] text-center text-[11px] text-slate-400 print:hidden">
         الزيارة محفوظة في أرشيف المريض تلقائياً — زر الطباعة يطبع هذا القالب جاهزاً للمريض.
