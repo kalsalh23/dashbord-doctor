@@ -4,6 +4,7 @@ import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, Select, PageHeader, SkeletonRows } from '../../components/ui'
 import PrescriptionSheet from '../../components/PrescriptionSheet'
+import { usePrintIsolation } from '../../lib/print'
 import { formatDateShort } from '../../lib/format'
 
 /**
@@ -18,6 +19,7 @@ export default function PrescriptionPreview() {
   const [printed, setPrinted] = useState(false)
   const [savingMeds, setSavingMeds] = useState(false)
   const [medsDirty, setMedsDirty] = useState(false)
+  usePrintIsolation()
 
   const load = useCallback(async () => {
     if (!profile?.clinic_id) return

@@ -55,22 +55,16 @@
 }
 
 
-/* print: show only the prescription sheet — scaled to fit A5 exactly */
+/* print: isolate the prescription sheet into a single A5 page */
+#print-clone { display: none; }
 @media print {
-  body * { visibility: hidden !important; }
-  .print-area, .print-area * { visibility: visible !important; }
-  .print-area {
-    position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
-    left: auto !important;
+  html.printing #root { display: none !important; }
+  html.printing #print-clone { display: block !important; }
+  html.printing body { background: #fff !important; }
+  #print-clone .prescription-sheet {
     width: 745px !important;
-    transform: scale(0.655) !important;
+    transform: scale(0.62) !important;
     transform-origin: top right !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-    padding: 3mm !important;
-    background: #fff !important;
   }
-  @page { size: A5 portrait; margin: 4mm; }
+  @page { size: A5 portrait; margin: 5mm; }
 }

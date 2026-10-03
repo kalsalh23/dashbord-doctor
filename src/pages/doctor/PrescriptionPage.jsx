@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { useApp } from '../../lib/store'
 import { Button, Spinner, EmptyState } from '../../components/ui'
 import PrescriptionSheet from '../../components/PrescriptionSheet'
+import { usePrintIsolation } from '../../lib/print'
 
 /**
  * واجهة المعاينة — قالب الوصفة الطبية معبأ تلقائياً من الكشف المحفوظ.
@@ -16,6 +17,7 @@ export default function PrescriptionPage() {
   const nav = useNavigate()
   const [data, setData] = useState(undefined) // undefined loading / null missing
   const [savedMark, setSavedMark] = useState(false)
+  usePrintIsolation()
 
   useEffect(() => {
     document.title = 'معاينة — وصفة طبية'

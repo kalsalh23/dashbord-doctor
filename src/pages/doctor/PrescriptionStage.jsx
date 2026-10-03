@@ -4,11 +4,13 @@ import { Printer, Save, Check, ArrowRight, Repeat } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { Button, Card } from '../../components/ui'
 import PrescriptionSheet from '../../components/PrescriptionSheet'
+import { usePrintIsolation } from '../../lib/print'
 
 /** مرحلة المعاينة داخل الكشف — القالب معبأ، مع الحفظ والطباعة ثم المتابعة */
 export default function PrescriptionStage({ visit, onContinue }) {
   const { profile, settings } = useApp()
   const [printed, setPrinted] = useState(false)
+  usePrintIsolation()
   const nav = useNavigate()
 
   const print = () => {
