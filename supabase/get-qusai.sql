@@ -1,0 +1,1 @@
+select a.id, a.start_time, a.status from public.appointments a join public.patients p on p.id=a.patient_id where p.full_name='قصي' and a.appointment_date=current_date order by a.start_time;

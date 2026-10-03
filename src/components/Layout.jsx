@@ -27,7 +27,7 @@ const NAV = {
     { to: '/doctor/patients', label: 'المرضى', icon: Users },
     { to: '/doctor/expenses', label: 'المصاريف', icon: Receipt },
     { to: '/doctor/archive', label: 'أرشيف المرضى', icon: FileText },
-    { to: '/doctor/follow-ups', label: 'متابعاتي', icon: Repeat },
+    { to: '/doctor/preview', label: 'معاينة', icon: Printer },
     { to: '/doctor/favorites', label: 'أدويتي الشائعة', icon: Pill },
     { to: '/doctor/settings', label: 'إعداداتي', icon: Settings },
   ],

@@ -17,8 +17,8 @@ import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import Consultation from './pages/doctor/Consultation'
 import Schedule from './pages/doctor/Schedule'
 import PatientArchive from './pages/doctor/PatientArchive'
+import PrescriptionPreview from './pages/doctor/PrescriptionPreview'
 import PrescriptionPage from './pages/doctor/PrescriptionPage'
-import DoctorFollowUps from './pages/doctor/DoctorFollowUps'
 import Favorites from './pages/doctor/Favorites'
 import DoctorSettings from './pages/doctor/DoctorSettings'
 import DentalDashboard from './pages/doctor/DentalDashboard'
@@ -164,7 +164,7 @@ function AppRoutes() {
             <Route path="/doctor/patients" element={<RequireRole role="doctor"><Patients doctorMode /></RequireRole>} />
             <Route path="/doctor/patients/:id" element={<RequireRole role="doctor"><PatientProfile /></RequireRole>} />
             <Route path="/doctor/archive" element={<RequireRole role="doctor"><PatientArchive /></RequireRole>} />
-            <Route path="/doctor/follow-ups" element={<RequireRole role="doctor"><DoctorFollowUps /></RequireRole>} />
+            <Route path="/doctor/preview" element={<RequireRole role="doctor"><PrescriptionPreview /></RequireRole>} />
             <Route path="/doctor/favorites" element={<RequireRole role="doctor"><Favorites /></RequireRole>} />
             <Route path="/doctor/expenses" element={<RequireRole role="doctor"><Expenses /></RequireRole>} />
             <Route path="/doctor/settings" element={<RequireRole role="doctor"><DoctorSettings /></RequireRole>} />
