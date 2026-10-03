@@ -1,0 +1,1 @@
+alter table public.clinic_settings add column if not exists prescription_template text not null default 'rose'; update public.clinic_settings set prescription_template = 'nizar' where clinic_id = (select id from public.clinics where name = 'عيادة د. نزار عبد الستار الشيخ'); select clinic_id, prescription_template from public.clinic_settings;

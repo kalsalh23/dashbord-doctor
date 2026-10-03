@@ -8,7 +8,7 @@ import { ageFrom, formatDateShort, genderLabel } from '../lib/format'
  * meds: قائمة الأدوية الحالية (قابلة للتحرير من الواجهة الأم).
  * onMedsChange(list): يُنادى عند أي تعديل ليحفظ الأم مستقبلاً.
  */
-export default function PrescriptionSheet({ settings, patient, visit, meds = [], onMedsChange, editable = false, doctorName }) {
+export function RosePrescriptionSheet({ settings, patient, visit, meds = [], onMedsChange, editable = false, doctorName }) {
   const [catQuery, setCatQuery] = useState('')
   const [catOpen, setCatOpen] = useState(false)
   const [catalog, setCatalog] = useState([])
@@ -244,4 +244,17 @@ export default function PrescriptionSheet({ settings, patient, visit, meds = [],
       </div>
     </div>
   )
+}
+
+
+import NizarSheet from './NizarSheet'
+
+/**
+ * موزّع القوالب: يختار قالب الوصفة حسب إعدادات العيادة.
+ */
+export default function PrescriptionSheet(props) {
+  if (props.settings?.prescription_template === 'nizar') {
+    return <NizarSheet {...props} />
+  }
+  return <RosePrescriptionSheet {...props} />
 }
