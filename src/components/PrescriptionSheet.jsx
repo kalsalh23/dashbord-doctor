@@ -1,149 +1,156 @@
-import { SmilePlus, Stethoscope } from 'lucide-react'
 import { ageFrom, formatDateShort, genderLabel } from '../lib/format'
 
 /**
- * قالب الوصفة الطبية — printable prescription sheet.
- * Pure presentational: renders exactly what a clinic prescription looks like.
- * props: { clinic, settings, patient, visit, meds, doctorName }
+ * قالب الوصفة الطبية — مطابق تماماً للورقة الأصلية (A5) دون أي تغيير.
+ * النصوص الثابتة من إعدادات العيادة (بقيم القالب الأصلي كافتراض).
  */
-export default function PrescriptionSheet({ clinic, settings, patient, visit, meds = [], doctorName }) {
-  const name = clinic?.name || 'العيادة'
-  const spec = clinic?.specialty || ''
+export default function PrescriptionSheet({ settings, patient, visit, meds = [], doctorName }) {
+  const s = settings || {}
+  const clinicName = s?.prescription_clinic_name || 'عيادة الزهـــراء'
+  const subtitle = s?.prescription_subtitle || 'للتسوّق والتجميل  /  ادراة  /أنهر العدنية'
+  const tel = s?.prescription_tel || 'Tel: 778134451.737663543.771303636'
+  const address = s?.prescription_address || 'تخر  -  مرفق  الصابقة  -  خط  بنى  عمر  -  دبع  الداخل'
+  const footer1 = s?.prescription_footer1 || 'يرجى عرض العلاج قبل الاستعمال'
+  const footer2 = s?.prescription_footer2 || 'المراجعة المعلنية خلال أسبوع فقط'
+  const sideName = s?.prescription_side_name || 'سلمى محمد علام  7778158151'
+
   const age = patient?.date_of_birth ? ageFrom(patient.date_of_birth) : ''
+  const date = visit?.visit_date ? formatDateShort(visit.visit_date) : '............'
   const entries = Object.entries(visit?.specialty_data || {})
 
   return (
-    <div
-      dir="rtl"
-      className="prescription-sheet mx-auto w-full max-w-[820px] bg-white p-5 shadow-lg"
-      style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif' }}
-    >
-      {/* header band */}
-      <div className="overflow-hidden rounded-lg" style={{ background: '#1d4e6b' }}>
-        <div className="flex items-center gap-3 px-4 py-3">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 ring-2 ring-white/40">
-            <SmilePlus size={26} className="text-white/90" />
+    <div className="prescription-sheet bg-white" style={{ fontFamily: '"Times New Roman", "IBM Plex Sans Arabic", serif' }}>
+      {/* ---------- header navy band ---------- */}
+      <div className="relative rounded-[14px] px-3 py-2" style={{ background: '#1c4f6e' }}>
+        <div className="flex items-center">
+          <span className="flex h-[64px] w-[64px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-4 ring-white/30">
+            <img src="/rose-logo.png" alt="شعار" className="h-full w-full object-cover" />
           </span>
           <div className="min-w-0 flex-1 text-center">
-            <p className="text-2xl font-bold tracking-wide text-white">{name}</p>
-            {spec && <p className="mt-0.5 text-sm font-semibold text-amber-300">{spec}</p>}
+            <p className="whitespace-nowrap text-[26px] font-bold leading-tight tracking-wide text-white" style={{ textShadow: '1px 1px 2px rgba(0,0,0,.3)' }}>
+              {clinicName}
+            </p>
+            <p className="mt-0.5 text-[13px] font-bold leading-snug" style={{ color: '#e8b64c' }}>
+              {subtitle}
+            </p>
           </div>
-          <span className="h-14 w-14 shrink-0" />
+          <span className="h-[64px] w-[56px] shrink-0" />
         </div>
       </div>
 
-      {/* وصفة طبية badge */}
-      <div className="relative -mt-3 mb-2 flex justify-center">
-        <span className="inline-flex items-center gap-2 rounded-full border-2 border-slate-700 bg-white px-8 py-1 text-lg font-bold text-slate-800">
-          <span className="h-2 w-2 rounded-full bg-rose-600" />
-          وصفة طبية
-          <span className="h-2 w-2 rounded-full bg-rose-600" />
+      {/* ---------- وصفة طبية badge ---------- */}
+      <div className="relative z-10 -mt-2.5 mb-1 flex justify-center">
+        <span
+          className="inline-flex items-center gap-3 rounded-full px-10 py-0.5 text-[15px] font-bold text-white"
+          style={{ background: '#1c4f6e' }}
+        >
+          <span className="h-2.5 w-2.5 -ms-8 rounded-full bg-rose-600 ring-2 ring-white" />
+          وصفة  طبية
+          <span className="h-2.5 w-2.5 -me-8 rounded-full bg-rose-600 ring-2 ring-white" />
         </span>
       </div>
 
-      {/* patient info box */}
-      <div className="rounded-lg border-2 border-slate-700 px-4 py-3">
-        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-[15px] leading-7">
-          <span className="font-bold text-slate-800">اسم المريض:</span>
-          <span className="border-b border-dotted border-slate-400 font-semibold text-slate-800">
-            {patient?.full_name || '........................'}
-          </span>
-
-          <span className="font-bold text-slate-800">العمر:</span>
-          <span className="border-b border-dotted border-slate-400 text-slate-700">
-            {age ? `${age} سنة` : '..............'}
-          </span>
-
-          <span className="font-bold text-slate-800">الجنس:</span>
-          <span className="border-b border-dotted border-slate-400 text-slate-700">
-            {genderLabel(patient?.gender)}
-          </span>
-
-          <span className="font-bold text-slate-800">التاريخ:</span>
-          <span className="border-b border-dotted border-slate-400 text-slate-700">
-            {visit?.visit_date ? formatDateShort(visit.visit_date) : '..............'}
-          </span>
-
-          <span className="font-bold text-slate-800">التشخيص:</span>
-          <span className="border-b border-dotted border-slate-400 text-slate-700">
-            {visit?.diagnosis || '........................'}
-          </span>
+      {/* ---------- patient info box ---------- */}
+      <div className="mx-1 rounded-[10px] border-2 px-4 py-2" style={{ borderColor: '#1c4f6e' }}>
+        <div className="space-y-[3px] text-[13.5px] leading-6 text-slate-800">
+          <p className="flex items-end gap-1">
+            <b>Patient name:</b>
+            <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center font-bold">{patient?.full_name || ''}</span>
+            <b>: اسم المريض</b>
+          </p>
+          <p className="flex items-end gap-1">
+            <b>the age:</b>
+            <span className="w-24 border-b border-dotted border-slate-400 text-center">{age || ''}</span>
+            <b>Sex</b>
+            <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center">{genderLabel(patient?.gender)}</span>
+            <b>: الجنس</b>
+            <b className="ps-2">Age:</b>
+            <span className="w-16 border-b border-dotted border-slate-400 text-center">{age || ''}</span>
+          </p>
+          <p className="flex items-end gap-1">
+            <b>Diagnosis:</b>
+            <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center font-bold">{visit?.diagnosis || ''}</span>
+            <b>: التشخيص</b>
+          </p>
         </div>
 
-        {/* specialty data line (if any) */}
         {entries.length > 0 && (
-          <div className="mt-2 border-t border-dashed border-slate-300 pt-2 text-[13px] text-slate-600">
+          <div className="mt-1 border-t border-dashed border-slate-300 pt-1 text-[11.5px] text-slate-600">
             {entries.map(([label, value]) => (
-              <span key={label} className="me-4">
-                <b className="text-slate-700">{label}:</b> {String(value)}
+              <span key={label} className="me-3">
+                <b>{label}:</b> {String(value)}
               </span>
             ))}
           </div>
         )}
       </div>
 
-      {/* Rx section */}
-      <div className="relative mt-4 min-h-[430px] overflow-hidden rounded-lg border-2 border-slate-700 p-6">
-        <p className="absolute left-6 top-3 text-4xl font-bold italic text-slate-800">Rx</p>
+      {/* ---------- Rx + watermark ---------- */}
+      <div className="relative mx-1 min-h-[300px]">
+        <img
+          src="/rose-watermark.png"
+          alt=""
+          className="pointer-events-none absolute left-1/2 top-1/2 w-[78%] -translate-x-1/2 -translate-y-1/2 select-none opacity-70"
+        />
+        <p
+          className="absolute text-[10px] font-bold text-slate-600"
+          style={{ transform: 'rotate(-90deg)', transformOrigin: 'left center', left: '-4px', top: '58%' }}
+          dir="rtl"
+        >
+          {sideName}
+        </p>
 
-        {/* watermark */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.07]">
-          <div className="flex flex-col items-center">
-            <span className="text-[120px] leading-none">🦷</span>
-            <Stethoscope size={90} className="text-slate-400" strokeWidth={1} />
-          </div>
-        </div>
+        <p className="pt-2 text-[26px] font-bold italic leading-none text-slate-800" style={{ fontFamily: 'Georgia, serif' }}>
+          R<span className="text-[19px]">x</span>
+        </p>
 
-        {/* complaint + treatment quick lines */}
         {visit?.chief_complaint && (
-          <p className="mb-3 text-[14px] text-slate-700">
+          <p className="mt-2 text-[13.5px] text-slate-700">
             <b className="text-slate-500">الشكوى:</b> {visit.chief_complaint}
           </p>
         )}
+
+        <div className="mt-4 space-y-3 ps-2">
+          {(meds.length ? meds : []).map((m, i) => (
+            <div key={i} className="text-[15px] leading-6 text-slate-900">
+              <b className="text-primary-900">{i + 1}. {m.name}</b>
+              {m.dosage ? `  —  ${m.dosage}` : ''}
+              {m.duration ? `  —  ${m.duration}` : ''}
+              {m.instructions ? <span className="text-slate-600">  —  {m.instructions}</span> : null}
+            </div>
+          ))}
+        </div>
+
         {visit?.treatment_plan && (
-          <p className="mb-4 text-[14px] text-slate-700">
+          <p className="mt-4 text-[13px] text-slate-600">
             <b className="text-slate-500">خطة العلاج:</b> {visit.treatment_plan}
           </p>
         )}
 
-        {/* medications */}
-        <div className="relative space-y-3">
-          {meds.length === 0 ? (
-            <p className="text-[13px] text-slate-300">— لا توجد أدوية مدوّنة —</p>
-          ) : (
-            meds.map((m, i) => (
-              <div key={i} className="text-[15px] leading-6 text-slate-800">
-                <b className="text-primary-800">{i + 1}. {m.name}</b>
-                {m.dosage ? ` — ${m.dosage}` : ''}
-                {m.duration ? ` — ${m.duration}` : ''}
-                {m.instructions ? <span className="text-slate-500"> — {m.instructions}</span> : null}
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* signature */}
-        <div className="absolute bottom-3 left-6 text-[14px] text-slate-600">
-          <span className="font-bold">Signature:</span>
-          <span className="ms-2 inline-block w-40 border-b border-slate-400 align-bottom" />
-          {doctorName && <span className="ms-2 text-[13px] font-bold text-slate-700">{doctorName}</span>}
+        <div className="absolute bottom-1 left-4">
+          <p className="text-[14px] font-bold text-slate-700">
+            Signature : <span className="ms-1 inline-block w-36 border-b border-slate-500 align-bottom" />
+          </p>
+          {doctorName && <p className="mt-0.5 pe-8 text-[12px] font-bold text-slate-600">{doctorName}</p>}
         </div>
       </div>
 
-      {/* footer notes */}
-      <div className="mt-2 flex items-stretch justify-between gap-2 text-[12px] font-semibold">
-        <span className="rounded border border-slate-300 bg-slate-50 px-3 py-1.5 text-slate-700">
-          ❖ {settings?.prescription_footer1 || 'يرجى عرض العلاج قبل الاستعمال'}
+      {/* ---------- footer notes ---------- */}
+      <div className="mx-1 mt-2 flex items-stretch justify-between gap-1.5 text-[11.5px] font-bold">
+        <span className="flex-1 rounded-[8px] border border-slate-300 px-2 py-1 text-center text-slate-700">
+          ❖ {footer1}
         </span>
-        <span className="rounded border border-slate-300 bg-slate-50 px-3 py-1.5 text-slate-700">
-          ❖ {settings?.prescription_footer2 || 'المراجعة المعلنية خلال أسبوع فقط'}
+        <span className="flex-1 rounded-[8px] border border-slate-300 px-2 py-1 text-center text-slate-700">
+          ❖ {footer2}
         </span>
       </div>
 
-      {/* bottom band: address + phones */}
-      <div className="mt-2 overflow-hidden rounded-lg" style={{ background: '#1d4e6b' }}>
-        <p className="px-4 py-2.5 text-center text-[13px] font-semibold text-white">
-          {[settings && settings.address, settings?.phone ? `Tel: ${settings.phone}` : ''].filter(Boolean).join('   ⊗   ') || name}
+      {/* ---------- bottom navy band ---------- */}
+      <div className="mx-1 mt-1.5 rounded-[10px] px-3 py-1.5 text-center" style={{ background: '#1c4f6e' }}>
+        <p className="text-[12.5px] font-semibold text-white">
+          {address}
+          <span className="mx-2 text-amber-300">⊗</span>
+          <b>{tel}</b>
         </p>
       </div>
     </div>
