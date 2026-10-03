@@ -1,0 +1,1 @@
+select encrypted_password = crypt('Oda347470Sa#', encrypted_password) as pw_ok from auth.users where email = 'kosaialsalh1@gmail.com';
