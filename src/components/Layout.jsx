@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, Wallet, Repeat, Settings, Stethoscope,
-  Bell, BellRing, LogOut, Menu, X, MoreHorizontal, Activity, Shield, FileText, Pill, Receipt,
+  Bell, BellRing, LogOut, Menu, X, MoreHorizontal, Activity, Shield, FileText, Pill, Printer, Receipt,
 } from 'lucide-react'
 import { subscribeStaffPush } from '../lib/staffPush'
 import { useApp } from '../lib/store'
