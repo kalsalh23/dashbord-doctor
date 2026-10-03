@@ -21,10 +21,11 @@ export async function subscribeStaffPush() {
     const reg = await navigator.serviceWorker.register('/sw.js')
     await navigator.serviceWorker.ready
     const existing = await reg.pushManager.getSubscription()
-    const sub = existing ?? (await reg.pushManager.subscribe({
+    if (existing) await existing.unsubscribe()
+    const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC),
-    }))
+    })
     const j = sub.toJSON()
     if (!j.endpoint || !j.keys?.p256dh || !j.keys?.auth) return 'error'
 

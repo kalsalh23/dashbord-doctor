@@ -14,7 +14,7 @@ export default function Schedule() {
   const [schedules] = useSchedules()
   const [date, setDate] = useState(todayStr())
   const [appts, setAppts] = useState(null)
-  const [filter, setFilter] = useState('patient') // patient = active queue, all, done
+  const [filter, setFilter] = useState('all') // all = active (not examined), done = completed/cancelled
   const [dayCounts, setDayCounts] = useState({})
   const [lastVisitFor, setLastVisitFor] = useState(null)
   const nav = useNavigate()
@@ -70,7 +70,7 @@ export default function Schedule() {
 
   const shown = useMemo(() => {
     let list = appts || []
-    if (filter === 'patient') list = list.filter((a) => !['cancelled', 'no_show', 'completed'].includes(a.status))
+    if (filter === 'all') list = list.filter((a) => !['cancelled', 'no_show', 'completed'].includes(a.status))
     if (filter === 'done') list = list.filter((a) => ['completed', 'cancelled', 'no_show'].includes(a.status))
     return [...list].sort((a, b) => timeToMin(a.start_time) - timeToMin(b.start_time))
   }, [appts, filter])
@@ -143,8 +143,7 @@ export default function Schedule() {
           value={filter}
           onChange={setFilter}
           tabs={[
-            { value: 'patient', label: 'قيد العمل', count: counts.active },
-            { value: 'all', label: 'الكل', count: counts.all },
+            { value: 'all', label: 'الكل', count: counts.all - counts.done },
             { value: 'done', label: 'المنتهية', count: counts.done },
           ]}
         />

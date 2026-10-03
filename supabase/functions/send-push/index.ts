@@ -33,20 +33,27 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    let query = admin
+    // subscriptions with the owner role (admin/super_admin receive everything)
+    const { data: subs, error } = await admin
       .from("push_subscriptions")
-      .select("endpoint, p256dh, auth")
+      .select("endpoint, p256dh, auth, profiles!inner(role)")
       .eq("clinic_id", clinicId);
-    if (userId) query = query.eq("user_id", userId);
-    else if (targetRole && targetRole !== "all") query = query.eq("role", targetRole);
 
-    const { data: subs, error } = await query;
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const admins = new Set(["admin", "super_admin"]);
+    const targets = (subs ?? []).filter((s: any) => {
+      const r = s.profiles?.role;
+      if (!targetRole || targetRole === "all") return true;
+      if (r === targetRole) return true;
+      if (admins.has(r)) return true; // المديرون يستلمون كل شيء
+      return false;
+    });
 
     webpush.setVapidDetails(
       Deno.env.get("VAPID_SUBJECT") ?? "mailto:admin@example.com",
@@ -58,7 +65,7 @@ Deno.serve(async (req: Request) => {
     let sent = 0;
     const dead: string[] = [];
     await Promise.all(
-      (subs ?? []).map(async (s: any) => {
+      targets.map(async (s: any) => {
         try {
           await webpush.sendNotification(
             { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
