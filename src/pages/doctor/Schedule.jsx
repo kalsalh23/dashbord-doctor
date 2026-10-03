@@ -171,25 +171,20 @@ export default function Schedule() {
                   <p className="text-[11px] text-slate-400" dir="ltr">{a.patient?.phone}</p>
                 </div>
                 <Badge map={APPT_STATUS} value={a.status} />
-                <Button size="sm" variant="secondary" onClick={() => setLastVisitFor(a.patient)} title="عرض آخر زيارة">
-                  <History size={14} />
+                <button
+                  onClick={() => setLastVisitFor(a.patient)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-100 px-3 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-200"
+                >
+                  <History size={13} />
                   آخر زيارة
-                </Button>
-                {['arrived', 'waiting'].includes(a.status) && (
-                  <Button size="sm" onClick={() => startConsult(a)}>
-                    <Stethoscope size={14} />
-                    بدء الكشف
-                  </Button>
-                )}
-                {a.status === 'in_consultation' && (
-                  <Button size="sm" onClick={() => startConsult(a)}>
-                    <Stethoscope size={14} />
-                    متابعة
-                  </Button>
-                )}
-                <Button size="sm" variant="ghost" onClick={() => nav(`/doctor/patients/${a.patient_id}`)} title="فتح الملف">
-                  <FolderOpen size={14} />
-                </Button>
+                </button>
+                <button
+                  onClick={() => startConsult(a)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white transition-colors hover:bg-emerald-700"
+                >
+                  <Stethoscope size={13} />
+                  بدء الكشف
+                </button>
               </li>
             ))}
           </ul>
