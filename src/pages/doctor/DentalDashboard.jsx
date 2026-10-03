@@ -229,8 +229,8 @@ export default function DentalDashboard() {
               <p className="flex items-center gap-2 text-sm font-bold text-slate-800"><Repeat size={16} className="text-primary-600" /> متابعاتي</p>
               <p className="mt-1 text-[11px] text-slate-400">مرضى الجلسات القادمة (علاج جذور، تركيبات...)</p>
             </button>
-            <button onClick={() => nav('/doctor/visits')} className="rounded-xl border border-slate-200 p-4 text-start transition-colors hover:border-primary-300 hover:bg-primary-50/40">
-              <p className="flex items-center gap-2 text-sm font-bold text-slate-800"><Activity size={16} className="text-primary-600" /> سجل الكشوفات</p>
+            <button onClick={() => nav('/doctor/archive')} className="rounded-xl border border-slate-200 p-4 text-start transition-colors hover:border-primary-300 hover:bg-primary-50/40">
+              <p className="flex items-center gap-2 text-sm font-bold text-slate-800"><Activity size={16} className="text-primary-600" /> أرشيف المرضى</p>
               <p className="mt-1 text-[11px] text-slate-400">راجع أي كشف سابق بتفاصيله الكاملة</p>
             </button>
           </div>

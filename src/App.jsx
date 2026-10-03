@@ -16,7 +16,8 @@ import Settings from './pages/reception/Settings'
 import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import Consultation from './pages/doctor/Consultation'
 import Schedule from './pages/doctor/Schedule'
-import VisitsLog from './pages/doctor/VisitsLog'
+import PatientArchive from './pages/doctor/PatientArchive'
+import PrescriptionPage from './pages/doctor/PrescriptionPage'
 import DoctorFollowUps from './pages/doctor/DoctorFollowUps'
 import Favorites from './pages/doctor/Favorites'
 import DoctorSettings from './pages/doctor/DoctorSettings'
@@ -36,6 +37,13 @@ function homeFor(role) {
   if (role === 'doctor') return '/doctor'
   if (role === 'super_admin' && APP_SCOPE === 'owner') return '/super'
   return '/reception'
+}
+
+function BareAuth({ children }) {
+  const { session } = useApp()
+  if (session === undefined) return <FullSpinner />
+  if (!session) return <Navigate to="/login" replace />
+  return children
 }
 
 function UnauthorizedScreen() {
@@ -134,6 +142,8 @@ function AppRoutes() {
           <Route path="/login" element={<Login />} />
           <Route element={<RequireAuth />}>
             <Route path="/super" element={<RequireSuper><SuperPanel /></RequireSuper>} />
+          {/* bare printable prescription page */}
+          <Route path="/print/prescription/:visitId" element={<BareAuth><PrescriptionPage /></BareAuth>} />
           </Route>
           <Route path="/" element={<HomeRedirect />} />
           <Route path="*" element={<Navigate to="/super" replace />} />
@@ -153,7 +163,7 @@ function AppRoutes() {
             <Route path="/doctor/schedule" element={<RequireRole role="doctor"><Schedule /></RequireRole>} />
             <Route path="/doctor/patients" element={<RequireRole role="doctor"><Patients doctorMode /></RequireRole>} />
             <Route path="/doctor/patients/:id" element={<RequireRole role="doctor"><PatientProfile /></RequireRole>} />
-            <Route path="/doctor/visits" element={<RequireRole role="doctor"><VisitsLog /></RequireRole>} />
+            <Route path="/doctor/archive" element={<RequireRole role="doctor"><PatientArchive /></RequireRole>} />
             <Route path="/doctor/follow-ups" element={<RequireRole role="doctor"><DoctorFollowUps /></RequireRole>} />
             <Route path="/doctor/favorites" element={<RequireRole role="doctor"><Favorites /></RequireRole>} />
             <Route path="/doctor/expenses" element={<RequireRole role="doctor"><Expenses /></RequireRole>} />

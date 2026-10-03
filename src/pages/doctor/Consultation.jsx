@@ -10,6 +10,7 @@ import { Button, Card, Field, Input, Textarea, Spinner, EmptyState, Tag } from '
 import DentalChart from '../../components/DentalChart'
 import { useSchedules, friendlyDbError } from '../../lib/hooks'
 import { specialtyByKey } from '../../lib/specialties'
+import PrescriptionStage from './PrescriptionStage'
 import { addDays, getWeekday, ageFrom, formatDateShort, todayStr } from '../../lib/format'
 
 const EMPTY_FORM = {
@@ -47,6 +48,7 @@ export default function Consultation() {
   const [favorites, setFavorites] = useState([])
   const [dentalEntries, setDentalEntries] = useState([])
   const [specData, setSpecData] = useState({})
+  const [savedVisit, setSavedVisit] = useState(null)
 
   // the doctor's own specialty (set on his account) drives his tools;
   // falls back to the clinic's specialty for admins viewing doctor mode
@@ -197,7 +199,8 @@ export default function Consultation() {
     audit(profile.clinic_id, 'complete_visit', 'visits', visit.id)
     setSaving(false)
     toast('success', 'تم حفظ الزيارة بنجاح')
-    setStage('followup')
+    setSavedVisit({ ...visit, patient, medications: realMeds, doctor: { full_name: profile.full_name } })
+    setStage('prescription')
   }
 
   // next working day on/after a given date
@@ -255,6 +258,15 @@ export default function Consultation() {
     )
 
   const needsStart = appointment && ['arrived', 'waiting'].includes(appointment.status) && !started
+
+  /* ---------- stage: prescription (معاينة) ---------- */
+  if (stage === 'prescription' && savedVisit) {
+    return (
+      <div className="py-4">
+        <PrescriptionStage visit={savedVisit} onContinue={() => setStage('followup')} />
+      </div>
+    )
+  }
 
   /* ---------- stage: follow-up ---------- */
   if (stage === 'followup' || stage === 'done') {
