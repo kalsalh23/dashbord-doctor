@@ -8,9 +8,10 @@ import { ageFrom, formatDateShort, genderLabel } from '../lib/format'
  * meds: قائمة الأدوية الحالية (قابلة للتحرير من الواجهة الأم).
  * onMedsChange(list): يُنادى عند أي تعديل ليحفظ الأم مستقبلاً.
  */
-export default function PrescriptionSheet({ settings, patient, visit, meds = [], onMedsChange, editable = false }) {
+export default function PrescriptionSheet({ settings, patient, visit, meds = [], onMedsChange, editable = false, doctorName }) {
   const [catQuery, setCatQuery] = useState('')
   const [catOpen, setCatOpen] = useState(false)
+  const [catalog, setCatalog] = useState([])
 
 
   // كتالوج الأدوية المشترك (يُجلب مرة واحدة)
@@ -34,6 +35,7 @@ export default function PrescriptionSheet({ settings, patient, visit, meds = [],
   const footer2 = s?.prescription_footer2 || 'المراجعة المعلنية خلال أسبوع فقط'
   const sideName = s?.prescription_side_name || 'سلمى محمد علام  7778158151'
   const logoUrl = s?.prescription_logo_url || null
+  const watermarkUrl = s?.prescription_watermark_url || null
 
   const age = patient?.date_of_birth ? ageFrom(patient.date_of_birth) : ''
   const entries = Object.entries(visit?.specialty_data || {})
