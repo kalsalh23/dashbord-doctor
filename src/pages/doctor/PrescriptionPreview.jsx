@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Printer, Save, Check, FileSearch } from 'lucide-react'
+import { Printer, Save, Check, FileSearch, Trash2, Pill } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, Select, PageHeader, SkeletonRows } from '../../components/ui'
@@ -7,13 +7,17 @@ import PrescriptionSheet from '../../components/PrescriptionSheet'
 import { formatDateShort } from '../../lib/format'
 
 /**
- * واجهة معاينة مستقلة: تختار زيارة من الأرشيف فيظهر قالب الوصفة الطبية معبأً — للطباعة.
+ * واجهة معاينة مستقلة: تختار زيارة من الأرشيف فيظهر قالب الوصفة الطبية معبأً —
+ * مع قائمة أدوية قابلة للبحث تُضاف للوصفة مباشرة، وحفظ وطباعة.
  */
 export default function PrescriptionPreview() {
   const { profile, settings, toast } = useApp()
   const [visits, setVisits] = useState(null)
   const [selected, setSelected] = useState(null)
+  const [meds, setMeds] = useState(null) // editable copy of the selected visit's meds
   const [printed, setPrinted] = useState(false)
+  const [savingMeds, setSavingMeds] = useState(false)
+  const [medsDirty, setMedsDirty] = useState(false)
 
   const load = useCallback(async () => {
     if (!profile?.clinic_id) return
@@ -25,14 +29,49 @@ export default function PrescriptionPreview() {
       .order('created_at', { ascending: false })
       .limit(100)
     setVisits(data || [])
-    if (data?.length) setSelected(data[0].id)
+    if (data?.length) setSelected((cur) => cur || data[0].id)
   }, [profile?.clinic_id])
 
   useEffect(() => {
     load()
   }, [load])
 
+  // reset the editable meds when switching visits
+  useEffect(() => {
+    if (!selected || !visits) return
+    const v = visits.find((v) => v.id === selected)
+    setMeds(v ? (v.medications || []).map((m) => ({ ...m })) : [])
+    setMedsDirty(false)
+  }, [selected, visits])
+
   const visit = useMemo(() => (visits || []).find((v) => v.id === selected) || null, [visits, selected])
+
+  const saveMeds = async () => {
+    if (!visit) return
+    setSavingMeds(true)
+    // replace the visit's medications with the current list
+    const { error: delErr } = await supabase.from('medications').delete().eq('visit_id', visit.id)
+    let error = delErr
+    if (!error && meds.length) {
+      const ins = await supabase.from('medications').insert(
+        meds.map((m) => ({
+          clinic_id: profile.clinic_id,
+          visit_id: visit.id,
+          patient_id: visit.patient?.id,
+          name: m.name,
+          dosage: m.dosage || null,
+          duration: m.duration || null,
+          instructions: m.instructions || null,
+        }))
+      )
+      error = ins.error
+    }
+    setSavingMeds(false)
+    if (error) return toast('error', 'تعذر حفظ الأدوية: ' + error.message)
+    setMedsDirty(false)
+    toast('success', 'تم حفظ أدوية الوصفة')
+    load()
+  }
 
   const print = () => {
     setPrinted(true)
@@ -78,13 +117,28 @@ export default function PrescriptionPreview() {
         ) : visit ? (
           <div className="print-area overflow-x-auto">
             <PrescriptionSheet
-              clinic={profile?.clinic}
               settings={settings}
               patient={visit.patient}
               visit={visit}
-              meds={visit.medications || []}
+              meds={meds || []}
               doctorName={visit.doctor?.full_name || profile?.full_name}
+              editable
+              onMedsChange={(list) => {
+                setMeds(list)
+                setMedsDirty(true)
+              }}
             />
+
+            {/* med save bar */}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 print:hidden">
+              <p className="text-[11px] text-slate-400">
+                {medsDirty ? 'توجد تغييرات غير محفوظة على أدوية الوصفة' : 'الأدوية محفوظة — اضغط على أي دواء القائمة أعلاه لإضافته'}
+              </p>
+              <Button size="sm" onClick={saveMeds} loading={savingMeds} disabled={!medsDirty}>
+                <Save size={14} />
+                حفظ أدوية الوصفة
+              </Button>
+            </div>
           </div>
         ) : null}
       </div>
