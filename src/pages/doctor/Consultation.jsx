@@ -128,11 +128,11 @@ export default function Consultation() {
   const setF = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const setMed = (i, k) => (e) => setMeds((ms) => ms.map((m, j) => (j === i ? { ...m, [k]: e.target.value } : m)))
 
-  const valid = form.chief_complaint.trim() && form.diagnosis.trim()
+  const valid = form.diagnosis.trim()
 
   const finish = async () => {
     if (!valid) {
-      return toast('error', 'الشكوى الرئيسية والتشخيص مطلوبان')
+      return toast('error', 'التشخيص مطلوب')
     }
     setSaving(true)
     const visitPayload = {
@@ -445,9 +445,6 @@ export default function Consultation() {
         <div className="space-y-4">
           <Card title="بيانات الكشف">
             <div className="space-y-4">
-              <Field label="الشكوى الرئيسية" required>
-                <Textarea value={form.chief_complaint} onChange={setF('chief_complaint')} rows={2} placeholder="سبب الزيارة الرئيسي..." autoFocus />
-              </Field>
               <Field label="الأعراض">
                 <Textarea value={form.symptoms} onChange={setF('symptoms')} rows={2} />
               </Field>
@@ -561,7 +558,7 @@ export default function Consultation() {
         <div className="fixed inset-x-0 bottom-16 z-20 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:bottom-0 lg:ms-60">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
             <p className="text-[11px] text-slate-400">
-              {valid ? 'جاهز للحفظ' : 'الشكوى الرئيسية والتشخيص مطلوبان'}
+              {valid ? 'جاهز للحفظ' : 'التشخيص مطلوب'}
             </p>
             <Button size="lg" onClick={finish} loading={saving} disabled={!valid}>
               <CheckCircle2 size={17} />

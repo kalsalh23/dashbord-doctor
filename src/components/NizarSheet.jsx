@@ -8,10 +8,8 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
   const age = patient?.date_of_birth ? ageFrom(patient.date_of_birth) : ''
   const entries = Object.entries(visit?.specialty_data || {})
 
-  // سطور المنطقة المكتوبة: التشخيص ثم الأدوية ثم الملاحظات
+  // سطور المنطقة المكتوبة: الأدوية ثم خطة العلاج والملاحظات (الاسم والعمر والتشخيص في الأعلى)
   const written = []
-  if (visit?.chief_complaint?.trim()) written.push('الشكوى: ' + visit.chief_complaint.trim())
-  if (visit?.diagnosis?.trim()) written.push('التشخيص: ' + visit.diagnosis.trim())
   meds.forEach((m) => {
     written.push([m.name, m.dosage, m.duration, m.instructions].filter(Boolean).join(' — '))
   })
@@ -76,24 +74,15 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
           <span className="text-[13px]" style={{ color: '#e8b64c' }}>📝</span>
         </span>
 
-        {/* patient rows */}
+        {/* patient rows — الاسم والعمر والتشخيص على خط واحد */}
         <div className="mt-4 space-y-3 text-[13.5px] text-slate-800">
-          <p className="flex items-end gap-1">
+          <p className="flex items-end gap-2">
             <b>اسم المريض :</b>
             <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center font-semibold">{patient?.full_name || ''}</span>
-          </p>
-          <p className="flex items-end justify-between gap-3">
-            <span>
-              <b>العمر:</b>
-              <span className="ms-1 inline-block w-20 border-b border-dotted border-slate-400 text-center">{age || '....'}</span>
-              <b className="ms-1">سنة</b>
-            </span>
-            <span>
-              <b>التاريخ:</b>
-              <span className="ms-1 inline-block w-32 border-b border-dotted border-slate-400 text-center" dir="ltr">
-                {visit?.visit_date ? formatDateShort(visit.visit_date) : '__ / __ / __'}
-              </span>
-            </span>
+            <b className="ms-1">العمر:</b>
+            <span className="inline-block w-14 border-b border-dotted border-slate-400 text-center">{age || '....'}</span>
+            <b className="ms-1">التشخيص:</b>
+            <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center">{visit?.diagnosis || ''}</span>
           </p>
         </div>
 
