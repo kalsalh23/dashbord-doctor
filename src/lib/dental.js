@@ -127,6 +127,7 @@ export const DEFAULT_CATALOG = [
       { treatment: 'تلبيسة إيماكس', price: 900000, color: '#eab308' },
       { treatment: 'تلبيسة معدنية', price: 400000, color: '#b08d57' },
       { treatment: 'فينير خزفي', price: 700000, color: '#f5d020' },
+      { treatment: 'جسر خزفي', price: 1500000, color: '#7c3aed' },
       { treatment: 'طوق أسنان', price: 350000, color: '#be185d' },
     ],
   },
