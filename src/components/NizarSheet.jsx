@@ -4,7 +4,7 @@ import { formatDateShort } from '../lib/format'
  * قالب الوصفة الطبية — د.نزار عبدالستار الشيخ
  * نسخة مطابقة تماماً للورقة الأصلية (A5) — ديناميكي: اسم المريض، العمر، التاريخ، المحتوى المكتوب.
  */
-export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', watermark = '/nizar-watermark.png', logo = '/nizar-logo.png' }) {
+export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', logo = '/nizar-logo.png' }) {
   const age = patient?.date_of_birth ? ageFrom(patient.date_of_birth) : ''
   const entries = Object.entries(visit?.specialty_data || {})
 
@@ -23,9 +23,6 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
 
   return (
     <div className="prescription-sheet relative overflow-hidden bg-white" style={{ fontFamily: '"IBM Plex Sans Arabic", serif' }}>
-      {/* faint spine pattern on the right edge */}
-      <img src={watermark} alt="" className="pointer-events-none absolute -right-6 top-0 h-full opacity-25" style={{ transform: 'scaleX(-1)' }} />
-
       {/* ---------- header: logo centered, name below ---------- */}
       <div className="relative px-4 pt-2 text-center">
         <img src={logo} alt="شعار العيادة" className="mx-auto h-[92px] w-auto" />
@@ -100,9 +97,8 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
           </p>
         </div>
 
-        {/* lined writing area with watermark */}
+        {/* lined writing area */}
         <div className="relative mt-3">
-          <img src={watermark} alt="" className="pointer-events-none absolute left-1/2 top-1/2 w-[55%] -translate-x-1/2 -translate-y-1/2 opacity-30 select-none" />
           <div className="relative space-y-[30px] py-3">
             {lineRows.map((line, i) => (
               <p key={i} className="min-h-[16px] border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800">

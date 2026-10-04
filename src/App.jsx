@@ -172,6 +172,8 @@ function AppRoutes() {
             <Route path="/doctor/settings" element={<RequireRole role="doctor"><DoctorSettings /></RequireRole>} />
             <Route path="/doctor/consultation/:appointmentId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
             <Route path="/doctor/consultation/new/:patientId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
+            {/* bare printable prescription page */}
+            <Route path="/print/prescription/:visitId" element={<BareAuth><PrescriptionPage /></BareAuth>} />
           </Route>
           <Route path="/" element={<HomeRedirect />} />
           {/* the control panel lives only on the owner link */}
