@@ -80,9 +80,6 @@ export default function PatientFormModal({ open, onClose, patient, onSaved }) {
         <Field label="رقم الهاتف" required>
           <Input value={form.phone} onChange={set('phone')} placeholder="09xxxxxxxx" dir="ltr" />
         </Field>
-        <Field label="تاريخ الميلاد">
-          <Input type="date" value={form.date_of_birth || ''} onChange={set('date_of_birth')} />
-        </Field>
         <Field label="الجنس">
           <Select value={form.gender} onChange={set('gender')}>
             <option value="">— اختر —</option>
