@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   CalendarDays, Hourglass, Stethoscope, FolderOpen, History, SmilePlus,
-  Activity, Repeat, Siren,
+  Activity, Repeat, Siren, Wallet, NotebookPen, Banknote, UserPlus, CalendarPlus,
 } from 'lucide-react'
 import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
-import { Card, Button, EmptyState, SkeletonRows, Avatar, PageHeader, StatCard, Modal, Field, Textarea, Toggle, ConfirmDialog } from '../../components/ui'
+import { Card, Button, EmptyState, SkeletonRows, Avatar, PageHeader, StatCard, Modal, Field, Textarea, Toggle, ConfirmDialog, Input } from '../../components/ui'
+import BookingModal from '../../components/BookingModal'
 import { todayStr, timeToMin, ageFrom, nowMinutes, minToTime, addDays } from '../../lib/format'
 
 /**
@@ -24,6 +25,10 @@ export default function DentalDashboard() {
   const [emergencyCancel, setEmergencyCancel] = useState(true)
   const [emergencyBusy, setEmergencyBusy] = useState(false)
   const [emergencyDone, setEmergencyDone] = useState(null)
+  const [addOpen, setAddOpen] = useState(false)
+  const [bookingOpen, setBookingOpen] = useState(false)
+  const [newP, setNewP] = useState({ name: '', age: '', phone: '' })
+  const [creating, setCreating] = useState(false)
   const nav = useNavigate()
 
   const load = useCallback(async () => {
@@ -64,8 +69,28 @@ export default function DentalDashboard() {
     }
   }, [load])
 
-  const runEmergency = async () => {
-    setEmergencyBusy(true)
+  // إضافة مريض سريعة من اللوحة: اسم + عمر ثم فتح كشفه مباشرة
+  const createAndOpen = async () => {
+    if (!newP.name.trim()) return toast('error', 'اسم المريض مطلوب')
+    const age = Number(newP.age)
+    if (!Number.isFinite(age) || age < 0 || age > 120) return toast('error', 'أدخل عمراً صحيحاً')
+    setCreating(true)
+    const now = new Date()
+    const dob = new Date(now.getFullYear() - age, now.getMonth(), now.getDate()).toISOString().slice(0, 10)
+    const { data, error } = await supabase
+      .from('patients')
+      .insert({ clinic_id: profile.clinic_id, full_name: newP.name.trim(), phone: newP.phone.trim() || '—', date_of_birth: dob, created_by: profile.id })
+      .select()
+      .single()
+    setCreating(false)
+    if (error) return toast('error', 'تعذر الإضافة: ' + error.message)
+    audit(profile.clinic_id, 'create_patient', 'patients', data.id)
+    setAddOpen(false)
+    setNewP({ name: '', age: '', phone: '' })
+    nav(`/doctor/consultation/new/${data.id}`)
+  }
+
+  const runEmergency = async () => {    setEmergencyBusy(true)
     const { data: count, error } = await supabase.rpc('emergency_broadcast', {
       p_note: emergencyNote.trim(),
       p_cancel: emergencyCancel,
@@ -90,6 +115,21 @@ export default function DentalDashboard() {
       <PageHeader
         title={`لوحة طبيب الأسنان`}
         subtitle={`${profile?.full_name} — ${profile?.clinic?.name || ''}`}
+        actions={
+          <div className="flex gap-2">
+            {/* الطبيب الشامل: يحجز بنفسه — لا يوجد موظف استقبال في عيادته */}
+            {profile?.self_service && (
+              <Button variant="secondary" onClick={() => setBookingOpen(true)}>
+                <CalendarPlus size={16} />
+                حجز موعد
+              </Button>
+            )}
+            <Button onClick={() => nav('/doctor/consultation')}>
+              <Stethoscope size={16} />
+              كشف أسنان جديد
+            </Button>
+          </div>
+        }
       />
 
       {/* dental stats */}
@@ -98,6 +138,25 @@ export default function DentalDashboard() {
         <StatCard label="في الانتظار" value={queue.length} icon={Hourglass} tone="amber" />
         <StatCard label="قيد الكشف" value={current.length} icon={Stethoscope} tone="teal" />
         <StatCard label="إجراءات آخر 7 أيام" value={weekCount ?? '—'} icon={SmilePlus} tone="violet" />
+      </div>
+
+      {/* إضافة مريض سريعة — في جسم الواجهة بمكان ظاهر */}
+      <div className="mb-5">
+        <button
+          onClick={() => setAddOpen(true)}
+          className="flex w-full items-center justify-between gap-4 rounded-2xl border-2 border-dashed border-primary-300 bg-primary-50/50 px-5 py-4 text-start transition-colors hover:border-primary-500 hover:bg-primary-50"
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-700 text-white">
+              <UserPlus size={22} />
+            </span>
+            <span>
+              <span className="block text-sm font-bold text-slate-800">إضافة مريض جديد</span>
+              <span className="block text-[11px] text-slate-500">أدخل الاسم والعمر — ينتقل بعدها مباشرة إلى واجهة كشفه الخاصة</span>
+            </span>
+          </span>
+          <span className="text-xs font-bold text-primary-700">إضافة ←</span>
+        </button>
       </div>
 
       {/* in consultation */}
@@ -217,6 +276,18 @@ export default function DentalDashboard() {
 
         <Card title="أدوات طبيب الأسنان" subtitle="وصول سريع">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button onClick={() => nav('/doctor/prices')} className="rounded-xl border border-slate-200 p-4 text-start transition-colors hover:border-primary-300 hover:bg-primary-50/40">
+              <p className="flex items-center gap-2 text-sm font-bold text-slate-800"><Wallet size={16} className="text-primary-600" /> أسعاري</p>
+              <p className="mt-1 text-[11px] text-slate-400">فئات التشخيص وعلاجاتها بأسعارها — تُحسب تلقائياً في الكشف</p>
+            </button>
+            <button onClick={() => nav('/doctor/today-log')} className="rounded-xl border border-slate-200 p-4 text-start transition-colors hover:border-primary-300 hover:bg-primary-50/40">
+              <p className="flex items-center gap-2 text-sm font-bold text-slate-800"><NotebookPen size={16} className="text-primary-600" /> سجلي اليوم</p>
+              <p className="mt-1 text-[11px] text-slate-400">ماذا عملت اليوم ومبلغ المدفوع — إضافة وتعديل وحذف</p>
+            </button>
+            <button onClick={() => nav('/doctor/payments')} className="rounded-xl border border-slate-200 p-4 text-start transition-colors hover:border-primary-300 hover:bg-primary-50/40">
+              <p className="flex items-center gap-2 text-sm font-bold text-slate-800"><Banknote size={16} className="text-primary-600" /> الدفعات</p>
+              <p className="mt-1 text-[11px] text-slate-400">حساب كل مريض: المتبقي بالأحمر والمسدد بالأخضر + الخصومات</p>
+            </button>
             <button onClick={() => nav('/doctor/favorites')} className="rounded-xl border border-slate-200 p-4 text-start transition-colors hover:border-primary-300 hover:bg-primary-50/40">
               <p className="flex items-center gap-2 text-sm font-bold text-slate-800"><SmilePlus size={16} className="text-primary-600" /> أدويتي الشائعة</p>
               <p className="mt-1 text-[11px] text-slate-400">مواد وتخديرات تستخدمها كثيراً — إدراج بضغطة داخل الكشف</p>
@@ -273,6 +344,40 @@ export default function DentalDashboard() {
         confirmLabel="حسناً"
         onConfirm={() => setEmergencyDone(null)}
       />
+
+      {/* نافذة إضافة مريض جديد: اسم + عمر ثم فتح كشفه */}
+      <BookingModal open={bookingOpen} onClose={() => setBookingOpen(false)} onBooked={load} />
+      <Modal
+        open={addOpen}
+        onClose={() => !creating && setAddOpen(false)}
+        title="مريض جديد"
+        subtitle="الاسم والعمر فقط — شكل الفك سيُبنى على العمر تلقائياً"
+        footer={
+          <div className="flex justify-start gap-2">
+            <Button onClick={createAndOpen} loading={creating}>إضافة وفتح كشفه</Button>
+            <Button variant="secondary" onClick={() => setAddOpen(false)} disabled={creating}>إلغاء</Button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          <Field label="الاسم" required>
+            <Input value={newP.name} onChange={(e) => setNewP((p) => ({ ...p, name: e.target.value }))} autoFocus />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="العمر (سنة)" required>
+              <Input type="number" dir="ltr" min={0} max={120} value={newP.age} onChange={(e) => setNewP((p) => ({ ...p, age: e.target.value }))} placeholder="مثال: 8" />
+            </Field>
+            <Field label="الهاتف (اختياري)">
+              <Input dir="ltr" value={newP.phone} onChange={(e) => setNewP((p) => ({ ...p, phone: e.target.value }))} />
+            </Field>
+          </div>
+          {newP.age !== '' && Number(newP.age) < 12 && (
+            <p className="rounded-lg bg-sky-50 px-3 py-2 text-[11px] text-sky-800">
+              طفل — سيظهر فك {Number(newP.age) < 6 ? 'الأسنان اللبنية (20 سنّاً) صغيراً' : 'التبديل المختلط: أسنان لبنية وأخرى دائمة'}
+            </p>
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }

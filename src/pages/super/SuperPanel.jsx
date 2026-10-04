@@ -146,17 +146,23 @@ export default function SuperPanel() {
     if (f.password.length < 6) return toast('error', 'كلمة المرور 6 أحرف على الأقل')
     setSavingUser(true)
     try {
-      const { error } = await supabase.rpc('super_create_user', {
+      const isSelf = f.role === 'doctor_self'
+      const { data: newId, error } = await supabase.rpc('super_create_user', {
         p_email: f.email.trim(),
         p_password: f.password,
         p_full_name: f.full_name.trim(),
-        p_role: f.role,
+        p_role: isSelf ? 'doctor' : f.role,
         p_clinic_id: userModalFor.id,
         p_phone: f.phone.trim() || null,
-        p_specialty_key: f.role === 'doctor' ? f.specialty_key : 'general',
+        p_specialty_key: f.role === 'doctor' || isSelf ? f.specialty_key : 'general',
       })
       if (error) throw error
-      toast('success', `تم إنشاء حساب ${f.role === 'doctor' ? 'الطبيب' : 'الموظف'} — سلّم البريد وكلمة المرور للعيادة`)
+      // الطبيب الشامل: علم self_service على حسابه ليظهر له الحجز الذاتي في لوحته
+      if (isSelf && newId) {
+        const { error: upErr } = await supabase.from('profiles').update({ self_service: true }).eq('id', newId)
+        if (upErr) throw upErr
+      }
+      toast('success', `تم إنشاء حساب ${f.role === 'doctor' || isSelf ? 'الطبيب' : 'الموظف'} — سلّم البريد وكلمة المرور للعيادة`)
       setUserModalFor(null)
       setUserForm(EMPTY_USER_FORM)
       load()
@@ -401,11 +407,12 @@ export default function SuperPanel() {
           <Field label="نوع الحساب" required className="sm:col-span-2">
             <Select value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}>
               <option value="doctor">طبيب</option>
+              <option value="doctor_self">طبيب شامل (بدون استقبال — يحجز ويدير بنفسه)</option>
               <option value="reception">موظف استقبال</option>
               <option value="admin">مدير عيادة (وصول كامل لعيادته)</option>
             </Select>
           </Field>
-          {userForm.role === 'doctor' && (
+          {(userForm.role === 'doctor' || userForm.role === 'doctor_self') && (
             <Field label="اختصاص الطبيب" required hint="يحدد لوحته والأدوات التي تظهر له (مثل مخطط الأسنان)" className="sm:col-span-2">
               <Select value={userForm.specialty_key} onChange={(e) => setUserForm({ ...userForm, specialty_key: e.target.value })}>
                 {SPECIALTIES.map((s) => (
@@ -413,6 +420,11 @@ export default function SuperPanel() {
                 ))}
               </Select>
             </Field>
+          )}
+          {userForm.role === 'doctor_self' && (
+            <p className="sm:col-span-2 rounded-lg bg-violet-50 px-3 py-2.5 text-[11px] leading-relaxed text-violet-800">
+              الطبيب الشامل: عيادته بدون موظف استقبال — ستظهر في لوحته أداة «حجز موعد» ليتولى الحجز بنفسه مع أدوات اختصاصه.
+            </p>
           )}
           <Field label="الاسم الكامل" required className="sm:col-span-2">
             <Input value={userForm.full_name} onChange={(e) => setUserForm({ ...userForm, full_name: e.target.value })} placeholder="د. أحمد السالم" />

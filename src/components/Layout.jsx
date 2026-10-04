@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, Wallet, Repeat, Settings, Stethoscope,
   Bell, BellRing, LogOut, Menu, X, MoreHorizontal, Activity, Shield, FileText, Pill, Printer, Receipt,
+  NotebookPen, Banknote,
 } from 'lucide-react'
 import { subscribeStaffPush } from '../lib/staffPush'
 import { useApp } from '../lib/store'
@@ -273,6 +274,21 @@ export default function Layout() {
     navItems = NAV.super
   } else {
     navItems = navItems.filter((i) => isAdmin || !i.adminOnly)
+  }
+  // عيادات الأسنان: أدواتها الخاصة — أسعاري، سجلي اليوم، الدفعات
+  const isDental = (profile?.specialty_key || profile?.clinic?.specialty_key) === 'dentistry'
+  if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isDental) {
+    navItems = [
+      { to: '/doctor', label: 'لوحة اليوم', icon: LayoutDashboard, end: true },
+      { to: '/doctor/schedule', label: 'جدول المواعيد', icon: CalendarDays },
+      { to: '/doctor/patients', label: 'المرضى', icon: Users },
+      { to: '/doctor/archive', label: 'أرشيف المرضى', icon: FileText },
+      { to: '/doctor/prices', label: 'أسعاري', icon: Wallet },
+      { to: '/doctor/today-log', label: 'سجلي اليوم', icon: NotebookPen },
+      { to: '/doctor/payments', label: 'الدفعات', icon: Banknote },
+      { to: '/doctor/favorites', label: 'أدويتي الشائعة', icon: Pill },
+      { to: '/doctor/settings', label: 'إعداداتي', icon: Settings },
+    ]
   }
   const mobileMain = navItems.slice(0, 4)
   const mobileMoreItems = navItems.slice(4)

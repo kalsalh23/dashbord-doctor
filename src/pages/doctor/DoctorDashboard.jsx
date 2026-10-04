@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Hourglass, Stethoscope, CalendarDays, FolderOpen, History, Siren } from 'lucide-react'
+import { Hourglass, Stethoscope, CalendarDays, FolderOpen, History, Siren, CalendarPlus } from 'lucide-react'
 import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, SkeletonRows, Avatar, Badge, APPT_STATUS, PageHeader, Modal, Field, Textarea, Toggle, ConfirmDialog } from '../../components/ui'
 import LastVisitModal from '../../components/LastVisitModal'
+import BookingModal from '../../components/BookingModal'
 import { todayStr, timeToMin, ageFrom, nowMinutes, minToTime } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
 
@@ -19,6 +20,7 @@ export default function DoctorDashboard() {
   const [emergencyCancel, setEmergencyCancel] = useState(true)
   const [emergencyBusy, setEmergencyBusy] = useState(false)
   const [emergencyDone, setEmergencyDone] = useState(null)
+  const [bookingOpen, setBookingOpen] = useState(false)
   const nav = useNavigate()
 
   const load = useCallback(async () => {
@@ -73,15 +75,24 @@ export default function DoctorDashboard() {
         title="عيادة اليوم"
         subtitle={`${profile?.full_name} — ${queue.length + current.length} مريض نشط الآن`}
         actions={
-          <Button
-            variant="dangerGhost"
-            onClick={() => setEmergencyOpen(true)}
-            disabled={todayCount === 0}
-            title={todayCount === 0 ? 'لا توجد مواعيد اليوم' : 'إشعار جماعي لمرضى اليوم'}
-          >
-            <Siren size={16} />
-            حالة إسعافية
-          </Button>
+          <div className="flex gap-2">
+            {/* الطبيب الشامل: يحجز بنفسه — لا يوجد موظف استقبال في عيادته */}
+            {profile?.self_service && (
+              <Button variant="secondary" onClick={() => setBookingOpen(true)}>
+                <CalendarPlus size={16} />
+                حجز موعد
+              </Button>
+            )}
+            <Button
+              variant="dangerGhost"
+              onClick={() => setEmergencyOpen(true)}
+              disabled={todayCount === 0}
+              title={todayCount === 0 ? 'لا توجد مواعيد اليوم' : 'إشعار جماعي لمرضى اليوم'}
+            >
+              <Siren size={16} />
+              حالة إسعافية
+            </Button>
+          </div>
         }
       />
 
@@ -163,6 +174,8 @@ export default function DoctorDashboard() {
       </div>
 
       <LastVisitModal open={!!lastVisitFor} onClose={() => setLastVisitFor(null)} patient={lastVisitFor} />
+      {/* الطبيب الشامل: حجز المواعيد بنفسه */}
+      <BookingModal open={bookingOpen} onClose={() => setBookingOpen(false)} onBooked={load} />
 
       {/* today's upcoming */}
       <div>

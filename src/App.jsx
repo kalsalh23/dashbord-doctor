@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { AppProvider, useApp } from './lib/store'
 import { APP_SCOPE } from './lib/scope'
@@ -15,6 +15,10 @@ import Expenses from './pages/reception/Expenses'
 import Settings from './pages/reception/Settings'
 import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import Consultation from './pages/doctor/Consultation'
+import DentalConsultation from './pages/doctor/DentalConsultation'
+import DentalPrices from './pages/doctor/DentalPrices'
+import DentalTodayLog from './pages/doctor/DentalTodayLog'
+import DentalPayments from './pages/doctor/DentalPayments'
 import Schedule from './pages/doctor/Schedule'
 import PatientArchive from './pages/doctor/PatientArchive'
 import VisitReadPage from './pages/doctor/VisitReadPage'
@@ -32,6 +36,17 @@ function FullSpinner() {
       <span className="text-xs">جارٍ التحميل...</span>
     </div>
   )
+}
+
+// واجهة الكشف تُختار حسب تخصص الطبيب — عيادات الأسنان لها واجهة مختلفة تماماً
+function ConsultationSwitch() {
+  const { appointmentId, patientId } = useParams()
+  const { profile } = useApp()
+  const specialtyKey = profile?.specialty_key || profile?.clinic?.specialty_key || 'general'
+  if (specialtyKey === 'dentistry') {
+    return <DentalConsultation appointmentId={appointmentId} patientId={patientId} />
+  }
+  return <Consultation />
 }
 
 function homeFor(role) {
@@ -170,8 +185,13 @@ function AppRoutes() {
             <Route path="/doctor/favorites" element={<RequireRole role="doctor"><Favorites /></RequireRole>} />
             <Route path="/doctor/expenses" element={<RequireRole role="doctor"><Expenses /></RequireRole>} />
             <Route path="/doctor/settings" element={<RequireRole role="doctor"><DoctorSettings /></RequireRole>} />
-            <Route path="/doctor/consultation/:appointmentId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
-            <Route path="/doctor/consultation/new/:patientId" element={<RequireRole role="doctor"><Consultation /></RequireRole>} />
+            <Route path="/doctor/consultation" element={<RequireRole role="doctor"><ConsultationSwitch /></RequireRole>} />
+            <Route path="/doctor/consultation/:appointmentId" element={<RequireRole role="doctor"><ConsultationSwitch /></RequireRole>} />
+            <Route path="/doctor/consultation/new/:patientId" element={<RequireRole role="doctor"><ConsultationSwitch /></RequireRole>} />
+            {/* أدوات عيادات الأسنان */}
+            <Route path="/doctor/prices" element={<RequireRole role="doctor"><DentalPrices /></RequireRole>} />
+            <Route path="/doctor/today-log" element={<RequireRole role="doctor"><DentalTodayLog /></RequireRole>} />
+            <Route path="/doctor/payments" element={<RequireRole role="doctor"><DentalPayments /></RequireRole>} />
             {/* bare printable prescription page */}
             <Route path="/print/prescription/:visitId" element={<BareAuth><PrescriptionPage /></BareAuth>} />
           </Route>
