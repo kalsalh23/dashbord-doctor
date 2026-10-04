@@ -59,12 +59,15 @@
 #print-clone { display: none; }
 @media print {
   html.printing #root { display: none !important; }
-  html.printing #print-clone { display: block !important; }
-  html.printing body { background: #fff !important; }
-  #print-clone .prescription-sheet {
-    width: 745px !important;
-    transform: scale(0.62) !important;
-    transform-origin: top right !important;
+  html.printing #print-clone {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 745px;
+    zoom: 0.62;
   }
+  html.printing body { background: #fff !important; }
+  #print-clone .prescription-sheet { width: 745px !important; }
   @page { size: A5 portrait; margin: 5mm; }
 }
