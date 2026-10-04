@@ -14,7 +14,6 @@ export default function PatientArchive() {
   const [visits, setVisits] = useState(null)
   const [q, setQ] = useState('')
   const [openPatient, setOpenPatient] = useState(null)
-  const [openVisit, setOpenVisit] = useState(null)
   const nav = useNavigate()
 
   const load = useCallback(async () => {
@@ -102,13 +101,13 @@ export default function PatientArchive() {
                       const meds = v.medications || []
                       return (
                         <div key={v.id} className="rounded-lg border border-slate-200 bg-white">
-                          <button onClick={() => setOpenVisit(vOpen ? null : v.id)} className="flex w-full flex-wrap items-center gap-2.5 px-3.5 py-2.5 text-start">
+                          <button onClick={() => nav(`/doctor/visit/${v.id}`)} className="flex w-full flex-wrap items-center gap-2.5 px-3.5 py-2.5 text-start hover:bg-primary-50/40">
                             <span className="text-xs font-bold text-slate-800">{formatDateShort(v.visit_date)}</span>
                             <span className="min-w-0 flex-1 truncate text-xs text-slate-500">
                               {v.chief_complaint || '—'}{v.diagnosis ? ` — ${v.diagnosis}` : ''}
                             </span>
                             {meds.length > 0 && <Tag tone="teal">{meds.length} دواء</Tag>}
-                            <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform ${vOpen ? 'rotate-180' : ''}`} />
+                            <Stethoscope size={14} className="shrink-0 text-primary-500" />
                           </button>
 
                           {vOpen && (
