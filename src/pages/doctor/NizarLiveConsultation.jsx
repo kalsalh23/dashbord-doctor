@@ -6,10 +6,13 @@ import { supabase } from '../../lib/supabase'
 import { Button, Card, Field, Input, Modal } from '../../components/ui'
 import PrescriptionSheet from '../../components/PrescriptionSheet'
 import { usePrintIsolation } from '../../lib/print'
-import { ageFrom, todayStr } from '../../lib/format'
+import { ageFrom, todayStr, formatDateShort } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
 
 const EMPTY_MED = { name: '', dosage: '', duration: '', instructions: '' }
+
+// سطر علوي جديد بتاريخ اليوم تلقائياً
+const freshTop = (name = '') => ({ name, age: '', date: formatDateShort(todayStr()), diagnosis: '' })
 
 /**
  * الكشف الحي لعيادات قالب نزار — بلا حقول نموذج إطلاقاً:
@@ -24,7 +27,7 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
   const [stage, setStage] = useState('pick') // pick | work | done
   const [patient, setPatient] = useState(null)
   const [appointment, setAppointment] = useState(null)
-  const [top, setTop] = useState({ name: '', age: '', diagnosis: '' })
+  const [top, setTop] = useState(freshTop())
   const [meds, setMeds] = useState([])
   const [favorites, setFavorites] = useState([])
   const [saving, setSaving] = useState(false)
@@ -62,7 +65,7 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
       if (pat) {
         setPatient(pat)
         setAppointment(appt)
-        setTop((t) => ({ ...t, name: pat.full_name || '' }))
+        setTop(freshTop(pat.full_name || ''))
         setStage('work')
         if (appt && ['arrived', 'waiting', 'in_consultation'].includes(appt.status)) {
           supabase.from('appointments').update({ status: 'in_consultation' }).eq('id', appt.id)
@@ -137,7 +140,8 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
   }
 
   const medEntrySlot = (
-    <div className="relative">
+    <div className="relative flex items-center gap-1.5">
+      <span className="shrink-0 text-[10px] text-slate-300 print:hidden" title="سطر كتابة الدواء">✎</span>
       <input
         value={medQuery}
         onChange={(e) => { setMedQuery(e.target.value); setMedOpen(true) }}
@@ -245,7 +249,7 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
 
   /* ---------------- المراحل ---------------- */
   if (stage === 'pick') {
-    return <PatientPicker onPicked={(p, appt) => { setPatient(p); setAppointment(appt || null); setTop((t) => ({ ...t, name: p.full_name || '' })); setStage('work') }} />
+    return <PatientPicker onPicked={(p, appt) => { setPatient(p); setAppointment(appt || null); setTop(freshTop(p.full_name || '')); setMeds([]); setStage('work') }} />
   }
 
   if (stage === 'done') {
@@ -261,7 +265,7 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
           </p>
         </div>
         <div className="flex justify-center gap-2">
-          <Button size="lg" onClick={() => { setStage('pick'); setPatient(null); setAppointment(null); setMeds([]); setTop({ name: '', age: '', diagnosis: '' }); setSaved(false) }}>
+          <Button size="lg" onClick={() => { setStage('pick'); setPatient(null); setAppointment(null); setMeds([]); setTop(freshTop()); setSaved(false) }}>
             مريض جديد
           </Button>
           <Button size="lg" variant="secondary" onClick={() => nav('/doctor')}>
@@ -275,7 +279,7 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
   /* ---------------- مرحلة الورقة الحية ---------------- */
   return (
     <div className="mx-auto max-w-3xl pb-24">
-      <button onClick={() => { setStage('pick'); setPatient(null); setAppointment(null); setMeds([]); setTop({ name: '', age: '', diagnosis: '' }); setSaved(false) }} className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700">
+      <button onClick={() => { setStage('pick'); setPatient(null); setAppointment(null); setMeds([]); setTop(freshTop()); setSaved(false) }} className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700">
         <ArrowRight size={14} />
         مريض آخر
       </button>
@@ -306,8 +310,11 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
               visit={{ diagnosis: top.diagnosis }}
               meds={realMeds}
               doctorName={profile?.full_name}
-              topValues={{ name: top.name, age: shownAge === null ? '' : String(shownAge), diagnosis: top.diagnosis }}
+              topValues={{ name: top.name, age: shownAge === null ? '' : String(shownAge), date: top.date, diagnosis: top.diagnosis }}
               onTopEdit={onTopEdit}
+              dateValue={top.date}
+              onDateEdit={(v) => onTopEdit('date', v)}
+              onDeleteMed={removeMed}
               medEntrySlot={medEntrySlot}
             />
           </div>

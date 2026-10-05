@@ -4,7 +4,7 @@ import { ageFrom, formatDateShort } from '../lib/format'
  * قالب الوصفة الطبية — د.نزار عبدالستار الشيخ
  * نسخة مطابقة تماماً للورقة الأصلية (A5) — ديناميكي: اسم المريض، العمر، التاريخ، المحتوى المكتوب.
  */
-export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', logo = '/nizar-logo.png', topValues = null, onTopEdit = null, medEntrySlot = null }) {
+export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', logo = '/nizar-logo.png', topValues = null, onTopEdit = null, dateValue = null, onDateEdit = null, medEntrySlot = null, onDeleteMed = null }) {
   const age = patient?.date_of_birth ? ageFrom(patient.date_of_birth) : ''
   const entries = Object.entries(visit?.specialty_data || {})
 
@@ -118,22 +118,60 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
               )}
             </span>
           </p>
+
+          {/* سطر التاريخ — تلقائي حسب اليوم وقابل للتعديل اليدوي */}
+          <p className="flex items-end gap-2">
+            <b>التاريخ:</b>
+            <span className="inline-block w-44 border-b border-dotted border-slate-400 text-center">
+              {onDateEdit ? (
+                <input
+                  dir="ltr"
+                  value={dateValue ?? ''}
+                  onChange={(e) => onDateEdit(e.target.value)}
+                  className="w-full bg-transparent text-center outline-none"
+                />
+              ) : (
+                visit?.visit_date ? formatDateShort(visit.visit_date) : ''
+              )}
+            </span>
+          </p>
         </div>
 
         {/* lined writing area */}
         <div className="relative mt-3">
           <div className="relative space-y-[30px] py-3">
-            {lineRows.map((line, i) => (
+            {/* أسطر الأدوية المضافة — مع حذف كل دواء في الوضع الحي */}
+            {lineRows.slice(0, meds.length).map((line, i) => (
               <p key={i} className="min-h-[16px] border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800">
-                {line}
+                {onDeleteMed ? (
+                  <span className="flex items-center justify-between gap-2">
+                    <span>{line}</span>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteMed(i)}
+                      className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-400 hover:text-rose-600 print:hidden"
+                      aria-label="حذف الدواء"
+                    >
+                      حذف ✕
+                    </button>
+                  </span>
+                ) : (
+                  line
+                )}
               </p>
             ))}
-            {/* سطر إضافة الدواء الحي — يكتب أو يختار من القائمة المنسدلة مباشرة على الورقة */}
+            {/* سطر كتابة الدواء — في السطر الثالث مباشرة بعد الأدوية، بعلامة صغيرة للإشارة */}
             {medEntrySlot && (
               <p className="min-h-[16px] border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800">
                 {medEntrySlot}
               </p>
             )}
+            {/* باقي الأسطر الفارغة */}
+            {lineRows.slice(meds.length + (medEntrySlot ? 1 : 0)).map((line, i) => (
+              <p key={'e' + i} className="min-h-[16px] border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800">
+                {line}
+              </p>
+            ))}
           </div>
         </div>
 
