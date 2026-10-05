@@ -2,16 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowRight, Stethoscope, Pill, Plus, Trash2, CheckCircle2, AlertTriangle,
-  ChevronDown, FolderOpen, Send, HeartPulse,
+  ChevronDown, FolderOpen, HeartPulse,
 } from 'lucide-react'
-import { useApp, audit, notify } from '../../lib/store'
+import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, Field, Input, Textarea, Spinner, EmptyState, Tag } from '../../components/ui'
 import DentalChart from '../../components/DentalChart'
 import { useSchedules, friendlyDbError } from '../../lib/hooks'
 import { specialtyByKey } from '../../lib/specialties'
-import PrescriptionStage from './PrescriptionStage'
-import { addDays, getWeekday, ageFrom, formatDateShort, todayStr } from '../../lib/format'
+import { ageFrom, formatDateShort, todayStr } from '../../lib/format'
 
 const EMPTY_FORM = {
   chief_complaint: '',
@@ -22,7 +21,6 @@ const EMPTY_FORM = {
   medical_notes: '',
 }
 const EMPTY_MED = { name: '', dosage: '', duration: '', instructions: '' }
-const FOLLOW_UP_OPTIONS = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 30]
 
 export default function Consultation() {
   const { appointmentId, patientId } = useParams()
@@ -41,14 +39,10 @@ export default function Consultation() {
   const [meds, setMeds] = useState([{ ...EMPTY_MED }])
   const [saving, setSaving] = useState(false)
 
-  const [stage, setStage] = useState('consult') // consult | followup | done
-  const [needsFollowUp, setNeedsFollowUp] = useState(null)
-  const [followDays, setFollowDays] = useState(null)
-  const [sendingFu, setSendingFu] = useState(false)
+  const [stage, setStage] = useState('consult') // consult | done
   const [favorites, setFavorites] = useState([])
   const [dentalEntries, setDentalEntries] = useState([])
   const [specData, setSpecData] = useState({})
-  const [savedVisit, setSavedVisit] = useState(null)
 
   // the doctor's own specialty (set on his account) drives his tools;
   // falls back to the clinic's specialty for admins viewing doctor mode
@@ -199,51 +193,6 @@ export default function Consultation() {
     audit(profile.clinic_id, 'complete_visit', 'visits', visit.id)
     setSaving(false)
     toast('success', 'تم حفظ الزيارة بنجاح')
-    setSavedVisit({ ...visit, patient, medications: realMeds, doctor: { full_name: profile.full_name } })
-    setStage('prescription')
-  }
-
-  // next working day on/after a given date
-  const nextWorkingDay = useMemo(() => {
-    return (dateStr) => {
-      let d = dateStr
-      for (let i = 0; i < 21; i++) {
-        const probe = addDays(d, i)
-        const sched = schedules.find((s) => s.weekday === getWeekday(probe) && s.is_active)
-        if (sched) return probe
-      }
-      return d
-    }
-  }, [schedules])
-
-  const sendFollowUp = async () => {
-    if (!followDays) return
-    setSendingFu(true)
-    const suggested = nextWorkingDay(addDays(todayStr(), followDays))
-    const { error } = await supabase
-      .from('follow_up_requests')
-      .insert({
-        clinic_id: profile.clinic_id,
-        patient_id: patient.id,
-        doctor_id: profile.id,
-        visit_id: null,
-        interval_days: followDays,
-        suggested_date: suggested,
-        status: 'pending',
-      })
-    setSendingFu(false)
-    if (error) return toast('error', friendlyDbError(error))
-    notify(
-      profile.clinic_id,
-      'reception',
-      'طلب متابعة جديد',
-      `${patient.full_name} — مراجعة بعد ${followDays} يوم (المقترح ${suggested})`,
-      'follow_up',
-      '/reception/follow-ups',
-      profile.id
-    )
-    audit(profile.clinic_id, 'send_follow_up_request', 'patients', patient.id, { days: followDays })
-    toast('success', 'تم إرسال طلب المتابعة إلى الاستقبال')
     setStage('done')
   }
 
@@ -259,17 +208,8 @@ export default function Consultation() {
 
   const needsStart = appointment && ['arrived', 'waiting'].includes(appointment.status) && !started
 
-  /* ---------- stage: prescription (معاينة) ---------- */
-  if (stage === 'prescription' && savedVisit) {
-    return (
-      <div className="py-4">
-        <PrescriptionStage visit={savedVisit} onContinue={() => setStage('followup')} />
-      </div>
-    )
-  }
-
-  /* ---------- stage: follow-up ---------- */
-  if (stage === 'followup' || stage === 'done') {
+  /* ---------- stage: done ---------- */
+  if (stage === 'done') {
     return (
       <div className="mx-auto max-w-xl pt-6">
         <div className="mb-6 flex flex-col items-center text-center">
@@ -279,73 +219,14 @@ export default function Consultation() {
           <h1 className="text-lg font-bold text-slate-800">تم إنهاء كشف {patient.full_name}</h1>
           <p className="mt-1 text-xs text-slate-500">حُفظت الزيارة في السجل الطبي وأصبح الموعد مكتملًا</p>
         </div>
-
-        {stage === 'followup' ? (
-          <Card title="هل يحتاج المريض موعد مراجعة؟">
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant={needsFollowUp === false ? 'primary' : 'secondary'}
-                size="lg"
-                onClick={() => {
-                  setNeedsFollowUp(false)
-                  setStage('done')
-                }}
-              >
-                لا يحتاج متابعة
-              </Button>
-              <Button
-                variant={needsFollowUp === true ? 'primary' : 'secondary'}
-                size="lg"
-                onClick={() => setNeedsFollowUp(true)}
-              >
-                يحتاج متابعة
-              </Button>
-            </div>
-
-            {needsFollowUp === true && (
-              <div className="mt-5 border-t border-slate-100 pt-4">
-                <p className="label-base">بعد كم يوم تفضل المراجعة؟</p>
-                <div className="flex flex-wrap gap-2">
-                  {FOLLOW_UP_OPTIONS.map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setFollowDays(d)}
-                      className={`h-11 min-w-14 rounded-xl border px-3 text-sm font-bold transition-colors ${
-                        followDays === d
-                          ? 'border-primary-700 bg-primary-700 text-white'
-                          : 'border-slate-300 bg-white text-slate-700 hover:border-primary-400'
-                      }`}
-                    >
-                      {d} يوم
-                    </button>
-                  ))}
-                </div>
-                {followDays && (
-                  <div className="mt-4 rounded-xl border border-primary-100 bg-primary-50/60 px-4 py-3">
-                    <p className="text-xs text-slate-500">تاريخ المراجعة المقترح</p>
-                    <p className="text-sm font-bold text-primary-800">{formatDateShort(nextWorkingDay(addDays(todayStr(), followDays)))}</p>
-                    <p className="mt-1 text-[10px] text-slate-400">يُحسب تلقائيًا حسب أيام عمل العيادة</p>
-                  </div>
-                )}
-                <div className="mt-4">
-                  <Button size="lg" className="w-full" disabled={!followDays} loading={sendingFu} onClick={sendFollowUp}>
-                    <Send size={16} />
-                    إرسال طلب المتابعة إلى الاستقبال
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Card>
-        ) : (
-          <div className="flex justify-center gap-2">
-            <Button size="lg" onClick={() => nav('/doctor')}>
-              العودة إلى قائمة الانتظار
-            </Button>
-            <Button size="lg" variant="secondary" onClick={() => nav(`/doctor/patients/${patient.id}`)}>
-              فتح ملف المريض
-            </Button>
-          </div>
-        )}
+        <div className="flex justify-center gap-2">
+          <Button size="lg" onClick={() => nav('/doctor')}>
+            العودة إلى قائمة الانتظار
+          </Button>
+          <Button size="lg" variant="secondary" onClick={() => nav(`/doctor/patients/${patient.id}`)}>
+            فتح ملف المريض
+          </Button>
+        </div>
       </div>
     )
   }

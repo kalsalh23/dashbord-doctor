@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowRight, Search, UserPlus, CheckCircle2, AlertTriangle, FolderOpen, Send, Wallet, X,
+  ArrowRight, Search, UserPlus, CheckCircle2, AlertTriangle, FolderOpen, Wallet,
 } from 'lucide-react'
-import { useApp, audit, notify } from '../../lib/store'
+import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
-import { Button, Card, Field, Input, Modal, Spinner, EmptyState } from '../../components/ui'
+import { Button, Card, Field, Input, Modal, EmptyState } from '../../components/ui'
 import DentalChart from '../../components/DentalChart'
-import PrescriptionStage from './PrescriptionStage'
-import { ageFrom, todayStr, formatDateShort, addDays, getWeekday } from '../../lib/format'
+import { ageFrom, todayStr, formatDateShort } from '../../lib/format'
 import { fmtPrice, DEFAULT_CATALOG } from '../../lib/dental'
-import { useSchedules, friendlyDbError } from '../../lib/hooks'
+import { friendlyDbError } from '../../lib/hooks'
 
 const FOLLOW_UP_OPTIONS = [2, 4, 7, 14, 30]
 
@@ -21,10 +20,9 @@ const FOLLOW_UP_OPTIONS = [2, 4, 7, 14, 30]
  */
 export default function DentalConsultation({ appointmentId, patientId }) {
   const { profile, toast } = useApp()
-  const [schedules] = useSchedules()
   const nav = useNavigate()
 
-  const [stage, setStage] = useState('pick') // pick | work | prescription | followup | done
+  const [stage, setStage] = useState('pick') // pick | work | done
   const [patient, setPatient] = useState(null)
   const [appointment, setAppointment] = useState(null)
   const [allergies, setAllergies] = useState(null)
@@ -32,10 +30,6 @@ export default function DentalConsultation({ appointmentId, patientId }) {
   const [entries, setEntries] = useState([])
   const [paidNow, setPaidNow] = useState('')
   const [saving, setSaving] = useState(false)
-  const [savedVisit, setSavedVisit] = useState(null)
-  const [needsFollowUp, setNeedsFollowUp] = useState(null)
-  const [followDays, setFollowDays] = useState(null)
-  const [sendingFu, setSendingFu] = useState(false)
 
   // جدول الأسعار من أسعاري — وإن كان فارغاً نعرض الافتراضي مؤقتاً
   useEffect(() => {
@@ -177,8 +171,7 @@ export default function DentalConsultation({ appointmentId, patientId }) {
         if (aErr) throw aErr
       }
       audit(profile.clinic_id, 'complete_dental_visit', 'visits', visit.id)
-      setSavedVisit({ ...visit, patient, medications: [], doctor: { full_name: profile.full_name } })
-      setStage('prescription')
+      setStage('done')
     } catch (e) {
       toast('error', friendlyDbError(e) || e.message)
     } finally {
@@ -186,53 +179,12 @@ export default function DentalConsultation({ appointmentId, patientId }) {
     }
   }
 
-  const nextWorkingDay = useCallback(
-    (dateStr) => {
-      let d = dateStr
-      for (let i = 0; i < 21; i++) {
-        const probe = addDays(d, i)
-        const sched = schedules.find((s) => s.weekday === getWeekday(probe) && s.is_active)
-        if (sched) return probe
-      }
-      return d
-    },
-    [schedules]
-  )
-
-  const sendFollowUp = async () => {
-    if (!followDays) return
-    setSendingFu(true)
-    const suggested = nextWorkingDay(addDays(todayStr(), followDays))
-    const { error } = await supabase.from('follow_up_requests').insert({
-      clinic_id: profile.clinic_id,
-      patient_id: patient.id,
-      doctor_id: profile.id,
-      visit_id: savedVisit?.id || null,
-      interval_days: followDays,
-      suggested_date: suggested,
-      status: 'pending',
-    })
-    setSendingFu(false)
-    if (error) return toast('error', friendlyDbError(error))
-    notify(profile.clinic_id, 'reception', 'طلب متابعة جديد', `${patient.full_name} — مراجعة بعد ${followDays} يوم`, 'follow_up', '/reception/follow-ups', profile.id)
-    toast('success', 'تم إرسال طلب المتابعة إلى الاستقبال')
-    setStage('done')
-  }
-
   /* ---------------- المراحل ---------------- */
   if (stage === 'pick') {
     return <PatientPicker onPicked={(p, appt) => { setPatient(p); setAppointment(appt || null); setStage('work') }} />
   }
 
-  if (stage === 'prescription' && savedVisit) {
-    return (
-      <div className="py-4">
-        <PrescriptionStage visit={savedVisit} onContinue={() => setStage('followup')} />
-      </div>
-    )
-  }
-
-  if (stage === 'followup' || stage === 'done') {
+  if (stage === 'done') {
     return (
       <div className="mx-auto max-w-xl pt-6">
         <div className="mb-6 flex flex-col items-center text-center">
@@ -244,48 +196,13 @@ export default function DentalConsultation({ appointmentId, patientId }) {
             {entries.length} علاجًا بإجمالي {fmtPrice(total)} — حُفظت على حساب المريض
           </p>
         </div>
-        {stage === 'followup' ? (
-          <Card title="هل يحتاج المريض موعد مراجعة؟">
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant={needsFollowUp === false ? 'primary' : 'secondary'} size="lg" onClick={() => { setNeedsFollowUp(false); setStage('done') }}>لا يحتاج متابعة</Button>
-              <Button variant={needsFollowUp === true ? 'primary' : 'secondary'} size="lg" onClick={() => setNeedsFollowUp(true)}>يحتاج متابعة</Button>
-            </div>
-            {needsFollowUp === true && (
-              <div className="mt-5 border-t border-slate-100 pt-4">
-                <p className="label-base">بعد كم يوم تفضل المراجعة؟</p>
-                <div className="flex flex-wrap gap-2">
-                  {FOLLOW_UP_OPTIONS.map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setFollowDays(d)}
-                      className={`h-11 min-w-14 rounded-xl border px-3 text-sm font-bold transition-colors ${followDays === d ? 'border-primary-700 bg-primary-700 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-primary-400'}`}
-                    >
-                      {d} يوم
-                    </button>
-                  ))}
-                </div>
-                {followDays && (
-                  <div className="mt-4 rounded-xl border border-primary-100 bg-primary-50/60 px-4 py-3">
-                    <p className="text-xs text-slate-500">تاريخ المراجعة المقترح</p>
-                    <p className="text-sm font-bold text-primary-800">{formatDateShort(nextWorkingDay(addDays(todayStr(), followDays)))}</p>
-                  </div>
-                )}
-                <Button size="lg" className="mt-4 w-full" disabled={!followDays} loading={sendingFu} onClick={sendFollowUp}>
-                  <Send size={16} />
-                  إرسال طلب المتابعة إلى الاستقبال
-                </Button>
-              </div>
-            )}
-          </Card>
-        ) : (
-          <div className="flex justify-center gap-2">
-            <Button size="lg" onClick={() => nav('/doctor')}>العودة إلى قائمة الانتظار</Button>
-            <Button size="lg" variant="secondary" onClick={() => nav(`/doctor/patients/${patient.id}`)}>
-              <FolderOpen size={15} />
-              فتح الملف
-            </Button>
-          </div>
-        )}
+        <div className="flex justify-center gap-2">
+          <Button size="lg" onClick={() => nav('/doctor')}>العودة إلى قائمة الانتظار</Button>
+          <Button size="lg" variant="secondary" onClick={() => nav(`/doctor/patients/${patient.id}`)}>
+            <FolderOpen size={15} />
+            فتح الملف
+          </Button>
+        </div>
       </div>
     )
   }
