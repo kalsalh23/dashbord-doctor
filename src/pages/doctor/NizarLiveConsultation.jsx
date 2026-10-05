@@ -97,8 +97,83 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
 
   const onTopEdit = (field, value) => setTop((t) => ({ ...t, [field]: value }))
 
-  const addFavorite = (f) =>
-    setMeds((ms) => [...ms, { name: f.name, dosage: f.dosage || '', duration: f.duration || '', instructions: f.instructions || '' }])
+  // سطر الدواء الحي: بحث فوري بين أدويتك الشائعة والكتالوج — الضغط يُنزل الدواء على الورقة
+  const [medQuery, setMedQuery] = useState('')
+  const [medOpen, setMedOpen] = useState(false)
+  const [catalog, setCatalog] = useState([])
+  useEffect(() => {
+    supabase
+      .from('medication_catalog')
+      .select('name, dosage, duration, instructions')
+      .order('name')
+      .then(({ data }) => setCatalog(data || []))
+  }, [])
+
+  const medSuggestions = useMemo(() => {
+    const q = medQuery.trim()
+    const pool = [
+      ...favorites.map((f) => ({ ...f, src: '★' })),
+      ...catalog.map((c) => ({ ...c, src: '' })),
+    ]
+    const seen = new Set()
+    return pool
+      .filter((p) => {
+        if (seen.has(p.name)) return false
+        seen.add(p.name)
+        return !q || p.name.includes(q)
+      })
+      .slice(0, 8)
+  }, [medQuery, favorites, catalog])
+
+  const addMed = (m) => {
+    setMeds((ms) => [...ms, { name: m.name, dosage: m.dosage || '', duration: m.duration || '', instructions: m.instructions || '' }])
+    setMedQuery('')
+    setMedOpen(false)
+  }
+  const addCustom = () => {
+    if (!medQuery.trim()) return
+    const exact = medSuggestions.find((s) => s.name === medQuery.trim())
+    addMed(exact || { name: medQuery.trim() })
+  }
+
+  const medEntrySlot = (
+    <div className="relative">
+      <input
+        value={medQuery}
+        onChange={(e) => { setMedQuery(e.target.value); setMedOpen(true) }}
+        onFocus={() => setMedOpen(true)}
+        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom() } }}
+        placeholder="— اكتب اسم الدواء أو اختر من القائمة"
+        className="w-full bg-transparent text-[13px] leading-5 outline-none placeholder:text-slate-300"
+      />
+      {medOpen && medQuery.trim() && (
+        <div className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white text-start shadow-lg print:hidden">
+          {medSuggestions.map((s, i) => (
+            <button
+              key={s.name + i}
+              type="button"
+              onClick={() => addMed(s)}
+              className="flex w-full items-center justify-between gap-2 border-b border-slate-50 px-3 py-2 text-xs hover:bg-primary-50"
+            >
+              <span className="font-bold text-slate-700">
+                {s.src ? <span className="text-amber-500">{s.src} </span> : null}
+                {s.name}
+              </span>
+              <span className="text-slate-400">{[s.dosage, s.duration].filter(Boolean).join(' · ')}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={addCustom}
+            className="flex w-full items-center gap-2 px-3 py-2 text-xs font-bold text-primary-700 hover:bg-primary-50"
+          >
+            <Plus size={12} />
+            إضافة «{medQuery.trim()}» كدواء جديد
+          </button>
+        </div>
+      )}
+    </div>
+  )
   const removeMed = (i) => setMeds((ms) => ms.filter((_, j) => j !== i))
   const setMed = (i, k) => (e) => setMeds((ms) => ms.map((m, j) => (j === i ? { ...m, [k]: e.target.value } : m)))
   const realMeds = meds.filter((m) => m.name.trim())
@@ -220,34 +295,8 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
         </div>
       </Card>
 
-      {/* أدويتي الشائعة — بضغطة تُضاف على الورقة */}
-      <Card className="mb-4 print:hidden" bodyClass="!p-3">
-        <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
-          <Pill size={13} />
-          أدويتك الشائعة — اضغط الدواء ليُضاف فوراً على الورقة
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {favorites.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => addFavorite(f)}
-              className="inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-800 transition-colors hover:bg-primary-100"
-              title={[f.dosage, f.duration, f.instructions].filter(Boolean).join(' · ')}
-            >
-              <Plus size={12} />
-              {f.name}
-              {f.dosage ? ` · ${f.dosage}` : ''}
-            </button>
-          ))}
-          {favorites.length === 0 && (
-            <p className="text-[11px] text-slate-400">لا توجد أدوية شائعة بعد — أضفها من صفحة «أدويتي الشائعة»، أو أضف دواءً يدوياً بالأسفل</p>
-          )}
-        </div>
-      </Card>
-
-      {/* الورقة الحية */}
-      <Card title="الوصفة الطبية — اكتب التشخيص مباشرة على الورقة" bodyClass="!p-3">
+      {/* الورقة الحية — إضافة الدواء على الورقة نفسها */}
+      <Card title="الوصفة الطبية — اكتب التشخيص والدواء مباشرة على الورقة" bodyClass="!p-3">
         <div className="print-area">
           <div ref={frameRef} className="prescription-paper" style={{ zoom }}>
             <PrescriptionSheet
@@ -259,46 +308,20 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
               doctorName={profile?.full_name}
               topValues={{ name: top.name, age: shownAge === null ? '' : String(shownAge), diagnosis: top.diagnosis }}
               onTopEdit={onTopEdit}
+              medEntrySlot={medEntrySlot}
             />
           </div>
         </div>
-
-        {/* تفاصيل الأدوية المضافة (تحرير سريع تحت الورقة) */}
-        {meds.length > 0 && (
-          <div className="mt-3 space-y-2 print:hidden">
-            {meds.map((m, i) => (
-              <div key={i} className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 p-2.5 sm:grid-cols-5">
-                <div className="col-span-2 sm:col-span-1">
-                  <Field label="الدواء">
-                    <Input className="!h-8 text-xs" value={m.name} onChange={setMed(i, 'name')} placeholder="اسم الدواء" />
-                  </Field>
-                </div>
-                <Field label="الجرعة">
-                  <Input className="!h-8 text-xs" value={m.dosage} onChange={setMed(i, 'dosage')} placeholder="500 ملغ" />
-                </Field>
-                <Field label="المدة">
-                  <Input className="!h-8 text-xs" value={m.duration} onChange={setMed(i, 'duration')} placeholder="5 أيام" />
-                </Field>
-                <div className="col-span-2 sm:col-span-1">
-                  <Field label="التعليمات">
-                    <Input className="!h-8 text-xs" value={m.instructions} onChange={setMed(i, 'instructions')} placeholder="قرص كل 8 ساعات" />
-                  </Field>
-                </div>
-                <div className="col-span-2 flex items-end justify-end sm:col-span-1">
-                  <Button size="sm" variant="ghost" onClick={() => removeMed(i)} title="حذف">
-                    <Trash2 size={14} className="text-rose-500" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="mt-2 flex justify-start print:hidden">
-          <Button size="sm" variant="ghost" onClick={() => setMeds((ms) => [...ms, { ...EMPTY_MED }])}>
-            <Plus size={14} />
-            إضافة دواء آخر يدوياً
-          </Button>
-        </div>
+        <p className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400 print:hidden">
+          <Pill size={12} />
+          آخر سطر على الورقة هو سطر الدواء الحي: اكتب حرفاً لتظهر قائمة الأدوية واضغط لينزل على الورقة، أو أكمل كتابة اسم جديد واضغط Enter.
+          {meds.length > 0 && (
+            <button type="button" onClick={() => removeMed(meds.length - 1)} className="inline-flex items-center gap-1 font-bold text-rose-500 hover:text-rose-700">
+              <X size={12} />
+              إزالة آخر دواء
+            </button>
+          )}
+        </p>
       </Card>
 
       {/* شريط الحفظ والطباعة */}

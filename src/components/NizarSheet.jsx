@@ -4,7 +4,7 @@ import { ageFrom, formatDateShort } from '../lib/format'
  * قالب الوصفة الطبية — د.نزار عبدالستار الشيخ
  * نسخة مطابقة تماماً للورقة الأصلية (A5) — ديناميكي: اسم المريض، العمر، التاريخ، المحتوى المكتوب.
  */
-export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', logo = '/nizar-logo.png', topValues = null, onTopEdit = null }) {
+export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', logo = '/nizar-logo.png', topValues = null, onTopEdit = null, medEntrySlot = null }) {
   const age = patient?.date_of_birth ? ageFrom(patient.date_of_birth) : ''
   const entries = Object.entries(visit?.specialty_data || {})
 
@@ -128,6 +128,12 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
                 {line}
               </p>
             ))}
+            {/* سطر إضافة الدواء الحي — يكتب أو يختار من القائمة المنسدلة مباشرة على الورقة */}
+            {medEntrySlot && (
+              <p className="min-h-[16px] border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800">
+                {medEntrySlot}
+              </p>
+            )}
           </div>
         </div>
 
