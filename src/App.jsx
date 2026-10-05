@@ -17,6 +17,7 @@ import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import Consultation from './pages/doctor/Consultation'
 import DentalConsultation from './pages/doctor/DentalConsultation'
 import EntConsultation from './pages/doctor/EntConsultation'
+import NizarLiveConsultation from './pages/doctor/NizarLiveConsultation'
 import DentalPrices from './pages/doctor/DentalPrices'
 import DentalTodayLog from './pages/doctor/DentalTodayLog'
 import DentalPayments from './pages/doctor/DentalPayments'
@@ -41,13 +42,17 @@ function FullSpinner() {
 // واجهة الكشف تُختار حسب تخصص الطبيب — عيادات الأسنان لها واجهة مختلفة تماماً
 function ConsultationSwitch() {
   const { appointmentId, patientId } = useParams()
-  const { profile } = useApp()
+  const { profile, settings } = useApp()
   const specialtyKey = profile?.specialty_key || profile?.clinic?.specialty_key || 'general'
   if (specialtyKey === 'dentistry') {
     return <DentalConsultation appointmentId={appointmentId} patientId={patientId} />
   }
   if (specialtyKey === 'ent') {
     return <EntConsultation appointmentId={appointmentId} patientId={patientId} />
+  }
+  // عيادات قالب نزار: الكشف الحي — ورقة الوصفة تظهر فوراً بدل نموذج الحقول
+  if (settings?.prescription_template === 'nizar') {
+    return <NizarLiveConsultation appointmentId={appointmentId} patientId={patientId} />
   }
   return <Consultation />
 }

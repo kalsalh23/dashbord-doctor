@@ -4,7 +4,7 @@ import { ageFrom, formatDateShort } from '../lib/format'
  * قالب الوصفة الطبية — د.نزار عبدالستار الشيخ
  * نسخة مطابقة تماماً للورقة الأصلية (A5) — ديناميكي: اسم المريض، العمر، التاريخ، المحتوى المكتوب.
  */
-export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', logo = '/nizar-logo.png' }) {
+export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', logo = '/nizar-logo.png', topValues = null, onTopEdit = null }) {
   const age = patient?.date_of_birth ? ageFrom(patient.date_of_birth) : ''
   const entries = Object.entries(visit?.specialty_data || {})
 
@@ -74,15 +74,49 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
           <span className="text-[13px]" style={{ color: '#e8b64c' }}>📝</span>
         </span>
 
-        {/* patient rows — الاسم والعمر والتشخيص على خط واحد */}
+        {/* patient rows — الاسم والعمر والتشخيص على خط واحد (قابل للكتابة المباشرة في الوضع الحي) */}
         <div className="mt-4 space-y-3 text-[13.5px] text-slate-800">
           <p className="flex items-end gap-2">
             <b>اسم المريض :</b>
-            <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center font-semibold">{patient?.full_name || ''}</span>
+            <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center font-semibold">
+              {onTopEdit ? (
+                <input
+                  value={topValues?.name ?? patient?.full_name ?? ''}
+                  onChange={(e) => onTopEdit('name', e.target.value)}
+                  className="w-full bg-transparent text-center font-semibold outline-none placeholder:text-slate-300"
+                  placeholder="اسم المريض"
+                />
+              ) : (
+                patient?.full_name || ''
+              )}
+            </span>
             <b className="ms-1">العمر:</b>
-            <span className="inline-block w-14 border-b border-dotted border-slate-400 text-center">{age || '....'}</span>
+            <span className="inline-block w-14 border-b border-dotted border-slate-400 text-center">
+              {onTopEdit ? (
+                <input
+                  dir="ltr"
+                  value={topValues?.age ?? ''}
+                  onChange={(e) => onTopEdit('age', e.target.value)}
+                  className="w-full bg-transparent text-center outline-none placeholder:text-slate-300"
+                  placeholder="...."
+                />
+              ) : (
+                age || '....'
+              )}
+            </span>
             <b className="ms-1">التشخيص:</b>
-            <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center">{visit?.diagnosis || ''}</span>
+            <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center">
+              {onTopEdit ? (
+                <input
+                  value={topValues?.diagnosis ?? ''}
+                  onChange={(e) => onTopEdit('diagnosis', e.target.value)}
+                  className="w-full bg-transparent text-center outline-none placeholder:text-slate-300"
+                  placeholder="اكتب التشخيص هنا"
+                />
+              ) : (
+                visit?.diagnosis || ''
+              )}
+            </span>
           </p>
         </div>
 
