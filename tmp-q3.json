@@ -1,0 +1,1 @@
+{"query":"select row_to_json(t) from (select * from auth.users where email='welcome-test@noor-clinic.com') t"}

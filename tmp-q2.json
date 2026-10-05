@@ -1,0 +1,1 @@
+{"query":"select i.provider_id, i.provider, i.identity_data, u.email_confirmed_at is not null as confirmed, u.aud, u.role from auth.identities i join auth.users u on u.id=i.user_id where u.email='welcome-test@noor-clinic.com'"}

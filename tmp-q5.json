@@ -1,0 +1,1 @@
+{"query":"update auth.users set confirmation_token='', recovery_token='', email_change_token_new='', email_change='', email_change_token_current='', reauthentication_token='', phone_change='' where email='ent-test@noor-clinic.com' returning email"}
