@@ -1,0 +1,1 @@
+{"query":"select c.id, c.name, c.specialty_key, (select json_agg(json_build_object('email',u.email,'name',p.full_name,'role',p.role,'specialty',p.specialty_key)) from public.profiles p join auth.users u on u.id=p.id where p.clinic_id=c.id) as staff from public.clinics c where c.name like '%سليمان%'"}

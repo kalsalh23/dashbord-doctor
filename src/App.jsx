@@ -23,7 +23,6 @@ import DentalPayments from './pages/doctor/DentalPayments'
 import Schedule from './pages/doctor/Schedule'
 import PatientArchive from './pages/doctor/PatientArchive'
 import VisitReadPage from './pages/doctor/VisitReadPage'
-import PrescriptionPreview from './pages/doctor/PrescriptionPreview'
 import PrescriptionPage from './pages/doctor/PrescriptionPage'
 import Favorites from './pages/doctor/Favorites'
 import DoctorSettings from './pages/doctor/DoctorSettings'
@@ -185,7 +184,6 @@ function AppRoutes() {
             <Route path="/doctor/patients/:id" element={<RequireRole role="doctor"><PatientProfile /></RequireRole>} />
             <Route path="/doctor/archive" element={<RequireRole role="doctor"><PatientArchive /></RequireRole>} />
             <Route path="/doctor/visit/:visitId" element={<RequireRole role="doctor"><VisitReadPage /></RequireRole>} />
-            <Route path="/doctor/preview" element={<RequireRole role="doctor"><PrescriptionPreview /></RequireRole>} />
             <Route path="/doctor/favorites" element={<RequireRole role="doctor"><Favorites /></RequireRole>} />
             <Route path="/doctor/expenses" element={<RequireRole role="doctor"><Expenses /></RequireRole>} />
             <Route path="/doctor/settings" element={<RequireRole role="doctor"><DoctorSettings /></RequireRole>} />
