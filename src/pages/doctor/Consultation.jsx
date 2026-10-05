@@ -10,6 +10,7 @@ import { Button, Card, Field, Input, Textarea, Spinner, EmptyState, Tag } from '
 import DentalChart from '../../components/DentalChart'
 import { useSchedules, friendlyDbError } from '../../lib/hooks'
 import { specialtyByKey } from '../../lib/specialties'
+import PrescriptionStage from './PrescriptionStage'
 import { ageFrom, formatDateShort, todayStr } from '../../lib/format'
 
 const EMPTY_FORM = {
@@ -39,10 +40,11 @@ export default function Consultation() {
   const [meds, setMeds] = useState([{ ...EMPTY_MED }])
   const [saving, setSaving] = useState(false)
 
-  const [stage, setStage] = useState('consult') // consult | done
+  const [stage, setStage] = useState('consult') // consult | prescription | done
   const [favorites, setFavorites] = useState([])
   const [dentalEntries, setDentalEntries] = useState([])
   const [specData, setSpecData] = useState({})
+  const [savedVisit, setSavedVisit] = useState(null)
 
   // the doctor's own specialty (set on his account) drives his tools;
   // falls back to the clinic's specialty for admins viewing doctor mode
@@ -193,7 +195,13 @@ export default function Consultation() {
     audit(profile.clinic_id, 'complete_visit', 'visits', visit.id)
     setSaving(false)
     toast('success', 'تم حفظ الزيارة بنجاح')
-    setStage('done')
+    // عيادات قالب نزار: تظهر ورقة المعاينة بعد الحفظ مباشرة لطباعة الوصفة — البقية تنتهي مباشرة
+    if (settings?.prescription_template === 'nizar') {
+      setSavedVisit({ ...visit, patient, medications: realMeds, doctor: { full_name: profile.full_name } })
+      setStage('prescription')
+    } else {
+      setStage('done')
+    }
   }
 
   if (loading) return <Spinner />
@@ -207,6 +215,15 @@ export default function Consultation() {
     )
 
   const needsStart = appointment && ['arrived', 'waiting'].includes(appointment.status) && !started
+
+  /* ---------- stage: prescription (معاينة ورقة نزار) ---------- */
+  if (stage === 'prescription' && savedVisit) {
+    return (
+      <div className="py-4">
+        <PrescriptionStage visit={savedVisit} onContinue={() => setStage('done')} />
+      </div>
+    )
+  }
 
   /* ---------- stage: done ---------- */
   if (stage === 'done') {
