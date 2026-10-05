@@ -76,6 +76,13 @@ export default function DoctorDashboard() {
         subtitle={`${profile?.full_name} — ${queue.length + current.length} مريض نشط الآن`}
         actions={
           <div className="flex gap-2">
+            {/* اختصاص الأنف والأذن والحنجرة: كشف برسومات تشريحية خاصة */}
+            {(profile?.specialty_key || '') === 'ent' && (
+              <Button variant="secondary" onClick={() => nav('/doctor/consultation')}>
+                <Stethoscope size={16} />
+                كشف جديد بالرسومات
+              </Button>
+            )}
             {/* الطبيب الشامل: يحجز بنفسه — لا يوجد موظف استقبال في عيادته */}
             {profile?.self_service && (
               <Button variant="secondary" onClick={() => setBookingOpen(true)}>

@@ -277,6 +277,8 @@ export default function Layout() {
   }
   // عيادات الأسنان: أدواتها الخاصة — أسعاري، سجلي اليوم، الدفعات
   const isDental = (profile?.specialty_key || profile?.clinic?.specialty_key) === 'dentistry'
+  // اختصاص الأنف والأذن والحنجرة: واجهة كشف برسومات خاصة + أدوات مالية
+  const isEnt = (profile?.specialty_key || profile?.clinic?.specialty_key) === 'ent'
   if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isDental) {
     navItems = [
       { to: '/doctor', label: 'لوحة اليوم', icon: LayoutDashboard, end: true },
@@ -284,6 +286,17 @@ export default function Layout() {
       { to: '/doctor/patients', label: 'المرضى', icon: Users },
       { to: '/doctor/archive', label: 'أرشيف المرضى', icon: FileText },
       { to: '/doctor/prices', label: 'أسعاري', icon: Wallet },
+      { to: '/doctor/today-log', label: 'سجلي اليوم', icon: NotebookPen },
+      { to: '/doctor/payments', label: 'الدفعات', icon: Banknote },
+      { to: '/doctor/favorites', label: 'أدويتي الشائعة', icon: Pill },
+      { to: '/doctor/settings', label: 'إعداداتي', icon: Settings },
+    ]
+  } else if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isEnt) {
+    navItems = [
+      { to: '/doctor', label: 'لوحة اليوم', icon: LayoutDashboard, end: true },
+      { to: '/doctor/schedule', label: 'جدول المواعيد', icon: CalendarDays },
+      { to: '/doctor/patients', label: 'المرضى', icon: Users },
+      { to: '/doctor/archive', label: 'أرشيف المرضى', icon: FileText },
       { to: '/doctor/today-log', label: 'سجلي اليوم', icon: NotebookPen },
       { to: '/doctor/payments', label: 'الدفعات', icon: Banknote },
       { to: '/doctor/favorites', label: 'أدويتي الشائعة', icon: Pill },
