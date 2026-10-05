@@ -1,4 +1,4 @@
-import { formatDateShort } from '../lib/format'
+import { ageFrom, formatDateShort } from '../lib/format'
 
 /**
  * قالب الوصفة الطبية — د.نزار عبدالستار الشيخ

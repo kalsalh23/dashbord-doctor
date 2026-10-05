@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Printer, Save, Check, ArrowRight, Repeat } from 'lucide-react'
 import { useApp } from '../../lib/store'
@@ -6,12 +6,31 @@ import { Button, Card } from '../../components/ui'
 import PrescriptionSheet from '../../components/PrescriptionSheet'
 import { usePrintIsolation } from '../../lib/print'
 
-/** مرحلة المعاينة داخل الكشف — القالب معبأ، مع الحفظ والطباعة ثم المتابعة */
+/** مرحلة المعاينة داخل الكشف — الورقة بعرض الطباعة الحقيقي (WYSIWYG) مع الحفظ والطباعة */
 export default function PrescriptionStage({ visit, onContinue }) {
   const { profile, settings } = useApp()
   const [printed, setPrinted] = useState(false)
   usePrintIsolation()
   const nav = useNavigate()
+
+  // تصغير الورقة تلقائياً لتناسب عرض الشاشة (المعاينة مطابقة للمطبوع)
+  const frameRef = useRef(null)
+  const [zoom, setZoom] = useState(1)
+  useEffect(() => {
+    const fit = () => {
+      const el = frameRef.current
+      if (!el) return
+      const avail = el.parentElement?.clientWidth || 0
+      if (avail > 0) setZoom(Math.min(1, avail / 745))
+    }
+    fit()
+    const t = setTimeout(fit, 400)
+    window.addEventListener('resize', fit)
+    return () => {
+      window.removeEventListener('resize', fit)
+      clearTimeout(t)
+    }
+  }, [])
 
   const print = () => {
     setPrinted(true)
@@ -20,16 +39,18 @@ export default function PrescriptionStage({ visit, onContinue }) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Card title="معاينة — الوصفة الطبية" subtitle="القالب الجاهز للمريض — يُطبع لصرفه من الصيدلية">
-        <div className="print-area overflow-x-auto">
-          <PrescriptionSheet
-            clinic={profile?.clinic}
-            settings={settings}
-            patient={visit.patient}
-            visit={visit}
-            meds={visit.medications || []}
-            doctorName={visit.doctor?.full_name || profile?.full_name}
-          />
+      <Card title="معاينة — الوصفة الطبية" subtitle="الورقة بحجمها الحقيقي — تُطبع بنفس هذه المعاينة تماماً">
+        <div className="print-area">
+          <div ref={frameRef} className="prescription-paper" style={{ zoom }}>
+            <PrescriptionSheet
+              clinic={profile?.clinic}
+              settings={settings}
+              patient={visit.patient}
+              visit={visit}
+              meds={visit.medications || []}
+              doctorName={visit.doctor?.full_name || profile?.full_name}
+            />
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3 print:hidden">

@@ -57,6 +57,19 @@
 
 /* print: isolate the prescription sheet into a single A5 page */
 #print-clone { display: none; }
+
+/* معاينة الورقة على الشاشة: بنفس عرض الطباعة (745px) مع مظهر ورقة حقيقية،
+   وتُصغّر تلقائياً بـ zoom لتناسب الشاشة — دون التأثير على الطباعة */
+.prescription-paper {
+  width: 745px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14), 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
 @media print {
   html.printing #root { display: none !important; }
   html.printing #print-clone {
@@ -69,5 +82,14 @@
   }
   html.printing body { background: #fff !important; }
   #print-clone .prescription-sheet { width: 745px !important; }
+  /* إلغاء تأثير المعاينة (تصغير الشاشة والظل) عند الطباعة */
+  #print-clone .prescription-paper {
+    zoom: 1 !important;
+    width: 745px !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
   @page { size: A5 portrait; margin: 5mm; }
 }
