@@ -180,5 +180,34 @@ store.delete('cm_local_session')
 r = await from('patients').select('*')
 ok(r.data.length === 3, 'no session -> no scoping (login/bootstrap path)')
 
+console.log('— تبديل الحساب بين طبيبين على نفس الجهاز —')
+// reload وهمي حتى لا تُعاد تحميل الصفحة أثناء الاختبار
+globalThis.window = { location: { reload() { globalThis.__reloaded = (globalThis.__reloaded || 0) + 1 } } }
+const { rememberAccount, otherAccounts, forgetAccount } = await import('../src/lib/accountStore.js')
+
+// حفظ حساب الدكتور (عيادة c1) والانتقال لحساب الدكتورة (عيادة c2)
+await auth.restoreSession({ user: { id: 'u_c1' }, access_token: 'local' })
+const sessionArif = (await auth.getSession()).data.session
+rememberAccount(sessionArif, { id: 'u_c1', full_name: 'د. محمد عارف', role: 'doctor', clinic_id: 'c1', clinic: { name: 'عيادة عارف' } }, true)
+
+await auth.restoreSession({ user: { id: 'u_c2' }, access_token: 'local' })
+const sessionRiam = (await auth.getSession()).data.session
+rememberAccount(sessionRiam, { id: 'u_c2', full_name: 'د. ريام نصر', role: 'doctor', clinic_id: 'c2', clinic: { name: 'عيادة ريام' } }, true)
+
+let list = otherAccounts('u_c2')
+ok(list.length === 1 && list[0].name === 'د. محمد عارف', 'قائمة التبديل تعرض الحساب الآخر فقط')
+
+// التبديل الفعلي: استعادة جلسة الحساب المختار (نفس ما يفعله زر التبديل في الوضع المحلي)
+const restored = await auth.restoreSession(list[0].local_session)
+ok(!restored.error && restored.data.session.user.id === 'u_c1', 'restoreSession يعيد جلسة الحساب المختار')
+r = await from('patients').select('*')
+ok(r.data.length === 2 && r.data.every((p) => p.clinic_id === 'c1'), 'بعد التبديل: البيانات معزولة على عيادة الحساب الجديد')
+
+// إزالة حساب من القائمة لا تمس الحساب نفسه
+forgetAccount('u_c2')
+ok(otherAccounts('u_c1').length === 0, 'forgetAccount يحذف الحساب من قائمة الجهاز')
+store.delete('cm_local_session')
+store.delete('cm_accounts')
+
 console.log(`\nالنتيجة: ${passed} نجح، ${failed} فشل`)
 process.exit(failed ? 1 : 0)

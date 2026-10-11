@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, SkeletonRows, Avatar, Badge, APPT_STATUS, PageHeader, Modal, Field, Textarea, Toggle, ConfirmDialog } from '../../components/ui'
 import LastVisitModal from '../../components/LastVisitModal'
 import BookingModal from '../../components/BookingModal'
+import AccountSwitcher from '../../components/AccountSwitcher'
 import EmergencyApology from '../../components/EmergencyApology'
 import { todayStr, timeToMin, ageFrom, nowMinutes, minToTime } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
@@ -85,6 +86,7 @@ export default function DoctorDashboard() {
         subtitle={`${profile?.full_name} — ${queue.length + current.length} مريض نشط الآن`}
         actions={
           <div className="flex gap-2">
+            <AccountSwitcher />
             {/* اختصاص الأنف والأذن والحنجرة: كشف برسومات تشريحية خاصة */}
             {(profile?.specialty_key || '') === 'ent' && (
               <Button variant="secondary" onClick={() => nav('/doctor/consultation')}>

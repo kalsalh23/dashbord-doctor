@@ -8,6 +8,7 @@ import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, SkeletonRows, Avatar, PageHeader, StatCard, Modal, Field, Textarea, Toggle, ConfirmDialog, Input } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
+import AccountSwitcher from '../../components/AccountSwitcher'
 import { todayStr, timeToMin, ageFrom, nowMinutes, minToTime, addDays } from '../../lib/format'
 
 /**
@@ -117,6 +118,7 @@ export default function DentalDashboard() {
         subtitle={`${profile?.full_name} — ${profile?.clinic?.name || ''}`}
         actions={
           <div className="flex gap-2">
+            <AccountSwitcher />
             {/* الطبيب الشامل: يحجز بنفسه — لا يوجد موظف استقبال في عيادته */}
             {profile?.self_service && (
               <Button variant="secondary" onClick={() => setBookingOpen(true)}>

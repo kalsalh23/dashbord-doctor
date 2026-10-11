@@ -85,6 +85,15 @@ export function createLocalAuth() {
       return { error: null }
     },
 
+    // استعادة جلسة محفوظة — للتبديل بين حسابات الأطباء على نفس الجهاز
+    async restoreSession(session) {
+      if (!session?.user) return { data: { session: null }, error: { message: 'INVALID_SESSION' } }
+      current = session
+      writeSession(current)
+      emit('SIGNED_IN', current)
+      return { data: { session: current }, error: null }
+    },
+
     onAuthStateChange(cb) {
       listeners.add(cb)
       // match supabase-js: an INITIAL_SESSION event fires right after subscribing

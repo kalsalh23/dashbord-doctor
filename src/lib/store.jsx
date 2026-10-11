@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from './supabase'
+import { rememberAccount } from './accountSwitch'
 
 const AppCtx = createContext(null)
 
@@ -37,12 +38,17 @@ export function AppProvider({ children }) {
     }
   }, [])
 
+  // الجلسة الحالية محفوظة في ref — يحتاجها حفظ الحساب في قائمة التبديل
+  const sessionRef = useRef(null)
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
+      sessionRef.current = data.session || null
       setSession(data.session || null)
       if (data.session?.user) loadUserData(data.session.user.id)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      sessionRef.current = s || null
       setSession(s || null)
       if (s?.user) loadUserData(s.user.id)
       else {
@@ -53,6 +59,11 @@ export function AppProvider({ children }) {
     })
     return () => sub.subscription.unsubscribe()
   }, [loadUserData])
+
+  // حفظ الحساب الحالي في قائمة «تبديل الحساب» على هذا الجهاز (مع بيانات جلسته)
+  useEffect(() => {
+    if (session?.user && profile) rememberAccount(sessionRef.current || session, profile, !!supabase.__local)
+  }, [session, profile])
 
   const login = useCallback(async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
