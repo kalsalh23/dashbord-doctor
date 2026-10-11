@@ -23,10 +23,10 @@ export default function NizarWorkingHours() {
   const [edits, setEdits] = useState({}) // { [weekday]: { active?, start?, end? } } — فوق القيم المحفوظة
   const [saving, setSaving] = useState(false)
 
-  // قواعد توليد المواعيد الفعلية للعيادة — كما يستخدمها الحجز نفسه
+  // قواعد توليد المواعيد الفعلية للعيادة — كما يستخدمها الحجز نفسه (نفس افتراضات slotsForDay)
   const slotMinutes = Number(settings?.slot_minutes) || 10
   const slotsBeforeBreak = Number(settings?.slots_before_break) || 8
-  const breakMinutes = Number(settings?.break_minutes) || 0
+  const breakMinutes = Number(settings?.break_minutes ?? 10)
 
   // الصف الفعلي = القيم المحفوظة + التعديلات المحلية (حتى لا تسبق حالة التحميل البيانات)
   const rowFor = (wd) => {
