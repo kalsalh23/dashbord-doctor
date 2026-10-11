@@ -1,0 +1,26 @@
+{
+  "name": "نظام إدارة العيادة",
+  "short_name": "عيادتي",
+  "description": "نظام إدارة العيادات الطبية — كشوف، أرشيف، وأدوية",
+  "start_url": "/doctor",
+  "scope": "/",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/nizar-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

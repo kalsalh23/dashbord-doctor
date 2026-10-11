@@ -149,7 +149,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto max-w-3xl">
       <PageHeader title="إعدادات العيادة" subtitle="هوية العيادة وساعات العمل وقواعد الحجز" />
 
       <div className="space-y-5">
@@ -273,8 +273,6 @@ export default function Settings() {
           ))}
         </ul>
       </Modal>
-
-      <PushSetupCard />
     </div>
   )
 }

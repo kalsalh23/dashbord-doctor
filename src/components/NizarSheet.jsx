@@ -18,6 +18,10 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
 
   const totalLines = 14
   const lineRows = Array.from({ length: totalLines }, (_, i) => written[i] || '')
+  // الورقة ثابتة الحجم: سطور الأدوية لا تتجاوز أسطر الورقة الأصلية مهما أُضيف —
+  // الباقي يُحفظ في أرشيف المريض ويظهر كاملاً في المعاينة والأرشفة
+  const maxMedLines = totalLines - (medEntrySlot ? 1 : 0)
+  const shownMeds = meds.slice(0, maxMedLines)
 
   return (
     <div className="prescription-sheet relative overflow-hidden bg-white" style={{ fontFamily: '"IBM Plex Sans Arabic", serif' }}>
@@ -30,7 +34,7 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
         <p className="mt-1 text-[15px] font-bold" style={{ color: '#a8811f' }}>
           اختصاصي الجراحة العصبية وجراحة العمود الفقري
         </p>
-        <p className="mt-0.5 text-[12px] text-slate-600">خبيرة جراحية متقدمة مدعومة بأحدث التقنيات المغورية</p>
+        <p className="mt-0.5 text-[12px] text-slate-600">خبرة جراحية متقدمة مدعومة بأحدث التقنيات المغورية</p>
 
         {/* services row */}
         <div className="mx-auto mt-3 flex w-fit items-center justify-center gap-3 text-[9.5px] font-semibold text-slate-600">
@@ -48,7 +52,7 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
             <span className="text-start leading-[1.3]">
               ثقب الفقرات واستئصال
               <br />
-              الديسك المخوري
+              الديسك مجهريا
             </span>
           </span>
           <span className="h-7 w-px bg-slate-200" />
@@ -140,16 +144,18 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
         {/* lined writing area */}
         <div className="relative mt-3">
           <div className="relative space-y-[30px] py-3">
-            {/* أسطر الأدوية المضافة — مع حذف كل دواء في الوضع الحي */}
-            {lineRows.slice(0, meds.length).map((line, i) => (
-              <p key={i} className="min-h-[16px] border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800">
+            {/* أسطر الأدوية المضافة — بسطور الورقة نفسها (حجم ثابت) مع منع التمدد */}
+            {shownMeds.map((m, i) => {
+              const line = [m.name, m.dosage, m.duration, m.instructions].filter(Boolean).join(' — ')
+              return (
+              <p key={i} className="min-h-[16px] overflow-hidden border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800" title={line}>
                 {onDeleteMed ? (
                   <span className="flex items-center justify-between gap-2">
-                    <span>{line}</span>
+                    <span className="truncate">{line}</span>
                     <button
                       type="button"
-                      onClick={() => onDeleteMed(i)}
-                      className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-400 hover:text-rose-600 print:hidden"
+                      onClick={() => onDeleteMed(meds.indexOf(m))}
+                      className="inline-flex shrink-0 items-center gap-1 text-[10px] font-bold text-rose-400 hover:text-rose-600 print:hidden"
                       aria-label="حذف الدواء"
                     >
                       حذف ✕
@@ -159,7 +165,8 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
                   line
                 )}
               </p>
-            ))}
+              )
+            })}
             {/* سطر كتابة الدواء — في السطر الثالث مباشرة بعد الأدوية، بعلامة صغيرة للإشارة */}
             {medEntrySlot && (
               <p className="min-h-[16px] border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800">
@@ -167,7 +174,7 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
               </p>
             )}
             {/* باقي الأسطر الفارغة */}
-            {lineRows.slice(meds.length + (medEntrySlot ? 1 : 0)).map((line, i) => (
+            {lineRows.slice(shownMeds.length + (medEntrySlot ? 1 : 0)).map((line, i) => (
               <p key={'e' + i} className="min-h-[16px] border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800">
                 {line}
               </p>
@@ -175,9 +182,9 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
           </div>
         </div>
 
-        {/* QR (left, original size) + signature (right) */}
+        {/* QR بحجمه الطبيعي (بلا تحجيم أو تمديد) + التوقيع يميناً */}
         <div className="relative mt-2 flex items-end justify-between px-2 pb-2">
-          <img src={qr} alt="QR" className="h-[104px] w-[104px]" />
+          <img src={qr} alt="QR" className="max-w-none" />
           <div className="text-end">
             <p className="text-[14px] font-bold text-slate-700">توقيع الطبيب وختم العيادة</p>
             <span className="mt-2 inline-block w-48 border-b border-slate-500" />

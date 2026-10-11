@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { Activity, Loader2, MessageCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Activity, Loader2, MessageCircle, FolderOpen } from 'lucide-react'
 import { useApp } from '../lib/store'
 import { useNavigate, Navigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import { LOGIN_SUPPORT_MESSAGE, supportWhatsAppLink, SUPPORT_WHATSAPP, DEVELOPER_NAME, DEVELOPER_PHONE } from '../lib/config'
 
 export default function Login() {
@@ -10,7 +11,25 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [noAccounts, setNoAccounts] = useState(false)
   const nav = useNavigate()
+
+  // في النسخة المحلية: إن لم تكن هناك حسابات على هذا الجهاز فهذا يعني أن ملف
+  // بيانات العيادة (clinic-data.json) غير موجود بجانب التطبيق — نرشد المستخدم فوراً
+  useEffect(() => {
+    if (!supabase.__local) return
+    let alive = true
+    import('../lib/local/client')
+      .then(({ localReady }) => localReady)
+      .then(() => supabase.from('__users').select('id').limit(1))
+      .then(({ data }) => {
+        if (alive && (!data || data.length === 0)) setNoAccounts(true)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
 
   if (session) return <Navigate to={effectiveRole === 'doctor' ? '/doctor' : '/reception'} replace />
 
@@ -74,6 +93,17 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+
+          {noAccounts && (
+            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-relaxed text-amber-900">
+              <FolderOpen size={16} className="mt-0.5 shrink-0" />
+              <span>
+                لا توجد حسابات على هذا الجهاز بعد. ضع ملف بيانات العيادة الذي استلمته{' '}
+                <span dir="ltr" className="font-bold">(clinic-data...json)</span>{' '}
+                في نفس مجلد التطبيق ثم أعد فتحه. إن لم يصلك الملف فتواصل مع إدارة النظام.
+              </span>
+            </div>
+          )}
 
           {error && (
             <p className="mt-2 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">

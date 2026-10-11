@@ -6,13 +6,15 @@ import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, SkeletonRows, Avatar, Badge, APPT_STATUS, PageHeader, Modal, Field, Textarea, Toggle, ConfirmDialog } from '../../components/ui'
 import LastVisitModal from '../../components/LastVisitModal'
 import BookingModal from '../../components/BookingModal'
+import EmergencyApology from '../../components/EmergencyApology'
 import { todayStr, timeToMin, ageFrom, nowMinutes, minToTime } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
 
 const SELECT = 'id, patient_id, appointment_date, start_time, end_time, status, updated_at, patient:patients(id, full_name, phone, date_of_birth, gender)'
 
 export default function DoctorDashboard() {
-  const { profile, toast } = useApp()
+  const { profile, settings, toast } = useApp()
+  const isNizar = settings?.prescription_template === 'nizar'
   const [appts, setAppts] = useState(null)
   const [lastVisitFor, setLastVisitFor] = useState(null) // patient object for the quick-view modal
   const [emergencyOpen, setEmergencyOpen] = useState(false)
@@ -20,6 +22,7 @@ export default function DoctorDashboard() {
   const [emergencyCancel, setEmergencyCancel] = useState(true)
   const [emergencyBusy, setEmergencyBusy] = useState(false)
   const [emergencyDone, setEmergencyDone] = useState(null)
+  const [emergencyTargets, setEmergencyTargets] = useState(null) // { list, note, cancelled } — شاشة إرسال الاعتذار (نزار)
   const [bookingOpen, setBookingOpen] = useState(false)
   const nav = useNavigate()
 
@@ -47,16 +50,22 @@ export default function DoctorDashboard() {
 
   const runEmergency = async () => {
     setEmergencyBusy(true)
-    const { data: count, error } = await supabase.rpc('emergency_broadcast', {
+    const { data, error } = await supabase.rpc('emergency_broadcast', {
       p_note: emergencyNote.trim(),
       p_cancel: emergencyCancel,
     })
     setEmergencyBusy(false)
     if (error) return toast('error', friendlyDbError(error))
+    const count = typeof data === 'number' ? data : (data?.count ?? 0)
     audit(profile.clinic_id, 'emergency_broadcast', 'appointments', null, { notified: count })
     setEmergencyOpen(false)
     setEmergencyNote('')
-    setEmergencyDone(count ?? 0)
+    if (isNizar && data?.list) {
+      // عيادة نزار: شاشة إرسال الاعتذار الفعلي (واتساب) لكل مريض
+      setEmergencyTargets({ list: data.list, note: emergencyNote.trim(), cancelled: emergencyCancel })
+    } else {
+      setEmergencyDone(count ?? 0)
+    }
     load()
   }
 
@@ -70,7 +79,7 @@ export default function DoctorDashboard() {
     .sort((a, b) => timeToMin(a.start_time) - timeToMin(b.start_time))
 
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto max-w-3xl">
       <PageHeader
         title="عيادة اليوم"
         subtitle={`${profile?.full_name} — ${queue.length + current.length} مريض نشط الآن`}
@@ -235,14 +244,23 @@ export default function DoctorDashboard() {
         </div>
       </Modal>
 
-      <ConfirmDialog
-        open={emergencyDone !== null}
-        onClose={() => setEmergencyDone(null)}
-        title="تم الإرسال بنجاح"
-        message={`وصل الاعتذار لـ ${emergencyDone} مريض عبر قنواتهم${emergencyCancel ? '، وأُلغيت مواعيدهم اليوم لتحرير الأوقات' : ''}. أُرسل إشعار للاستقبال بالاتصال وترتيب إعادة الحجز.`}
-        confirmLabel="حسناً"
-        onConfirm={() => setEmergencyDone(null)}
-      />
+      {isNizar ? (
+        /* نزار: شاشة إرسال الاعتذار الفعلي عبر واتساب لكل مريض متأثر */
+        <EmergencyApology
+          open={!!emergencyTargets}
+          onClose={() => setEmergencyTargets(null)}
+          targets={emergencyTargets}
+        />
+      ) : (
+        <ConfirmDialog
+          open={emergencyDone !== null}
+          onClose={() => setEmergencyDone(null)}
+          title="تم الإرسال بنجاح"
+          message={`وصل الاعتذار لـ ${emergencyDone} مريض عبر قنواتهم${emergencyCancel ? '، وأُلغيت مواعيدهم اليوم لتحرير الأوقات' : ''}. أُرسل إشعار للاستقبال بالاتصال وترتيب إعادة الحجز.`}
+          confirmLabel="حسناً"
+          onConfirm={() => setEmergencyDone(null)}
+        />
+      )}
     </div>
   )
 }

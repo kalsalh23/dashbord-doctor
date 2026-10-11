@@ -2,8 +2,9 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { AppProvider, useApp } from './lib/store'
 import { APP_SCOPE } from './lib/scope'
+import { isNizarStyle } from './lib/clinicStyle'
 import Layout from './components/Layout'
-import { Toasts } from './components/ui'
+import { Toasts, Spinner } from './components/ui'
 import Login from './pages/Login'
 import ReceptionDashboard from './pages/reception/Dashboard'
 import Appointments from './pages/reception/Appointments'
@@ -23,6 +24,8 @@ import DentalTodayLog from './pages/doctor/DentalTodayLog'
 import DentalPayments from './pages/doctor/DentalPayments'
 import Schedule from './pages/doctor/Schedule'
 import PatientArchive from './pages/doctor/PatientArchive'
+import NizarExamBoard from './pages/doctor/NizarExamBoard'
+import NizarWorkingHours from './pages/doctor/NizarWorkingHours'
 import VisitReadPage from './pages/doctor/VisitReadPage'
 import PrescriptionPage from './pages/doctor/PrescriptionPage'
 import Favorites from './pages/doctor/Favorites'
@@ -55,6 +58,22 @@ function ConsultationSwitch() {
     return <NizarLiveConsultation appointmentId={appointmentId} patientId={patientId} />
   }
   return <Consultation />
+}
+
+// واجهة المدفوعات محذوفة من عيادة د. نزار (قالب nizar) — أي دخول للرابط يعود للوحة اليوم
+function PaymentsGate() {
+  const { settings, settingsReady } = useApp()
+  if (!settingsReady) return <Spinner />
+  if (settings?.prescription_template === 'nizar') return <Navigate to="/doctor" replace />
+  return <DentalPayments />
+}
+
+// أوقات الدوام: عيادة د. نزار (قالب nizar) والعيادات المضافة لأسلوبه — لغيرها يعود للوحة اليوم
+function WorkingHoursGate() {
+  const { settings, settingsReady, profile } = useApp()
+  if (!settingsReady) return <Spinner />
+  if (!isNizarStyle(profile, settings)) return <Navigate to="/doctor" replace />
+  return <NizarWorkingHours />
 }
 
 function homeFor(role) {
@@ -198,13 +217,17 @@ function AppRoutes() {
             {/* أدوات عيادات الأسنان */}
             <Route path="/doctor/prices" element={<RequireRole role="doctor"><DentalPrices /></RequireRole>} />
             <Route path="/doctor/today-log" element={<RequireRole role="doctor"><DentalTodayLog /></RequireRole>} />
-            <Route path="/doctor/payments" element={<RequireRole role="doctor"><DentalPayments /></RequireRole>} />
+            <Route path="/doctor/payments" element={<RequireRole role="doctor"><PaymentsGate /></RequireRole>} />
+            {/* واجهة المعاينة — عيادة د. نزار (صور المعاينات الورقية وطباعتها) */}
+            <Route path="/doctor/exam" element={<RequireRole role="doctor"><NizarExamBoard /></RequireRole>} />
+            {/* أوقات دوامي — عيادة د. نizar والعيادات المضافة لأسلوبه (دوام كل يوم + أيام العطلة) */}
+            <Route path="/doctor/hours" element={<RequireRole role="doctor"><WorkingHoursGate /></RequireRole>} />
+            {/* لوحة إدارة النظام — لحساب مدير النظام فقط */}
+            <Route path="/super" element={<RequireSuper><SuperPanel /></RequireSuper>} />
             {/* bare printable prescription page */}
             <Route path="/print/prescription/:visitId" element={<BareAuth><PrescriptionPage /></BareAuth>} />
           </Route>
           <Route path="/" element={<HomeRedirect />} />
-          {/* the control panel lives only on the owner link */}
-          <Route path="/super" element={<Navigate to="/" replace />} />
           <Route path="*" element={<HomeRedirect />} />
         </Routes>
       )}

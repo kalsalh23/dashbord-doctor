@@ -20,3 +20,18 @@ scripts/set-owner-pw.cjs
 scripts/finish-rotation.cjs
 scripts/rotate-secrets.cjs
 apply-pw.query
+
+# النسخة المحلية: بيانات المرضى الحقيقية والملف التنفيذي
+public/seed-data.json
+release/
+screenshots/
+ent-auth.json
+mazen-auth.json
+nizar-auth.json
+sl-auth.json
+tmp-q*.json
+restored-full-seed  
+rej(tx.error)
+persist-log.txt
+
+data/

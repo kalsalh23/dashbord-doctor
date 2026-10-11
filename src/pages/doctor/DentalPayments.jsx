@@ -325,7 +325,7 @@ export default function DentalPayments() {
                 </thead>
                 <tbody>
                   {statement.entries.length === 0 ? (
-                    <tr><td style={stTd} colSpan={3} style={{ textAlign: 'center' }}>لا توجد إجراءات مسجلة</td></tr>
+                    <tr><td style={{ ...stTd, textAlign: 'center' }} colSpan={3}>لا توجد إجراءات مسجلة</td></tr>
                   ) : (
                     statement.entries.map((e, i) => (
                       <tr key={i}>

@@ -2,6 +2,38 @@
 
 نظام متكامل لإدارة العيادات الطبية بواجهة عربية (RTL) مبني على React + Supabase، ومهيأ منذ البداية ليكون منتج SaaS متعدد العيادات (عزل كامل لكل عيادة عبر `clinic_id` و RLS).
 
+> **نسختان من التطبيق:**
+> - **النسخة المحلية (الافتراضية):** تطبيق كامل بلا إنترنت — قاعدة بيانات IndexedDB داخل التطبيق + Electron لنظام Windows. البناء: `npm run app` (تشغيل) أو `npm run app:dist` (ملف exe مستقل في مجلد `release/`).
+> - **النسخة السحابية:** نفس الكود مع `VITE_BACKEND=online` يعمل على Supabase كما كان.
+
+## النسخة المحلية (بلا إنترنت)
+
+### كيف تعمل
+- `src/lib/local/db.js` — محرك استعلامات يحاكي واجهة supabase-js (from/select/eq/or/in/order/limit/single/embeds/insert/update/upsert/delete/count) فوق IndexedDB.
+- `src/lib/local/auth.js` — مصادقة محلية بـ bcrypt؛ نفس كلمات المرور السحابية تعمل لأن الهاشات تُصدَّر كما هي.
+- `src/lib/local/storage.js` — تخزين ملفات محلي بديل عن Supabase Storage (المرفقات والصور داخل IndexedDB).
+- `src/lib/local/rpc.js` — تنفيذ محلي لدوال Postgres (إلغاء الطوارئ، طلبات المنصة، لوحة الإدارة...).
+- `electron/main.cjs` — يقدّم الواجهة من سيرفر محلي على 127.0.0.1 ويفتحها في نافذة تطبيق.
+
+### أوامر التشغيل
+```bash
+npm install
+npm run seed:demo      # بيانات تجريبية (admin|doctor|reception@demo.com — كلمة المرور 123456)
+npm run app            # بناء + تشغيل نافذة Electron
+npm run app:dist       # ملف exe محمول في release/
+npm run test:offline   # اختبارات محرك قاعدة البيانات المحلية
+```
+
+### نقل البيانات الحقيقية من Supabase
+```bash
+SUPA_MGMT_TOKEN=<توكن إدارة المشروع> npm run export:data
+```
+ينتج `public/seed-data.json` (كل الجداول + مستخدمو auth بهاشاتهم). ثم أعد `npm run app`.
+ملاحظات:
+- الملف يحتوي بيانات مرضى حساسة — مُستثنى من git، ولا ترفعه لأي مكان.
+- مرفقات Supabase Storage القديمة لا تنتقل؛ المرفقات الجديدة تُحفظ محلياً.
+- عند تعديل البيانات السحابية لاحقاً أعد التصدير؛ التطبيق يحدّث بياناته عند تغيّر رقم النسخة.
+
 ## المزايا
 
 ### واجهة الاستقبال
@@ -32,11 +64,11 @@
 - **قاعدة البيانات:** clinics, profiles, patients, appointments, visits, medical_information, medications, attachments, payments, follow_up_requests, notifications, clinic_settings, doctor_schedules, audit_logs — كلها معزولة بـ `clinic_id` وسياسات RLS صارمة.
 - **التخزين:** bucket خاص للمرفقات بمسارات `{clinic}/{patient}/` وسياسات وصول مطابقة.
 
-## التشغيل المحلي
+## التشغيل المحلي (النسخة السحابية)
 ```bash
 npm install
 cp .env.example .env.local   # ثم عبّئ القيم
-npm run dev
+VITE_BACKEND=online npm run dev
 ```
 
 ## متغيرات البيئة

@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, Users, Wallet, Repeat, Settings, Stethoscope,
-  Bell, BellRing, LogOut, Menu, X, MoreHorizontal, Activity, Shield, FileText, Pill, Printer, Receipt,
-  NotebookPen, Banknote,
+  Bell, LogOut, Menu, X, MoreHorizontal, Activity, Shield, FileText, Pill, Printer, Receipt,
+  NotebookPen, Banknote, ArrowRight, ScanSearch, Clock,
 } from 'lucide-react'
-import { subscribeStaffPush } from '../lib/staffPush'
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
+import { isNizarStyle } from '../lib/clinicStyle'
 import { DEVELOPER_NAME } from '../lib/config'
 import { Avatar, Badge } from './ui'
 import { todayStr, formatDateLong } from '../lib/format'
@@ -142,36 +142,6 @@ function NotificationsBell() {
   )
 }
 
-function ExternalPushButton() {
-  const [state, setState] = useState(() =>
-    typeof Notification !== 'undefined' && Notification.permission === 'granted' && localStorage.getItem('staff_push_on') === '1' ? 'on' : 'off',
-  )
-  const [busy, setBusy] = useState(false)
-
-  const enable = async () => {
-    setBusy(true)
-    const r = await subscribeStaffPush()
-    setBusy(false)
-    if (r === 'ok') {
-      localStorage.setItem('staff_push_on', '1')
-      setState('on')
-    }
-  }
-
-  return (
-    <button
-      onClick={enable}
-      disabled={state === 'on' || busy}
-      title={state === 'on' ? 'إشعارات طلبات المواعيد مفعّلة على هذا الجهاز' : 'تفعيل إشعار طلبات المواعيد الواردة من دليل طيبة'}
-      aria-label="تفعيل إشعارات الحجوزات"
-      className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-60"
-    >
-      <BellRing size={19} />
-      {state === 'on' && <span className="absolute bottom-1.5 left-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500" />}
-    </button>
-  )
-}
-
 function UserMenu({ inline }) {
   const { profile, logout, isSuper, isAdmin, mode, switchMode } = useApp()
   const [open, setOpen] = useState(false)
@@ -267,9 +237,12 @@ function Brand() {
 }
 
 export default function Layout() {
-  const { effectiveRole, profile, logout, isSuper, isAdmin } = useApp()
+  const { effectiveRole, profile, logout, isSuper, isAdmin, settings } = useApp()
   const [mobileMore, setMobileMore] = useState(false)
   const loc = useLocation()
+  const nav = useNavigate()
+  // زر الرجوع يظهر في كل الصفحات عدا الصفحات الرئيسية لكل واجهة
+  const isHomePage = ['/', '/reception', '/doctor', '/super'].includes(loc.pathname)
   let navItems = NAV[effectiveRole] || NAV.reception
   if (APP_SCOPE === 'owner') {
     navItems = NAV.super
@@ -304,6 +277,30 @@ export default function Layout() {
       { to: '/doctor/settings', label: 'إعداداتي', icon: Settings },
     ]
   }
+  // عيادة د. نزار (قالب nizar): بلا واجهة مدفوعات — وأضيفت واجهة المعاينة (صور المعاينات الورقية)
+  const isNizar = settings?.prescription_template === 'nizar'
+  if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isNizar) {
+    navItems = [
+      { to: '/doctor', label: 'لوحة اليوم', icon: LayoutDashboard, end: true },
+      { to: '/doctor/schedule', label: 'جدول المواعيد', icon: CalendarDays },
+      { to: '/doctor/hours', label: 'أوقات دوامي', icon: Clock },
+      { to: '/doctor/exam', label: 'المعاينة', icon: ScanSearch },
+      { to: '/doctor/patients', label: 'المرضى', icon: Users },
+      { to: '/doctor/archive', label: 'الأرشفة', icon: FileText },
+      { to: '/doctor/expenses', label: 'المصاريف', icon: Receipt },
+      { to: '/doctor/favorites', label: 'أدويتي الشائعة', icon: Pill },
+      { to: '/doctor/settings', label: 'إعداداتي', icon: Settings },
+    ]
+  } else if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isNizarStyle(profile, settings)) {
+    // عيادات أسلوب نizar مع قالب مختلف (مثل عيادة د. ريام): تُضاف «أوقات دوامي» بعد جدول المواعيد
+    const hoursItem = { to: '/doctor/hours', label: 'أوقات دوامي', icon: Clock }
+    const at = navItems.findIndex((i) => i.to === '/doctor/schedule')
+    navItems = at >= 0 ? [...navItems.slice(0, at + 1), hoursItem, ...navItems.slice(at + 1)] : [hoursItem, ...navItems]
+  }
+  // مدير النظام وهو داخل لوحة الإدارة: يرى قائمة اللوحة فقط
+  if (APP_SCOPE !== 'owner' && isSuper && loc.pathname.startsWith('/super')) {
+    navItems = NAV.super
+  }
   const mobileMain = navItems.slice(0, 4)
   const mobileMoreItems = navItems.slice(4)
 
@@ -319,41 +316,83 @@ export default function Layout() {
       isActive ? 'bg-primary-50 text-primary-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
     }`
 
+  // عيادات الأسنان: شريط تنقل علوي أفقي بدل الجانبي — كما في برامج الأسنان
+  const isDentalNav = APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isDental
+
   return (
     <div className="flex min-h-screen">
       {/* -------- desktop sidebar (right in RTL) -------- */}
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-s border-slate-200 bg-white lg:flex">
-        <div className="px-4 py-4">
-          <Brand />
-        </div>
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-          {navItems.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className={linkCls}>
-              <item.icon size={18} className="shrink-0" />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="border-t border-slate-100 p-3">
-          <UserMenu inline />
-          <p className="mt-2 text-center text-[10px] text-slate-300">تطوير: {DEVELOPER_NAME}</p>
-        </div>
-      </aside>
+      {!isDentalNav && (
+        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-s border-slate-200 bg-white lg:flex">
+          <div className="px-4 py-4">
+            <Brand />
+          </div>
+          <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
+            {navItems.map((item) => (
+              <NavLink key={item.to} to={item.to} end={item.end} className={linkCls}>
+                <item.icon size={18} className="shrink-0" />
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="border-t border-slate-100 p-3">
+            <UserMenu inline />
+            <p className="mt-2 text-center text-[10px] text-slate-300">تطوير: {DEVELOPER_NAME}</p>
+          </div>
+        </aside>
+      )}
 
       {/* -------- main column -------- */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:px-6">
-          <div className="lg:hidden">
-            <Brand />
+          <div className="flex items-center gap-3">
+            {!isHomePage && (
+              <button
+                onClick={() => nav(-1)}
+                className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-800"
+                aria-label="رجوع للصفحة السابقة"
+                title="رجوع"
+              >
+                <ArrowRight size={17} />
+                <span className="hidden text-xs font-bold sm:block">رجوع</span>
+              </button>
+            )}
+            <div className="lg:hidden">
+              <Brand />
+            </div>
+            <p className="hidden text-xs font-medium text-slate-400 lg:block">{formatDateLong(todayStr())}</p>
           </div>
-          <p className="hidden text-xs font-medium text-slate-400 lg:block">{formatDateLong(todayStr())}</p>
           <div className="flex items-center gap-1.5">
-            <ExternalPushButton />
             <NotificationsBell />
             <UserMenu />
           </div>
         </header>
+
+        {/* شريط التنقل العلوي لعيادات الأسنان */}
+        {isDentalNav && (
+          <nav className="sticky top-14 z-20 hidden border-b border-slate-200 bg-white/95 backdrop-blur lg:block">
+            <div className="flex items-stretch gap-1.5 overflow-x-auto px-4 py-2">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold transition-colors ${
+                      isActive
+                        ? 'border-primary-700 bg-primary-700 text-white'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300 hover:text-primary-700'
+                    }`
+                  }
+                >
+                  <item.icon size={17} />
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          </nav>
+        )}
 
         <main className="flex-1 px-4 pb-24 pt-5 sm:px-6 lg:pb-8">
           <div className="mx-auto max-w-6xl">

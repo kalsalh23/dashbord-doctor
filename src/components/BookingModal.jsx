@@ -3,6 +3,7 @@ import { UserPlus, CalendarCheck } from 'lucide-react'
 import { Modal, Button, Input, Select, Field, Spinner, EmptyState } from './ui'
 import { useApp, audit } from '../lib/store'
 import { useSchedules, fetchBookedMap, friendlyDbError } from '../lib/hooks'
+import { isNizarStyle } from '../lib/clinicStyle'
 import { slotsForDay } from '../lib/slots'
 import { todayStr, addDays, dayLabel, formatDateShort, nowMinutes, timeToMin, genderLabel, ageFrom } from '../lib/format'
 import { supabase } from '../lib/supabase'
@@ -18,13 +19,14 @@ import { supabase } from '../lib/supabase'
  */
 export default function BookingModal({ open, onClose, onBooked, presetPatient, presetDate, moveAppointment }) {
   const { profile, settings, toast } = useApp()
+  const isNizar = isNizarStyle(profile, settings)
   const [schedules] = useSchedules()
   const [search, setSearch] = useState('')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [patient, setPatient] = useState(null)
   const [showNew, setShowNew] = useState(false)
-  const [newPatient, setNewPatient] = useState({ full_name: '', phone: '', gender: '', date_of_birth: '' })
+  const [newPatient, setNewPatient] = useState({ full_name: '', phone: '', gender: '', date_of_birth: '', age: '' })
   const [creatingPatient, setCreatingPatient] = useState(false)
   const [date, setDate] = useState(presetDate || todayStr())
   const [booked, setBooked] = useState({})
@@ -96,9 +98,18 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
       return
     }
     setCreatingPatient(true)
+    // عيادات أسلوب نزار (نزار، ريام...): العمر يُكتب مباشرة — يُحوَّل لتاريخ ميلاد تقريبي يخدم حساب العمر لاحقاً
+    let dob = newPatient.date_of_birth || null
+    if (isNizar && !dob && String(newPatient.age).trim() !== '') {
+      const a = Number(newPatient.age)
+      if (Number.isFinite(a) && a >= 0 && a < 120) {
+        const now = new Date()
+        dob = new Date(now.getFullYear() - a, now.getMonth(), now.getDate()).toISOString().slice(0, 10)
+      }
+    }
     const { data, error } = await supabase
       .from('patients')
-      .insert({ clinic_id: profile.clinic_id, ...newPatient, gender: newPatient.gender || null, date_of_birth: newPatient.date_of_birth || null })
+      .insert({ clinic_id: profile.clinic_id, full_name: newPatient.full_name, phone: newPatient.phone, gender: newPatient.gender || null, date_of_birth: dob })
       .select('id, full_name, phone, date_of_birth, gender')
       .single()
     setCreatingPatient(false)
@@ -199,9 +210,15 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
                   <option value="female">أنثى</option>
                 </Select>
               </Field>
-              <Field label="تاريخ الميلاد">
-                <Input type="date" value={newPatient.date_of_birth} onChange={(e) => setNewPatient({ ...newPatient, date_of_birth: e.target.value })} />
-              </Field>
+              {isNizar ? (
+                <Field label="العمر (سنة)">
+                  <Input type="number" dir="ltr" min={0} max={120} value={newPatient.age} onChange={(e) => setNewPatient({ ...newPatient, age: e.target.value })} placeholder="مثال: 20" />
+                </Field>
+              ) : (
+                <Field label="تاريخ الميلاد">
+                  <Input type="date" value={newPatient.date_of_birth} onChange={(e) => setNewPatient({ ...newPatient, date_of_birth: e.target.value })} />
+                </Field>
+              )}
               <div className="col-span-2">
                 <Button onClick={createPatient} loading={creatingPatient} size="sm">حفظ المريض</Button>
               </div>

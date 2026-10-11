@@ -22,6 +22,7 @@ const CATEGORY_META = {
 export default function PatientProfile() {
   const { id } = useParams()
   const { profile, settings, effectiveRole, toast } = useApp()
+  const isNizar = settings?.prescription_template === 'nizar'
   const nav = useNavigate()
   const [params, setParams] = useSearchParams()
 
@@ -198,7 +199,8 @@ export default function PatientProfile() {
         </Card>
       </div>
 
-      {/* important medical info */}
+      {/* important medical info — مستبعدة من عيادة د. نزار (لا حاجة لها) */}
+      {!isNizar && (
       <div className="mb-5">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-bold text-slate-700">معلومات طبية مهمة</h2>
@@ -220,7 +222,7 @@ export default function PatientProfile() {
                     ? c.key === 'allergies'
                       ? 'border-rose-200 bg-rose-50'
                       : 'border-slate-200 bg-white'
-                    : 'border-slate-100 bg-slate-50'
+                    : 'border-rose-100 bg-slate-50'
                 }`}
               >
                 <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
@@ -235,6 +237,7 @@ export default function PatientProfile() {
           })}
         </div>
       </div>
+      )}
 
       {/* latest visit */}
       <div className="mb-5">

@@ -93,3 +93,13 @@
   }
   @page { size: A5 portrait; margin: 5mm; }
 }
+
+/* طباعة عدة أوراق معاينة دفعة واحدة: كل ورقة بصفحة A5 كاملة */
+#print-clone .prescription-sheet {
+  page-break-after: always;
+  break-after: page;
+}
+#print-clone .prescription-sheet:last-of-type {
+  page-break-after: auto;
+  break-after: auto;
+}

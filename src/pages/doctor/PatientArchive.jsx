@@ -1,15 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Archive, Pill, ChevronDown, Printer, FolderOpen, Stethoscope, FileText, RefreshCw, Users } from 'lucide-react'
+import { Archive, Pill, ChevronDown, Printer, FolderOpen, Stethoscope, FileText, RefreshCw, Users, FileSearch } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, SkeletonRows, PageHeader, SearchInput, Tag, Avatar, Tabs } from '../../components/ui'
+import PrescriptionSheet from '../../components/PrescriptionSheet'
+import { isNizarStyle } from '../../lib/clinicStyle'
 import { formatDateShort } from '../../lib/format'
 
 /**
  * أرشيف المرضى — مبني على جدول المرضى نفسه (كل المرضى يظهرون حتى بدون زيارات)،
  * بحث فوري بالاسم/الهاتف/التشخيص مع تجاهل الهمزات والتاء المربوطة،
  * وترتيب حسب الأحدث زيارة أو أبجدياً — وصول سريع لأرشيف أي مريض.
+ *
+ * نسخة د. نزار (قالب nizar): الأرشفة تعرض أوراق المعاينة فقط —
+ * كل زيارة تظهر كورقة المعاينة المطابقة للأصل (بلا نصوص أو قوائم)،
+ * والبحث بالاسم والهاتف فقط. الطباعة الكاملة من واجهة «المعاينة».
  */
 
 // توحيد الحروف العربية للبحث: همزات، تاء مربوطة، ألف مقصورة، تشكيل
@@ -23,7 +29,8 @@ const norm = (s) =>
     .trim()
 
 export default function PatientArchive() {
-  const { profile } = useApp()
+  const { profile, settings } = useApp()
+  const isNizar = isNizarStyle(profile, settings)
   const [patients, setPatients] = useState(null)
   const [visits, setVisits] = useState(null)
   const [error, setError] = useState(null)
@@ -31,6 +38,7 @@ export default function PatientArchive() {
   const [sort, setSort] = useState('recent')
   const [openPatient, setOpenPatient] = useState(null)
   const [openVisit, setOpenVisit] = useState(null)
+  const [viewingVisit, setViewingVisit] = useState(null) // { patientId, visit } — عرض ورقة بحجمها الكامل
   const nav = useNavigate()
 
   const load = useCallback(async () => {
@@ -80,6 +88,7 @@ export default function PatientArchive() {
     const list = patients.map((p) => ({ patient: p, visits: visitsByPatient.get(p.id) || [] }))
 
     // بحث فوري: الاسم، الهاتف، أو أي تشخيص/شكوى ضمن الزيارات
+    // (نسخة نزار: الاسم والهاتف فقط — لا نصوص تشخيص في الأرشفة)
     const term = norm(q)
     const filtered = !term
       ? list
@@ -87,7 +96,8 @@ export default function PatientArchive() {
           (g) =>
             norm(g.patient.full_name).includes(term) ||
             (g.patient.phone || '').includes(term) ||
-            g.visits.some((v) => norm(v.diagnosis).includes(term) || norm(v.chief_complaint).includes(term))
+            (!isNizar &&
+              g.visits.some((v) => norm(v.diagnosis).includes(term) || norm(v.chief_complaint).includes(term)))
         )
 
     if (sort === 'name') {
@@ -103,7 +113,7 @@ export default function PatientArchive() {
       })
     }
     return filtered
-  }, [patients, visitsByPatient, q, sort])
+  }, [patients, visitsByPatient, q, sort, isNizar])
 
   const withVisits = rows ? rows.filter((g) => g.visits.length > 0).length : 0
 
@@ -111,7 +121,11 @@ export default function PatientArchive() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="أرشيف المرضى"
-        subtitle="كل المرضى مع زياراتهم وأدويتهم السابقة — ابحث واضغط على المريض لعرض أرشيحه"
+        subtitle={
+          isNizar
+            ? 'أوراق المعاينة لكل مريض — ابحث بالاسم واضغط على المريض لعرض أوراقه'
+            : 'كل المرضى مع زياراتهم وأدويتهم السابقة — ابحث واضغط على المريض لعرض أرشيحه'
+        }
         actions={
           <Button variant="secondary" size="sm" onClick={load} className="print:hidden">
             <RefreshCw size={14} />
@@ -122,20 +136,28 @@ export default function PatientArchive() {
 
       {/* بحث + ترتيب — ثابتان أعلى الصفحة أثناء التمرير */}
       <div className="sticky top-0 z-10 -mx-1 mb-4 space-y-2.5 bg-slate-50/95 px-1 py-2 backdrop-blur">
-        <SearchInput value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث باسم المريض أو الهاتف أو التشخيص..." autoFocus />
+        <SearchInput
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={isNizar ? 'ابحث باسم المريض...' : 'ابحث باسم المريض أو الهاتف أو التشخيص...'}
+          autoFocus
+        />
         <div className="flex items-center justify-between gap-2">
-          <Tabs
-            tabs={[
-              { value: 'recent', label: 'الأحدث زيارة' },
-              { value: 'name', label: 'الاسم' },
-            ]}
-            value={sort}
-            onChange={setSort}
-          />
+          {!isNizar && (
+            <Tabs
+              tabs={[
+                { value: 'recent', label: 'الأحدث زيارة' },
+                { value: 'name', label: 'الاسم' },
+              ]}
+              value={sort}
+              onChange={setSort}
+            />
+          )}
           {rows !== null && (
             <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
               <Users size={13} />
-              {rows.length} مريض{q ? ` (من ${patients.length})` : ''} · {withVisits} لديه زيارات
+              {rows.length} مريض{q ? ` (من ${patients.length})` : ''}
+              {!isNizar && ` · ${withVisits} لديه زيارات`}
             </p>
           )}
         </div>
@@ -179,7 +201,13 @@ export default function PatientArchive() {
                       <p className="text-[11px] text-slate-400" dir="ltr">{g.patient.phone || '—'}</p>
                     </div>
                     <div className="hidden text-end sm:block">
-                      {g.visits.length > 0 ? (
+                      {isNizar ? (
+                        g.visits.length > 0 ? (
+                          <Tag tone="teal">{g.visits.length} معاينة</Tag>
+                        ) : (
+                          <Tag>لا معاينات</Tag>
+                        )
+                      ) : g.visits.length > 0 ? (
                         <>
                           <Tag tone="teal">{g.visits.length} زيارة</Tag>
                           <p className="mt-1 text-[10px] text-slate-400">آخر زيارة: {formatDateShort(last.visit_date)}</p>
@@ -191,7 +219,79 @@ export default function PatientArchive() {
                     <ChevronDown size={16} className={`shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {open && (
+                  {open && isNizar && (
+                    <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-3.5 sm:px-5">
+                      {g.visits.length === 0 ? (
+                        <p className="rounded-lg border border-dashed border-slate-200 bg-white px-3 py-4 text-center text-xs text-slate-400">
+                          لا توجد معاينات لهذا المريض بعد — تُنشأ تلقائياً عند كتابتها في «الكشف»
+                        </p>
+                      ) : viewingVisit && viewingVisit.patientId === g.patient.id ? (
+                        /* عرض ورقة معاينة واحدة بحجمها الكامل + زر رجوع */
+                        <div>
+                          <Button size="sm" variant="secondary" onClick={() => setViewingVisit(null)} className="mb-3">
+                            <Archive size={13} />
+                            رجوع للمعاينات
+                          </Button>
+                          <div className="prescription-paper !m-0" style={{ zoom: 0.92 }}>
+                            <PrescriptionSheet
+                              clinic={profile?.clinic}
+                              settings={settings}
+                              patient={g.patient}
+                              visit={viewingVisit.visit}
+                              meds={viewingVisit.visit.medications || []}
+                              doctorName={viewingVisit.visit.doctor?.full_name || profile?.full_name}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        /* بطاقات المعاينات — بجانب وتحت بعضها حسب حجم الشاشة */
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                          {g.visits.map((v) => (
+                            <div
+                              key={v.id}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setViewingVisit({ patientId: g.patient.id, visit: v })}
+                              onKeyDown={(e) => e.key === 'Enter' && setViewingVisit({ patientId: g.patient.id, visit: v })}
+                              className="group cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card transition-colors hover:border-primary-300"
+                            >
+                              {/* مصغّرة الورقة — الجزء العلوي من الورقة الفعلية */}
+                              <span className="block h-64 overflow-hidden">
+                                <span className="pointer-events-none block origin-top" style={{ zoom: 0.42 }}>
+                                  <span className="prescription-paper !m-0 block !shadow-none">
+                                    <PrescriptionSheet
+                                      clinic={profile?.clinic}
+                                      settings={settings}
+                                      patient={g.patient}
+                                      visit={v}
+                                      meds={v.medications || []}
+                                      doctorName={v.doctor?.full_name || profile?.full_name}
+                                    />
+                                  </span>
+                                </span>
+                              </span>
+                              {/* معلومات رئيسية أسفل البطاقة */}
+                              <span className="block border-t border-slate-100 px-3 py-2.5">
+                                <span className="block text-xs font-bold text-slate-800">معاينة {formatDateShort(v.visit_date)}</span>
+                                <span className="mt-0.5 block truncate text-[11px] text-slate-500">
+                                  {v.diagnosis || 'بدون تشخيص مدوَّن'}
+                                  {(v.medications || []).length > 0 && ` · ${(v.medications || []).length} دواء`}
+                                </span>
+                              </span>
+                            </div>
+                          ))}
+                          <div className="col-span-full flex justify-center">
+                            <Button size="sm" variant="secondary" onClick={() => nav('/doctor/exam')}>
+                              <Printer size={13} />
+                              طباعة من واجهة المعاينة
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {open && !isNizar && (
                     <div className="space-y-2.5 border-t border-slate-100 bg-slate-50/50 px-4 py-3.5 sm:px-5">
                       <Button size="sm" variant="secondary" onClick={() => nav(`/doctor/patients/${g.patient.id}`)}>
                         <FolderOpen size={13} />

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Shield, Plus, Building2, UserPlus, KeyRound, Power, PencilLine, Users as UsersIcon,
-  CalendarDays, Repeat, Activity, Search,
+  CalendarDays, Repeat, Activity, Search, DatabaseBackup, Send,
 } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
+import { downloadLocalBackup, downloadClinicFile } from '../../lib/local/backup'
 import {
   Button, Card, Field, Input, Select, Modal, ConfirmDialog, Badge, EmptyState, Spinner,
   PageHeader, Tag, SearchInput,
@@ -29,6 +30,8 @@ const EMPTY_USER_FORM = { full_name: '', email: '', password: '', phone: '', rol
 export default function SuperPanel() {
   const { profile, toast } = useApp()
   const [clinics, setClinics] = useState(null)
+  const [exporting, setExporting] = useState(false)
+  const isLocalApp = !!supabase.__local
   const [stats, setStats] = useState([])
   const [usersByClinic, setUsersByClinic] = useState({})
   const [q, setQ] = useState('')
@@ -79,6 +82,29 @@ export default function SuperPanel() {
       (c) => c.name.includes(term) || (c.specialty || '').includes(term) || (c.phone || '').includes(term)
     )
   }, [clinics, q])
+
+  /* ---------- full local backup (offline app only) ---------- */
+  const exportBackup = async () => {
+    setExporting(true)
+    try {
+      const summary = await downloadLocalBackup()
+      toast('success', 'تم تنزيل النسخة الاحتياطية الكاملة (' + summary + ')')
+    } catch (e) {
+      toast('error', 'تعذر التصدير: ' + (e?.message || e))
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  /* ---------- ملف الطبيب: بيانات العيادة فقط ليرسلها مع التطبيق العام ---------- */
+  const exportClinicFile = async (clinic) => {
+    try {
+      const s = await downloadClinicFile(clinic)
+      toast('success', `تم تنزيل ملف العيادة (${s.patients} مريض، ${s.staff} حساب) — أرسله للطبيب ليضعه بجانب التطبيق`)
+    } catch (e) {
+      toast('error', 'تعذر التصدير: ' + (e?.message || e))
+    }
+  }
 
   /* ---------- clinic create / edit ---------- */
   const openClinicModal = (clinic) => {
@@ -209,15 +235,23 @@ export default function SuperPanel() {
   if (clinics === null) return <Spinner />
 
   return (
-    <div className="max-w-4xl">
+    <div className="mx-auto max-w-4xl">
       <PageHeader
         title="لوحة إدارة النظام"
         subtitle="إنشاء العيادات وحسابات الأطباء وإدارتها"
         actions={
-          <Button onClick={() => openClinicModal(null)}>
-            <Plus size={16} />
-            عيادة جديدة
-          </Button>
+          <div className="flex items-center gap-2">
+            {isLocalApp && (
+              <Button variant="secondary" onClick={exportBackup} loading={exporting} title="يصدر كل الجداول والمستخدمين من قاعدة بيانات هذا الجهاز — يُستخدم كنسخة احتياطية ولبناء نسخ الأطباء">
+                <DatabaseBackup size={16} />
+                نسخة احتياطية كاملة
+              </Button>
+            )}
+            <Button onClick={() => openClinicModal(null)}>
+              <Plus size={16} />
+              عيادة جديدة
+            </Button>
+          </div>
         }
       />
 
@@ -265,6 +299,17 @@ export default function SuperPanel() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
+                    {isLocalApp && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => exportClinicFile(c)}
+                        title="تنزيل ملف بيانات هذه العيادة فقط — يُرسل للطبيب ليضعه بجانب التطبيق العام"
+                      >
+                        <Send size={14} />
+                        ملف الطبيب
+                      </Button>
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => openClinicModal(c)} title="تعديل بيانات العيادة">
                       <PencilLine size={14} />
                     </Button>

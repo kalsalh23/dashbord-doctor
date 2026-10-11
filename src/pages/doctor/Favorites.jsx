@@ -58,7 +58,7 @@ export default function Favorites() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="mx-auto max-w-2xl">
       <PageHeader
         title="أدويتي الشائعة"
         subtitle="أدوية تصفها كثيراً — تظهر كأزرار سريعة داخل شاشة الكشف"

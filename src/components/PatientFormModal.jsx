@@ -3,11 +3,14 @@ import { Modal, Button, Input, Select, Field, Textarea } from './ui'
 import { useApp, audit } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { friendlyDbError } from '../lib/hooks'
+import { isNizarStyle } from '../lib/clinicStyle'
+import { ageFrom } from '../lib/format'
 
 /** Add / edit basic patient information (reception & admin). */
 export default function PatientFormModal({ open, onClose, patient, onSaved }) {
-  const { profile, toast } = useApp()
-  const [form, setForm] = useState({ full_name: '', phone: '', date_of_birth: '', gender: '', address: '', notes: '' })
+  const { profile, settings, toast } = useApp()
+  const isNizar = isNizarStyle(profile, settings)
+  const [form, setForm] = useState({ full_name: '', phone: '', date_of_birth: '', age: '', gender: '', address: '', notes: '' })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -18,13 +21,15 @@ export default function PatientFormModal({ open, onClose, patient, onSaved }) {
             full_name: patient.full_name || '',
             phone: patient.phone || '',
             date_of_birth: patient.date_of_birth || '',
+            // العمر يُعرض رقماً في عيادات أسلوب نزار — مقداراً من تاريخ الميلاد المحفوظ
+            age: isNizar && patient.date_of_birth ? String(ageFrom(patient.date_of_birth)) : '',
             gender: patient.gender || '',
             address: patient.address || '',
             notes: patient.notes || '',
           }
-        : { full_name: '', phone: '', date_of_birth: '', gender: '', address: '', notes: '' }
+        : { full_name: '', phone: '', date_of_birth: '', age: '', gender: '', address: '', notes: '' }
     )
-  }, [open, patient])
+  }, [open, patient, isNizar])
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
@@ -34,10 +39,19 @@ export default function PatientFormModal({ open, onClose, patient, onSaved }) {
       return
     }
     setSaving(true)
+    // العمر الرقمي يُحوَّل لتاريخ ميلاد تقريبي — يخدم حساب العمر والوثائق لاحقاً
+    let dateOfBirth = form.date_of_birth || null
+    if (isNizar && String(form.age).trim() !== '') {
+      const a = Number(form.age)
+      if (Number.isFinite(a) && a >= 0 && a < 120) {
+        const now = new Date()
+        dateOfBirth = new Date(now.getFullYear() - a, now.getMonth(), now.getDate()).toISOString().slice(0, 10)
+      }
+    }
     const payload = {
       full_name: form.full_name.trim(),
       phone: form.phone.trim(),
-      date_of_birth: form.date_of_birth || null,
+      date_of_birth: dateOfBirth,
       gender: form.gender || null,
       address: form.address.trim() || null,
       notes: form.notes.trim() || null,
@@ -90,6 +104,19 @@ export default function PatientFormModal({ open, onClose, patient, onSaved }) {
         <Field label="العنوان">
           <Input value={form.address} onChange={set('address')} placeholder="المدينة / الحي" />
         </Field>
+        {isNizar && (
+          <Field label="العمر (سنة)">
+            <Input
+              type="number"
+              dir="ltr"
+              min={0}
+              max={120}
+              value={form.age}
+              onChange={set('age')}
+              placeholder="مثال: 20"
+            />
+          </Field>
+        )}
         <Field label="ملاحظات مهمة" className="sm:col-span-2" hint="ملاحظات إدارية أو تعليمات خاصة بالمريض">
           <Textarea value={form.notes} onChange={set('notes')} rows={2} />
         </Field>

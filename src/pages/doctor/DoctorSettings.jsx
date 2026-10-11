@@ -77,7 +77,7 @@ export default function DoctorSettings() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="mx-auto max-w-2xl">
       <PageHeader title="إعداداتي" subtitle="معلوماتك وسعر الكشف الخاص بالعيادة" />
 
       <div className="space-y-5">

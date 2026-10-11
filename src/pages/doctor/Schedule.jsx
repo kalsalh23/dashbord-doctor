@@ -6,11 +6,13 @@ import { supabase } from '../../lib/supabase'
 import { Card, Badge, APPT_STATUS, Button, EmptyState, SkeletonRows, Avatar, Tabs, PageHeader } from '../../components/ui'
 import LastVisitModal from '../../components/LastVisitModal'
 import { useSchedules } from '../../lib/hooks'
+import { isNizarStyle } from '../../lib/clinicStyle'
 import { todayStr, addDays, formatDateLong, dayLabel, timeToMin, getWeekday, weekdayName } from '../../lib/format'
 import { slotsForDay } from '../../lib/slots'
 
 export default function Schedule() {
-  const { profile, toast } = useApp()
+  const { profile, toast, settings } = useApp()
+  const isNizar = isNizarStyle(profile, settings)
   const [schedules] = useSchedules()
   const [date, setDate] = useState(todayStr())
   const [appts, setAppts] = useState(null)
@@ -23,7 +25,7 @@ export default function Schedule() {
     if (!profile?.clinic_id) return
     const { data } = await supabase
       .from('appointments')
-      .select('id, patient_id, appointment_date, start_time, end_time, status, patient:patients(id, full_name, phone, date_of_birth)')
+      .select('id, patient_id, appointment_date, start_time, end_time, status, patient:patients(id, full_name)')
       .eq('clinic_id', profile.clinic_id)
       .eq('appointment_date', date)
       .order('start_time')
@@ -78,7 +80,7 @@ export default function Schedule() {
   const startConsult = (a) => nav(`/doctor/consultation/${a.id}`)
 
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto max-w-3xl">
       <PageHeader
         title="جدول مواعيدي"
         subtitle={formatDateLong(date)}
@@ -97,41 +99,9 @@ export default function Schedule() {
         }
       />
 
-      {/* day strip — prominent one-tap navigation across 14 days */}
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-1.5">
-        {strip.map((d) => {
-          const selected = d === date
-          const count = dayCounts[d] || 0
-          return (
-            <button
-              key={d}
-              onClick={() => setDate(d)}
-              className={`flex h-[68px] w-[72px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border transition-colors ${
-                selected
-                  ? 'border-primary-700 bg-primary-700 text-white shadow-sm'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300'
-              }`}
-            >
-              <span className={`text-[10px] font-semibold ${selected ? 'text-primary-100' : 'text-slate-400'}`}>
-                {weekdayName(getWeekday(d))}
-              </span>
-              <span className="text-lg font-bold leading-6">{Number(d.slice(8, 10))}</span>
-              <span
-                className={`min-w-4 rounded-full px-1 text-[9px] font-bold ${
-                  count > 0
-                    ? selected
-                      ? 'bg-white text-primary-800'
-                      : 'bg-primary-100 text-primary-800'
-                    : 'bg-transparent text-slate-300'
-                }`}
-              >
-                {count > 0 ? count : '·'}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
+      {/* نزار: قائمة المرضى بعرض كامل والمربعات تحتها — بقية العيادات نصفان */}
+      <div className={isNizar ? 'space-y-5' : 'grid gap-5 lg:grid-cols-5'}>
+        <div className={isNizar ? '' : 'lg:col-span-3'}>
       {/* precise date jump */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-xs font-semibold text-slate-500">انتقال لتاريخ محدد:</span>
@@ -158,16 +128,17 @@ export default function Schedule() {
           <EmptyState icon={CalendarDays} title="لا توجد مواعيد" message={`${dayLabel(date)} لا يحتوي مواعيد في هذه القائمة`} />
         ) : (
           <ul className="divide-y divide-slate-100">
-            {shown.map((a) => (
-              <li key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
-                <div className="w-14 shrink-0 text-center">
-                  <span className="block text-base font-bold leading-6 text-slate-800" dir="ltr">{a.start_time?.slice(0, 5)}</span>
+            {shown.map((a) => {
+              const isDone = ['completed', 'cancelled', 'no_show'].includes(a.status)
+              return (
+              <li key={a.id} className={`flex flex-wrap items-center gap-3 ${isNizar ? 'px-4 py-4 sm:px-5' : 'px-4 py-3 sm:px-5'}`}>
+                <div className={`${isNizar ? 'w-16' : 'w-14'} shrink-0 text-center`}>
+                  <span className={`block ${isNizar ? 'text-lg' : 'text-base'} font-bold leading-6 text-slate-800`} dir="ltr">{a.start_time?.slice(0, 5)}</span>
                   <span className="block text-[10px] text-slate-400" dir="ltr">{a.end_time?.slice(0, 5)}</span>
                 </div>
-                <Avatar name={a.patient?.full_name} className="h-9 w-9 text-xs" />
+                <Avatar name={a.patient?.full_name} className={`${isNizar ? 'h-11 w-11' : 'h-9 w-9'} text-xs`} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-slate-800">{a.patient?.full_name}</p>
-                  <p className="text-[11px] text-slate-400" dir="ltr">{a.patient?.phone}</p>
+                  <p className={`${isNizar ? 'text-base leading-snug break-words' : 'truncate text-sm'} font-bold text-slate-800`}>{a.patient?.full_name}</p>
                 </div>
                 <Badge map={APPT_STATUS} value={a.status} />
                 <button
@@ -177,18 +148,63 @@ export default function Schedule() {
                   <History size={13} />
                   آخر زيارة
                 </button>
-                <button
-                  onClick={() => startConsult(a)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white transition-colors hover:bg-emerald-700"
-                >
-                  <Stethoscope size={13} />
-                  بدء الكشف
-                </button>
+                {(!isNizar || !isDone) && (
+                  <button
+                    onClick={() => startConsult(a)}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white transition-colors hover:bg-emerald-700"
+                  >
+                    <Stethoscope size={13} />
+                    بدء الكشف
+                  </button>
+                )}
               </li>
-            ))}
+              )
+            })}
           </ul>
         )}
-      </Card>
+        </Card>
+        </div>
+
+        {/* أيام الأسبوع مربعات — نزار: تحت القائمة بعرض كامل */}
+        <div className={isNizar ? '' : 'lg:col-span-2'}>
+          <div className="lg:sticky lg:top-36">
+            <p className="mb-2 text-xs font-bold text-slate-500">الأيام — اضغط لعرض مواعيده</p>
+            <div className="grid grid-cols-3 gap-2">
+              {strip.map((d) => {
+                const selected = d === date
+                const count = dayCounts[d] || 0
+                return (
+                  <button
+                    key={d}
+                    onClick={() => setDate(d)}
+                    className={`flex h-[68px] w-full flex-col items-center justify-center gap-0.5 rounded-xl border transition-colors ${
+                      selected
+                        ? 'border-primary-700 bg-primary-700 text-white shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300'
+                    }`}
+                  >
+                    <span className={`text-[10px] font-semibold ${selected ? 'text-primary-100' : 'text-slate-400'}`}>
+                      {weekdayName(getWeekday(d))}
+                    </span>
+                    <span className="text-lg font-bold leading-6">{Number(d.slice(8, 10))}</span>
+                    <span
+                      className={`min-w-4 rounded-full px-1 text-[9px] font-bold ${
+                        count > 0
+                          ? selected
+                            ? 'bg-white text-primary-800'
+                            : 'bg-primary-100 text-primary-800'
+                          : 'bg-transparent text-slate-300'
+                      }`}
+                    >
+                      {count > 0 ? count : '·'}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
 
       <LastVisitModal open={!!lastVisitFor} onClose={() => setLastVisitFor(null)} patient={lastVisitFor} />
 

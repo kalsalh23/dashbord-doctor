@@ -182,11 +182,13 @@ export const DEFAULT_CATALOG = [
  */
 export function treatmentGlyph(treatment = '') {
   const t = String(treatment)
+  if (t.includes('مفقود')) return 'missing'
+  if (t.includes('كسر')) return 'fracture'
   if (t.includes('تلبيسة') || t.includes('تاج') || t.includes('فينير')) return 'crown'
   if (t.includes('زراعة')) return 'implant'
   if (t.includes('تقويم') || t.includes('براكت')) return 'ortho'
   if (t.includes('خلع') || t.includes('قلع')) return 'extraction'
-  if (t.includes('عصب') || t.includes('قناة')) return 'rct'
+  if (t.includes('عصب') || t.includes('قناة') || t.includes('لبّاً') || t.includes('معالجة لب')) return 'rct'
   if (t.includes('حشو')) return 'filling'
   if (t.includes('تسوس')) return 'caries'
   if (t.includes('لثة') || t.includes('كحت') || t.includes('تلبيد') || t.includes('خراج') || t.includes('سنخ') || t.includes('لحم')) return 'perio'
@@ -195,6 +197,7 @@ export function treatmentGlyph(treatment = '') {
   if (t.includes('فلورايد') || t.includes('وقائي') || t.includes('سدود') || t.includes('تطعيم')) return 'preventive'
   if (t.includes('أشعة')) return 'xray'
   if (t.includes('جسر')) return 'bridge'
+  if (t.includes('أخرى')) return 'other'
   return null
 }
 

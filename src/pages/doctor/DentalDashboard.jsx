@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   CalendarDays, Hourglass, Stethoscope, FolderOpen, History, SmilePlus,
-  Activity, Repeat, Siren, Wallet, NotebookPen, Banknote, UserPlus, CalendarPlus,
+  Activity, Repeat, Siren, Wallet, NotebookPen, Banknote, UserPlus, CalendarPlus, Pill, Receipt,
 } from 'lucide-react'
 import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
@@ -131,6 +131,46 @@ export default function DentalDashboard() {
           </div>
         }
       />
+
+      {/* بطاقات الوصول السريع — الواجهة الرئيسية للعيادات السنية */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {[
+          { to: '/doctor/consultation', label: 'جلسة جديدة', sub: 'كشف ومخطط أسنان للمريض', icon: SmilePlus, primary: true },
+          { to: '/doctor/patients', label: 'المرضى', sub: 'ملفات المرضى، الأسنان، الفلقات', icon: FolderOpen, badge: null },
+          { to: '/doctor/schedule', label: 'مواعيد اليوم', sub: 'جدول اليوم والمواعيد القادمة', icon: CalendarDays },
+          { to: '/doctor/today-log', label: 'سجلي اليوم', sub: 'ما تم إنجازه اليوم', icon: NotebookPen },
+          { to: '/doctor/payments', label: 'الدفعات', sub: 'قبايل الوصولات والأدوية المفترة', icon: Banknote },
+          { to: '/doctor/prices', label: 'أسعاري', sub: 'أسعار عيادتك على المخطط', icon: Wallet },
+          { to: '/doctor/archive', label: 'أرشيف المرضى', sub: 'سجل الزيارات والكشوف', icon: History },
+          { to: '/doctor/favorites', label: 'أدويتي الشائعة', sub: 'أدوية توصف بضغطة', icon: Pill },
+          { to: '/doctor/expenses', label: 'المصاريف', sub: 'مصاريف العيادة', icon: Receipt },
+          { to: '/doctor/settings', label: 'إعداداتي', sub: 'الهوية والأسعار والقوالب', icon: Activity },
+        ].map((c) =>
+          c.primary ? (
+            <button
+              key={c.to}
+              type="button"
+              onClick={() => nav(c.to)}
+              className="flex min-h-28 flex-col items-center justify-center gap-1.5 rounded-2xl bg-primary-700 px-3 py-4 text-white shadow-card transition-transform hover:scale-[1.02]"
+            >
+              <c.icon size={26} />
+              <span className="text-sm font-bold">{c.label}</span>
+              <span className="text-[10px] text-primary-100">{c.sub}</span>
+            </button>
+          ) : (
+            <button
+              key={c.to}
+              type="button"
+              onClick={() => nav(c.to)}
+              className="flex min-h-28 flex-col items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-4 shadow-sm transition-colors hover:border-primary-300 hover:bg-primary-50/40"
+            >
+              <c.icon size={24} className="text-primary-700" />
+              <span className="text-sm font-bold text-slate-800">{c.label}</span>
+              <span className="text-center text-[10px] leading-snug text-slate-400">{c.sub}</span>
+            </button>
+          )
+        )}
+      </div>
 
       {/* dental stats */}
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

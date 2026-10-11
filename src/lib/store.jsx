@@ -7,6 +7,7 @@ export function AppProvider({ children }) {
   const [session, setSession] = useState(undefined) // undefined = loading, null = signed out
   const [profile, setProfile] = useState(null)
   const [settings, setSettings] = useState(null)
+  const [settingsReady, setSettingsReady] = useState(false) // اكتمل أول تحميل لإعدادات العيادة
   const [mode, setMode] = useState(() => localStorage.getItem('ui_mode') || 'reception')
   const [toasts, setToasts] = useState([])
 
@@ -30,6 +31,9 @@ export function AppProvider({ children }) {
         .eq('clinic_id', prof.clinic_id)
         .maybeSingle()
       setSettings(st || null)
+      setSettingsReady(true)
+    } else {
+      setSettingsReady(true)
     }
   }, [])
 
@@ -44,6 +48,7 @@ export function AppProvider({ children }) {
       else {
         setProfile(null)
         setSettings(null)
+        setSettingsReady(false)
       }
     })
     return () => sub.subscription.unsubscribe()
@@ -58,6 +63,7 @@ export function AppProvider({ children }) {
     await supabase.auth.signOut()
     setProfile(null)
     setSettings(null)
+    setSettingsReady(false)
   }, [])
 
   const refreshSettings = useCallback(async () => {
@@ -109,6 +115,7 @@ export function AppProvider({ children }) {
       user: session?.user || null,
       profile,
       settings,
+      settingsReady,
       effectiveRole,
       isAdmin: profile?.role === 'admin',
       isSuper,
@@ -122,7 +129,7 @@ export function AppProvider({ children }) {
       toast,
       toasts,
     }),
-    [session, profile, settings, effectiveRole, isSuper, isAdminLevel, mode, toasts, switchMode, refreshSettings, refreshProfile, login, logout, toast]
+    [session, profile, settings, settingsReady, effectiveRole, isSuper, isAdminLevel, mode, toasts, switchMode, refreshSettings, refreshProfile, login, logout, toast]
   )
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>
