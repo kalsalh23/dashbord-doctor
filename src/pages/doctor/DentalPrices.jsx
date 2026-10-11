@@ -23,7 +23,9 @@ export default function DentalPrices() {
       .from('dental_pricebook')
       .select('*')
       .eq('clinic_id', profile.clinic_id)
+      // الأحدث أولاً داخل كل فئة: العلاج المضاف جديداً يظهر في الأعلى لا في الأسفل
       .order('category')
+      .order('created_at', { ascending: false })
       .order('treatment')
     setRows(data || [])
   }, [profile?.clinic_id])

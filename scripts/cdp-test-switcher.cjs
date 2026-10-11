@@ -50,8 +50,8 @@ async function main() {
         { id: RIAM_USER, clinic_id: RIAM_CLINIC, full_name: 'د. ريام نصر عبد الرحمن', role: 'doctor', specialty_key: 'general' },
       ],
       clinic_settings: [
-        { clinic_id: ARIF_CLINIC, doctor_name: 'محمد عارف عبد الرحمن', slot_minutes: 10, slots_before_break: 8, break_minutes: 10 },
-        { clinic_id: RIAM_CLINIC, doctor_name: 'د. ريام نصر عبد الرحمن', slot_minutes: 10, slots_before_break: 8, break_minutes: 0 },
+        { id: 'cs-a', clinic_id: ARIF_CLINIC, doctor_name: 'محمد عارف عبد الرحمن', slot_minutes: 10, slots_before_break: 8, break_minutes: 10 },
+        { id: 'cs-b', clinic_id: RIAM_CLINIC, doctor_name: 'د. ريام نصر عبد الرحمن', slot_minutes: 10, slots_before_break: 8, break_minutes: 0 },
       ],
       doctor_schedules: schedules,
     },

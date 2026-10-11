@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, SkeletonRows, Avatar, PageHeader, StatCard, Modal, Field, Textarea, Toggle, ConfirmDialog, Input } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
 import AccountSwitcher from '../../components/AccountSwitcher'
+import EmergencyApology from '../../components/EmergencyApology'
 import { todayStr, timeToMin, ageFrom, nowMinutes, minToTime, addDays } from '../../lib/format'
 
 /**
@@ -26,6 +27,7 @@ export default function DentalDashboard() {
   const [emergencyCancel, setEmergencyCancel] = useState(true)
   const [emergencyBusy, setEmergencyBusy] = useState(false)
   const [emergencyDone, setEmergencyDone] = useState(null)
+  const [emergencyTargets, setEmergencyTargets] = useState(null) // { list, note, cancelled } — شاشة إرسال الاعتذار الجماعي
   const [addOpen, setAddOpen] = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
   const [newP, setNewP] = useState({ name: '', age: '', phone: '' })
@@ -91,17 +93,21 @@ export default function DentalDashboard() {
     nav(`/doctor/consultation/new/${data.id}`)
   }
 
-  const runEmergency = async () => {    setEmergencyBusy(true)
-    const { data: count, error } = await supabase.rpc('emergency_broadcast', {
+  const runEmergency = async () => {
+    setEmergencyBusy(true)
+    const { data, error } = await supabase.rpc('emergency_broadcast', {
       p_note: emergencyNote.trim(),
       p_cancel: emergencyCancel,
     })
     setEmergencyBusy(false)
     if (error) return toast('error', friendlyDbError(error))
+    const count = typeof data === 'number' ? data : (data?.count ?? 0)
     audit(profile.clinic_id, 'emergency_broadcast', 'appointments', null, { notified: count })
     setEmergencyOpen(false)
     setEmergencyNote('')
-    setEmergencyDone(count ?? 0)
+    // قائمة مرضى اليوم جاهزة → شاشة إرسال الاعتذار الجماعي (واتساب لكل مريض)
+    if (data?.list) setEmergencyTargets({ list: data.list, note: emergencyNote.trim(), cancelled: emergencyCancel })
+    else setEmergencyDone(count ?? 0)
     load()
   }
 
@@ -119,6 +125,16 @@ export default function DentalDashboard() {
         actions={
           <div className="flex gap-2">
             <AccountSwitcher />
+            {/* حالة إسعافية: إشعار جماعي لكل مرضى اليوم + إلغاء مواعيدهم لتحرير الأوقات */}
+            <Button
+              variant="dangerGhost"
+              onClick={() => setEmergencyOpen(true)}
+              disabled={todayCount === 0}
+              title={todayCount === 0 ? 'لا توجد مواعيد اليوم' : 'إشعار جماعي لمرضى اليوم'}
+            >
+              <Siren size={16} />
+              حالة إسعافية
+            </Button>
             {/* الطبيب الشامل: يحجز بنفسه — لا يوجد موظف استقبال في عيادته */}
             {profile?.self_service && (
               <Button variant="secondary" onClick={() => setBookingOpen(true)}>
@@ -368,7 +384,7 @@ export default function DentalDashboard() {
         }
       >
         <p className="mb-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900">
-          سيُرسل اعتذار جماعي باسمك لكل مرضى اليوم عبر قنواتهم (إشعار تطبيق دليل طبي)، مع طلب إعادة الحجز.
+          باعتمادك تظهر قائمة مرضى اليوم المتأثرين، وترسل لهم رسالة اعتذار واحدة عبر واتساب (رسالة جاهزة لكل مريض)، مع طلب إعادة الحجز.
         </p>
         <Field label="نص إضافي (اختياري)" hint="مثال: الحالة إسعافية في المستشفى — سنرد عليكم لترتيب موعد بديل">
           <Textarea value={emergencyNote} onChange={(e) => setEmergencyNote(e.target.value)} rows={2} />
@@ -377,6 +393,13 @@ export default function DentalDashboard() {
           <Toggle checked={emergencyCancel} onChange={setEmergencyCancel} label="إلغاء مواعيد اليوم أيضاً (لتحرير الأوقات لإعادة الحجز)" />
         </div>
       </Modal>
+
+      {/* شاشة إرسال الاعتذار الجماعي عبر واتساب لكل مريض متأثر */}
+      <EmergencyApology
+        open={!!emergencyTargets}
+        onClose={() => setEmergencyTargets(null)}
+        targets={emergencyTargets}
+      />
 
       <ConfirmDialog
         open={emergencyDone !== null}

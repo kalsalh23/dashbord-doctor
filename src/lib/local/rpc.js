@@ -22,7 +22,12 @@ async function myProfile() {
   return p
 }
 
-const today = () => new Date().toISOString().slice(0, 10)
+// تاريخ اليوم بالتوقيت المحلي — نفس ما يستخدمه التطبيق (todayStr)
+// (باستخدام UTC يختلف التاريخ بعد منتصف الليل محلياً فيفشل ربط المواعيد)
+const today = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 const now = () => new Date().toISOString()
 
 async function getCurrentTimeHHMM() {
