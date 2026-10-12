@@ -6,13 +6,13 @@ import { supabase } from '../../lib/supabase'
 import { Card, Badge, APPT_STATUS, Button, EmptyState, SkeletonRows, Avatar, Tabs, PageHeader } from '../../components/ui'
 import LastVisitModal from '../../components/LastVisitModal'
 import { useSchedules } from '../../lib/hooks'
-import { isNizarStyle } from '../../lib/clinicStyle'
 import { todayStr, addDays, formatDateLong, dayLabel, timeToMin, getWeekday, weekdayName } from '../../lib/format'
 import { slotsForDay } from '../../lib/slots'
 
 export default function Schedule() {
   const { profile, toast, settings } = useApp()
-  const isNizar = isNizarStyle(profile, settings)
+  // أسلوب العرض الموحّد لكل العيادات (نفس واجهة الدكتور عارف) — قالب نizar فقط يختلف
+  const isNizar = settings?.prescription_template === 'nizar'
   const [schedules] = useSchedules()
   const [date, setDate] = useState(todayStr())
   const [appts, setAppts] = useState(null)

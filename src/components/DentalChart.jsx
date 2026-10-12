@@ -46,9 +46,75 @@ function toothKind(no) {
   return 'molar'
 }
 
-const KIND_W = { central: 34, lateral: 27, canine: 30, premolar: 37, molar: 48 }
+// السنّ في الفك العلوي؟ (رحى عليا لها ٣ جذور، سفلية جذران)
+const isUpperTooth = (no) => {
+  const n = Number(no)
+  return (n >= 10 && n < 30) || (n >= 50 && n < 60)
+}
 
-// سنّ تشريحي واقعي (يُرسم جذوره للأسفل — يستدعى داخل مجموعة معكوسة للفك العلوي)
+// ---- تيجان بحدود ومكامن إطباق حقيقية ----
+const CROWN = {
+  central:
+    'M -16.5,-17.6 Q 0,-19.4 16.5,-17.6 C 16.2,-9.5 15,2 12.6,11.5 C 9.5,15.4 4.6,17.8 0,17.8 C -4.6,17.8 -9.5,15.4 -12.6,11.5 C -15,2 -16.2,-9.5 -16.5,-17.6 Z',
+  lateral:
+    'M -13,-16.9 Q 0,-18.6 13,-16.9 C 12.7,-9 11.6,1.6 9.4,10.6 C 7.1,14.2 3.6,16.4 0,16.4 C -3.6,16.4 -7.1,14.2 -9.4,10.6 C -11.6,1.6 -12.7,-9 -13,-16.9 Z',
+  canine:
+    'M 0,-21.5 C 6.2,-14.4 13.6,-4.6 14.4,3.4 C 13.4,12 8.8,18.2 0,18.2 C -8.8,18.2 -13.4,12 -14.4,3.4 C -13.6,-4.6 -6.2,-14.4 0,-21.5 Z',
+  premolar:
+    'M -18.6,-16.4 Q -18.6,-17.4 -14.6,-17.4 L -8.4,-16.6 Q -4.4,-12.6 0,-13.2 Q 4.4,-12.6 8.4,-16.6 L 14.6,-17.4 Q 18.6,-17.4 18.6,-16.4 C 18.2,-6 15.2,7.6 11,14.4 C 7.6,17.8 3.8,19.2 0,19.2 C -3.8,19.2 -7.6,17.8 -11,14.4 C -15.2,7.6 -18.2,-6 -18.6,-16.4 Z',
+  molar:
+    'M -23.6,-17.4 Q -23.6,-18.4 -18.6,-18.4 L -11.6,-17.8 Q -7.6,-13.4 -3.4,-17.8 L 3.4,-17.8 Q 7.6,-13.4 11.6,-17.8 L 18.6,-18.4 Q 23.6,-18.4 23.6,-17.4 C 23.2,-6.4 19.4,7.6 14.6,15.2 C 10,18.6 4.8,19.8 0,19.8 C -4.8,19.8 -10,18.6 -14.6,15.2 C -19.4,7.6 -23.2,-6.4 -23.6,-17.4 Z',
+}
+
+// ---- جذور بعددها التشريحي الحقيقي ----
+const ROOTS = {
+  central: ['M -9.6,16.6 Q -8.2,31 -2.6,43.5 Q 5.2,30.4 8.4,16.6 Z'],
+  lateral: ['M -7.8,15.2 Q -6.6,28.6 -1.6,39.8 Q 5,28 7,15.2 Z'],
+  canine: ['M -11,16.8 Q -7.6,34 0,49 Q 7.2,33.2 10.2,16.8 Z'],
+  premolar: [
+    'M -10.4,16.4 Q -8.6,30 -2.8,43 Q 3.2,29.6 6,16.4 Z',
+    'M -6,16.2 Q -4,27 1.4,36.5 Q 6.4,27.2 8.4,16.2 Z',
+  ],
+  molarUpper: [
+    'M -18.4,16.6 Q -20.6,32 -14.6,44 Q -7.4,32 -8.4,16.6 Z',
+    'M 18.4,16.6 Q 20.6,32 14.6,44 Q 7.4,32 8.4,16.6 Z',
+    'M -7.6,17 Q -6.4,30 0,41.5 Q 6.4,30 7.6,17 Z',
+  ],
+  molarLower: [
+    'M -10.6,16.4 Q -9,31 -3.6,42.5 Q 2.6,30.8 3.4,16.4 Z',
+    'M -3.2,16.2 Q -1.2,29 3.4,39.5 Q 9.4,29.6 10,16.2 Z',
+  ],
+}
+
+function rootsFor(no) {
+  const kind = toothKind(no)
+  if (kind === 'molar') return isUpperTooth(no) ? ROOTS.molarUpper : ROOTS.molarLower
+  return ROOTS[kind]
+}
+
+// تفاصيل سطح الإطباق: حدبات وشقوق حقيقية لكل نوع
+function OcclusalDetail({ kind, stroke }) {
+  const s = { stroke, strokeWidth: 1.15, fill: 'none', opacity: 0.5, strokeLinecap: 'round' }
+  if (kind === 'central' || kind === 'lateral') return <path d="M 0,-14.5 L 0,9" {...s} />
+  if (kind === 'canine') return <path d="M 0,-17 L 0,13" {...s} />
+  if (kind === 'premolar') {
+    return (
+      <g {...s}>
+        <path d="M -8.5,-8 Q 0,-11 8.5,-8" />
+        <path d="M 0,-11 L 0,13" />
+      </g>
+    )
+  }
+  return (
+    <g {...s}>
+      <path d="M -13,-4 Q -8,-9 -2,-8 Q 2,-11 8,-8.5 Q 13,-5.5 13,1 Q 8,-3 2,-1 Q -2,-4 -8,-1.5 Q -13,0 -13,-4 Z" />
+      <path d="M -6,-6 L -6,6" />
+      <path d="M 6,-6 L 6,6" />
+    </g>
+  )
+}
+
+// سنّ تشريحي واقعي (يُرسم جذوره للأسفل — يُستدعى داخل مجموعة معكوسة للفك العلوي)
 function ToothArt({ no, fill = '#fdf8ef', stroke = '#c9ad7c', options = {} }) {
   const kind = toothKind(no)
   const k = options.scale || 1
@@ -56,104 +122,219 @@ function ToothArt({ no, fill = '#fdf8ef', stroke = '#c9ad7c', options = {} }) {
   const st = {
     fill: missing ? 'none' : fill,
     stroke: missing ? '#b6c2cf' : stroke,
-    strokeWidth: 1.5,
+    strokeWidth: 1.4,
     strokeDasharray: missing ? '3 2.5' : undefined,
     opacity: missing ? 0.35 : 1,
   }
-  // مسارات التاج لكل نوع (حافة الإطباق أعلى، العنق أسفل) — بنسب تشريحية
-  const CROWN = {
-    central: 'M -17,-16 Q 0,-18 17,-16 C 16.5,-4.5 14,7.5 10.5,15 Q 0,18.5 -10.5,15 C -14,7.5 -16.5,-4.5 -17,-16 Z',
-    lateral: 'M -13.5,-15.5 Q 0,-17 13.5,-15.5 C 13,-4.5 11.3,6.8 8.3,14.3 Q 0,17.7 -8.3,14.3 C -11.3,6.8 -13,-4.5 -13.5,-15.5 Z',
-    canine: 'M 0,-18 C 5.3,-12.8 14.3,-3 15,3 C 13.5,11.3 9,16.5 0,16.5 C -9,16.5 -13.5,11.3 -15,3 C -14.3,-3 -5.3,-12.8 0,-18 Z',
-    premolar:
-      'M -18.8,-15.8 Q -18.8,-16.5 -15,-16.5 L -4.5,-15.9 Q 0,-12.9 4.5,-15.9 L 15,-16.5 Q 18.8,-16.5 18.8,-15.8 C 18.5,-4.5 15,8.3 10.5,15 Q 0,18.5 -10.5,15 C -15,8.3 -18.5,-4.5 -18.8,-15.8 Z',
-    molar:
-      'M -24,-16.5 Q -24,-17.3 -19.5,-17.3 L -10.5,-16.8 Q -6.8,-13 -3,-16.8 L 3,-16.8 Q 6.8,-13 10.5,-16.8 L 19.5,-17.3 Q 24,-17.3 24,-16.5 C 23.6,-4.5 19.5,7.5 15,15.8 Q 0,19.5 -15,15.8 C -19.5,7.5 -23.6,-4.5 -24,-16.5 Z',
-  }
-  // الجذور لكل نوع (من العنق نحو الأسفل)
-  const ROOT = {
-    central: 'M -10.5,15.8 Q -8.3,30 -1.2,41 Q 5.7,29.3 9.3,15.8 Z',
-    lateral: 'M -8.7,15 Q -6.6,28.5 -0.9,39 Q 4.8,27.8 7.8,15 Z',
-    canine: 'M -11.3,15.8 Q -7.2,33 0,46.5 Q 6.6,32.3 10.2,15.8 Z',
-    premolar: 'M -9.6,15.3 Q -7.2,28.5 0,40.5 Q 6.3,27.9 8.7,15.3 Z',
-  }
+  const roots = rootsFor(no)
+  const crownD = CROWN[kind]
+  const gid = 'en-' + no + '-' + Math.round(k * 1000)
+  // خطّ العنق (أعلى منطقة اللثة) يتبع عرض التاج
+  const neck =
+    kind === 'molar'
+      ? 'M -22.4,15 Q -11,18.6 0,18.6 Q 11,18.6 22.4,15'
+      : kind === 'canine'
+      ? 'M -14.2,15.6 Q -7,18.2 0,18.2 Q 7,18.2 14.2,15.6'
+      : kind === 'premolar'
+      ? 'M -17.8,14.4 Q -9,17.8 0,17.8 Q 9,17.8 17.8,14.4'
+      : 'M -15.4,14.4 Q -8,17.6 0,17.6 Q 8,17.6 15.4,14.4'
   return (
-    <g transform={`scale(${k})`} opacity={missing ? 0.35 : 1}>
+    <g transform={'scale(' + k + ')'} opacity={missing ? 0.35 : 1}>
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity={0.8} />
+          <stop offset="30%" stopColor="#ffffff" stopOpacity={0.14} />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+        </linearGradient>
+      </defs>
       {/* الجذور */}
-      {kind === 'molar' ? (
-        <>
-          <path d="M -18.8,16.2 Q -20.3,30 -12.8,39.8 Q -5.1,30 -6,16.2 Z" {...st} />
-          <path d="M 18.8,16.2 Q 20.3,30 12.8,39.8 Q 5.1,30 6,16.2 Z" {...st} />
-        </>
-      ) : (
-        <path d={ROOT[kind]} {...st} />
-      )}
+      {roots.map((d, i) => (
+        <path key={i} d={d} {...st} />
+      ))}
       {/* التاج */}
-      <path d={CROWN[kind]} {...st} />
-      {/* تفاصيل الإطباق */}
-      {kind === 'molar' && !missing && (
-        <g stroke={stroke} strokeWidth={1.2} fill="none" opacity={0.55}>
-          <path d="M -7.5,-5.3 Q 0,-9.8 7.5,-5.3" />
-          <path d="M -6,2.3 Q 0,0 6,2.3" />
-        </g>
-      )}
-      {kind === 'premolar' && !missing && (
-        <path d="M 0,-12.9 L 0,-4.5" stroke={stroke} strokeWidth={1.1} opacity={0.55} />
-      )}
-      {/* لمعة خفيفة على المينا */}
-      {!missing && (
-        <path d={`M ${-KIND_W[kind] * 0.3},-${kind === 'molar' ? 8 : 7} Q ${-KIND_W[kind] * 0.08},-${kind === 'molar' ? 11 : 10} ${KIND_W[kind] * 0.18},-${kind === 'molar' ? 8 : 7}`} stroke="#ffffff" strokeWidth={2} fill="none" opacity={0.8} strokeLinecap="round" />
-      )}
+      <path d={crownD} {...st} />
+      {/* حدبات وشقوق الإطباق */}
+      {!missing && <OcclusalDetail kind={kind} stroke={stroke} />}
+      {/* لمعة المينا + تدرّج لون المينا */}
+      {!missing && <path d={crownD} fill={'url(#' + gid + ')'} stroke="none" style={{ pointerEvents: 'none' }} />}
+      {/* خطّ العنق عند اللثة */}
+      {!missing && <path d={neck} fill="none" stroke={stroke} strokeWidth={1.1} opacity={0.45} />}
       {options.overlay}
     </g>
   )
+}
+
+// أشكال واقعية لكل علاج — تُرسم فوق السن بمقاييسه الحقيقية (s = اتجاه الفك، no = رقم السن)
+function treatmentOverlay(g, s, no) {
+  if (!g) return null
+              switch (g) {
+                case 'caries':
+                  // تجويف تسوّس غير منتظم بلون بني غامق مع حدّ داكن
+                  return (
+                    <path
+                      d="M -6.2,-6.6 Q -2.4,-9.2 1.4,-7.6 Q 6,-8.4 7.2,-3.4 Q 8.6,1.6 3.2,3.6 Q -2.4,6.2 -6,2.6 Q -9.4,-1.2 -6.2,-6.6 Z"
+                      transform={`scale(1,${s}) translate(0,${-4 * s})`}
+                      fill="#3f1006"
+                      stroke="#1c0703"
+                      strokeWidth={0.7}
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  )
+                case 'filling':
+                  // حشوة كومبوزيت/أملغم غير منت几何 على سطح الإطباق
+                  return (
+                    <g transform={`scale(1,${s})`} style={{ pointerEvents: 'none' }}>
+                      <path
+                        d="M -7.4,-6.4 Q -1,-9.6 5,-6.2 Q 8.8,-2.6 5.2,1.8 Q 0.4,5.4 -4.6,3.2 Q -9.4,0.2 -7.4,-6.4 Z"
+                        fill="#cbd5e1"
+                        stroke="#64748b"
+                        strokeWidth={0.9}
+                      />
+                      <path d="M -4.6,-4.4 Q 0,-6 3.4,-3.6" fill="none" stroke="#ffffff" strokeWidth={1.1} opacity={0.85} />
+                    </g>
+                  )
+                case 'crown':
+                  // حدّ تاج عند العنق (التاج نفسه ملوّن بالكامل من colors())
+                  return (
+                    <path
+                      d="M -17.4,13.4 Q -9,17.4 0,17.4 Q 9,17.4 17.4,13.4"
+                      transform={`scale(1,${s})`}
+                      fill="none"
+                      stroke="#b45309"
+                      strokeWidth={1.6}
+                      opacity={0.9}
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  )
+                case 'implant':
+                  // زراعة: برغي حلزوني بلفات حقيقية في موضع الجذر
+                  return (
+                    <g style={{ pointerEvents: 'none' }}>
+                      <path
+                        d={`M -4.4,${16 * s} L 4.4,${16 * s} L 3,${40 * s} L -3,${40 * s} Z`}
+                        transform={`scale(1,${s})`}
+                        fill="#e2e8f0"
+                        stroke="#0f766e"
+                        strokeWidth={1.3}
+                      />
+                      {[20, 24.5, 29, 33.5, 38].map((y, i) => (
+                        <line
+                          key={i}
+                          x1={i % 2 ? -3.4 : -3}
+                          y1={y * s}
+                          x2={i % 2 ? 3 : 3.4}
+                          y2={(y + 2.4) * s}
+                          stroke="#0f766e"
+                          strokeWidth={1.1}
+                          strokeLinecap="round"
+                        />
+                      ))}
+                      <ellipse cx={0} cy={16.6 * s} rx={4.6} ry={2.2 * s} fill="#f1f5f9" stroke="#0f766e" strokeWidth={1.2} />
+                    </g>
+                  )
+                case 'rct':
+                  // معالجة لبّ: قنوات الجذور (خط لكل جذر)
+                  return (
+                    <g style={{ pointerEvents: 'none' }}>
+                      {rootsFor(no).length <= 2 ? (
+                        rootsFor(no).map((_, i) => (
+                          <line
+                            key={i}
+                            x1={rootsFor(no).length === 2 ? (i === 0 ? -4 : 4.5) : 0}
+                            y1={10 * s}
+                            x2={rootsFor(no).length === 2 ? (i === 0 ? -4 : 4.5) : 0}
+                            y2={32 * s}
+                            stroke="#b91c1c"
+                            strokeWidth={1.5}
+                            strokeLinecap="round"
+                          />
+                        ))
+                      ) : (
+                        [-6, 0, 6.5].map((x, i) => (
+                          <line key={i} x1={x} y1={10 * s} x2={x} y2={i === 1 ? 30 : 28} stroke="#b91c1c" strokeWidth={1.4} strokeLinecap="round" />
+                        ))
+                      )}
+                    </g>
+                  )
+                case 'fracture':
+                  // كسر: شقّ متعرّج يعبر التاج
+                  return (
+                    <polyline
+                      points="-10,8 -6,-2 -2,4 1,-8 5,3 9,-5"
+                      transform={`scale(1,${s})`}
+                      fill="none"
+                      stroke="#0f172a"
+                      strokeWidth={1.9}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  )
+                case 'ortho':
+                  // تقويم: bracket + سلك يربط الأسنان
+                  return (
+                    <g style={{ pointerEvents: 'none' }}>
+                      <rect x={-4.4} y={-4.4 * s} width={8.8} height={8.8 * s} rx={1.4} fill="#fdf2f8" stroke="#db2777" strokeWidth={1.5} />
+                      <line x1={-5.6} y1={-0.6 * s} x2={5.6} y2={-0.6 * s} stroke="#be185d" strokeWidth={0.9} />
+                    </g>
+                  )
+                case 'veneer':
+                  // فينير: طبقة رقيقة على السطح الأمامي
+                  return (
+                    <path
+                      d="M -14,-14.6 Q 0,-16.6 14,-14.6 Q 13,-2 0,0.6 Q -13,-2 -14,-14.6 Z"
+                      transform={`scale(1,${s})`}
+                      fill="#bae6fd"
+                      opacity={0.85}
+                      stroke="#0284c7"
+                      strokeWidth={0.8}
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  )
+                case 'other':
+                  return <circle cx={6} cy={5 * s} r={3} fill="#a78bfa" style={{ pointerEvents: 'none' }} />
+                case 'extraction':
+                  // خلع: علامة X فوق السنّ المتضاءل
+                  return (
+                    <g stroke="#0f172a" strokeWidth={2.6} strokeLinecap="round" style={{ pointerEvents: 'none' }}>
+                      <line x1={-9} y1={-9 * s} x2={9} y2={9 * s} />
+                      <line x1={9} y1={-9 * s} x2={-9} y2={9 * s} />
+                    </g>
+                  )
+                case 'cleaning':
+                case 'whitening':
+                  return (
+                    <g fill="#ffffff" opacity={0.95} style={{ pointerEvents: 'none' }}>
+                      <path d="M 0,-11 L 1.8,-6.4 L 6.6,-5.4 L 3,-1.8 L 4,2.8 L 0,0.6 L -4,2.8 L -3,-1.8 L -6.6,-5.4 L -1.8,-6.4 Z" transform={`scale(1,${s}) translate(0,${-4 * s})`} />
+                      <circle cx={-7} cy={-7 * s} r={1.3} />
+                      <circle cx={7} cy={-7 * s} r={1.3} />
+                    </g>
+                  )
+                case 'preventive':
+                  return (
+                    <text x={0} y={4 * s} textAnchor="middle" fontSize={12} fontWeight={800} fill="#16a34a" style={{ pointerEvents: 'none' }}>
+                      ✓
+                    </text>
+                  )
+                case 'perio':
+                  // التهاب لثة: نقاط حمرة على خطّ اللثة
+                  return (
+                    <g fill="#e11d48" style={{ pointerEvents: 'none' }}>
+                      {[-8, -2.5, 3, 8.5].map((x, i) => (
+                        <circle key={i} cx={x} cy={(14 + (i % 2 ? 1.4 : 0)) * s} r={1.9} />
+                      ))}
+                    </g>
+                  )
+                default:
+                  return null
+              }
 }
 
 // رمز الحالة فوق السنّ — نسخة مصغرة تُستخدم في الدليل وشبكة النافذة
 function StateIcon({ def, size = 34, active }) {
   const s = 1
   const gold = def.key === 'تاج' || def.key === 'جسر'
-  const overlay = (glyph) => {
-    if (!glyph) return null
-    switch (glyph) {
-      case 'caries':
-        return <circle cx={-4.5} cy={-4.5} r={3.2} fill="#431407" />
-      case 'filling':
-        return <circle cx={0} cy={0} r={3.4} fill="#94a3b8" opacity={0.95} />
-      case 'crown':
-        return null
-      case 'bridge':
-        return (
-          <g>
-            <line x1={-15} y1={-5} x2={15} y2={-5} stroke="#7c3aed" strokeWidth={2.6} />
-            <line x1={-15} y1={-1} x2={15} y2={-1} stroke="#7c3aed" strokeWidth={2.6} />
-          </g>
-        )
-      case 'implant':
-        return (
-          <g stroke="#065f46" strokeWidth={1.8} strokeLinecap="round">
-            <line x1={0} y1={11} x2={0} y2={27} />
-            <line x1={-3} y1={14} x2={3} y2={16} />
-            <line x1={3} y1={19} x2={-3} y2={21} />
-            <line x1={-3} y1={23} x2={3} y2={25} />
-          </g>
-        )
-      case 'missing':
-        return null
-      case 'rct':
-        return <line x1={0} y1={10} x2={0} y2={27} stroke="#7c2d12" strokeWidth={2} strokeLinecap="round" />
-      case 'fracture':
-        return <polyline points={-9 + ',1 ' + -3 + ',-3 ' + 2 + ',2 ' + 9 + ',-2'} fill="none" stroke="#334155" strokeWidth={1.8} strokeLinecap="round" />
-      case 'ortho':
-        return <rect x={-3.5} y={-3.5} width={7} height={7} rx={1.2} fill="#fdf2f8" stroke="#db2777" strokeWidth={1.4} />
-      case 'veneer':
-        return <line x1={-9} y1={-9} x2={9} y2={-9} stroke="#38bdf8" strokeWidth={2.6} strokeLinecap="round" />
-      case 'other':
-        return <circle cx={6} cy={6} r={3} fill="#a78bfa" />
-      default:
-        return null
-    }
-  }
+  const overlay = (glyph) => treatmentOverlay(glyph, 1, 11)
   return (
     <svg width={size} height={size * 1.25} viewBox="-16 -16 32 44" aria-hidden="true">
       <ToothArt no={def.glyph === 'implant' ? 14 : 11} fill={gold ? '#f0b429' : '#fdf8ef'} stroke={active ? '#0f766e' : '#c9ad7c'} options={{ overlay: overlay(def.glyph), missing: def.glyph === 'missing', scale: 0.92 }} />
@@ -375,66 +556,7 @@ export default function DentalChart({ patientId, age, entries, pricebook, onEntr
           const h = historyByTooth[no]
           const glyph = list && list.length ? treatmentGlyph(list[list.length - 1].treatment) : null
           const stateDef = STATE_DEFS.find((d) => d.glyph === glyph)
-          const overlay = (g) => {
-            if (!g) return null
-            switch (g) {
-              case 'caries':
-                return <circle cx={-4.5} cy={-4.5 * s} r={3.4} fill="#431407" style={{ pointerEvents: 'none' }} />
-              case 'filling':
-                return <circle cx={0} cy={0} r={3.8} fill="#94a3b8" opacity={0.95} style={{ pointerEvents: 'none' }} />
-              case 'crown':
-                return null // التاج يلوّن التاج كاملاً بالذهبي من colors()
-              case 'implant':
-                return (
-                  <g stroke="#065f46" strokeWidth={2} strokeLinecap="round" style={{ pointerEvents: 'none' }}>
-                    <line x1={0} y1={11 * s} x2={0} y2={(11 + 16) * s} />
-                    <line x1={-3} y1={(14) * s} x2={3} y2={(16) * s} />
-                    <line x1={3} y1={(19) * s} x2={-3} y2={(21) * s} />
-                  </g>
-                )
-              case 'rct':
-                return <line x1={0} y1={9 * s} x2={0} y2={(11 + 15) * s} stroke="#7c2d12" strokeWidth={2.2} strokeLinecap="round" style={{ pointerEvents: 'none' }} />
-              case 'fracture':
-                return <polyline points="-9,1 -3,-3 2,2 9,-2" fill="none" stroke="#334155" strokeWidth={1.8} strokeLinecap="round" style={{ pointerEvents: 'none' }} />
-              case 'ortho':
-                return <rect x={-3.5} y={-3.5} width={7} height={7} rx={1.2} fill="#fdf2f8" stroke="#db2777" strokeWidth={1.4} style={{ pointerEvents: 'none' }} />
-              case 'veneer':
-                return <line x1={-10} y1={-9 * s} x2={10} y2={-9 * s} stroke="#38bdf8" strokeWidth={2.8} strokeLinecap="round" style={{ pointerEvents: 'none' }} />
-              case 'other':
-                return <circle cx={6} cy={5 * s} r={3} fill="#a78bfa" style={{ pointerEvents: 'none' }} />
-              case 'extraction':
-                return (
-                  <g stroke="#0f172a" strokeWidth={2.4} strokeLinecap="round" style={{ pointerEvents: 'none' }}>
-                    <line x1={-8} y1={-7} x2={8} y2={7} />
-                    <line x1={8} y1={-7} x2={-8} y2={7} />
-                  </g>
-                )
-              case 'cleaning':
-              case 'whitening':
-                return (
-                  <g fill="#ffffff" opacity={0.95} style={{ pointerEvents: 'none' }}>
-                    <circle cx={-4} cy={-3 * s} r={1.6} />
-                    <circle cx={4} cy={2 * s} r={1.6} />
-                  </g>
-                )
-              case 'preventive':
-                return (
-                  <text x={0} y={3 * s} textAnchor="middle" fontSize={11} fontWeight={800} fill="#16a34a" style={{ pointerEvents: 'none' }}>
-                    ✓
-                  </text>
-                )
-              case 'perio':
-                return (
-                  <g fill="#fb7185" style={{ pointerEvents: 'none' }}>
-                    <circle cx={-5} cy={9 * s} r={1.8} />
-                    <circle cx={0} cy={10 * s} r={1.8} />
-                    <circle cx={5} cy={9 * s} r={1.8} />
-                  </g>
-                )
-              default:
-                return null
-            }
-          }
+          const overlay = (g) => treatmentOverlay(g, s, no)
           return (
             <g
               key={no}

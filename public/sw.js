@@ -1,4 +1,5 @@
 // Service Worker — نظام إدارة العيادة: استقبال إشعارات طلبات المواعيد الواردة
+// + تشغيل صوت النظام (إشعار غير صامت) وإعادة التنبيه للعميل إن كان التطبيق مفتوحاً
 self.addEventListener('install', () => self.skipWaiting())
 
 self.addEventListener('activate', (event) => {
@@ -20,9 +21,22 @@ self.addEventListener('push', (event) => {
     dir: 'rtl',
     lang: 'ar',
     tag: data.tag || undefined,
+    // صوت نظام خارجي: الإشعار غير صامت + أولوية عالية
+    silent: false,
+    requireInteraction: true,
+    renotify: true,
+    vibrate: [200, 100, 200],
     data: { url: data.url || '/reception/appointments' },
   }
-  event.waitUntil(self.registration.showNotification(title, options))
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(title, options),
+      // إن كان التطبيق مفتوحاً: أبلِغ الصفحة لتشغيل النغمة الداخلية أيضاً
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+        for (const client of list) client.postMessage({ type: 'clinic-alert', kind: data.kind || 'new', title, body: data.body || '' })
+      }),
+    ]),
+  )
 })
 
 self.addEventListener('notificationclick', (event) => {

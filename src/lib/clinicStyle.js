@@ -19,17 +19,29 @@ const NO_PATIENTS_PAGE_CLINICS = {
   '0015c9f9-c90e-496e-a65b-2ad04a85be8e': 'عيادة د. محمد عارف عبد الرحمن',
 }
 
+// عيادات يُدخل فيها عمر المريض رقماً (بدل تاريخ الميلاد) عند الإضافة
+const NUMERIC_AGE_CLINICS = {
+  '0015c9f9-c90e-496e-a65b-2ad04a85be8e': 'عيادة الدكتور محمد عارف عبد الرحمن',
+}
+
 export const clinicIdOf = (profile) => profile?.clinic_id || profile?.clinic?.id || null
 
-// هل هذه العيادة تُعرض بأسلوب الدكتور نزار؟
+// هل هذه العيادة تُعرض بأسلوب الدكتور نizar؟
 export function isNizarStyle(profile, settings) {
   if (settings?.prescription_template === 'nizar') return true
   const clinicId = clinicIdOf(profile)
   return !!(clinicId && NIZAR_STYLE_CLINICS[clinicId])
 }
 
-// هل تُخفى واجهة «المرضى» من قائمة هذه العيادة؟
+// هل يُخفى واجهة «المرضى» من قائمة هذه العيادة؟
 export function hidesPatientsPage(profile) {
   const clinicId = clinicIdOf(profile)
   return !!(clinicId && NO_PATIENTS_PAGE_CLINICS[clinicId])
+}
+
+// هل يُدخل عمر المريض رقماً في هذه العيادة؟ (نفس سلوك عيادة د. نزار)
+export function usesNumericAge(profile, settings) {
+  if (isNizarStyle(profile, settings)) return true
+  const clinicId = clinicIdOf(profile)
+  return !!(clinicId && NUMERIC_AGE_CLINICS[clinicId])
 }

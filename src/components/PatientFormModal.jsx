@@ -3,13 +3,13 @@ import { Modal, Button, Input, Select, Field, Textarea } from './ui'
 import { useApp, audit } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { friendlyDbError } from '../lib/hooks'
-import { isNizarStyle } from '../lib/clinicStyle'
+import { usesNumericAge } from '../lib/clinicStyle'
 import { ageFrom } from '../lib/format'
 
 /** Add / edit basic patient information (reception & admin). */
 export default function PatientFormModal({ open, onClose, patient, onSaved }) {
   const { profile, settings, toast } = useApp()
-  const isNizar = isNizarStyle(profile, settings)
+  const isNizar = usesNumericAge(profile, settings)
   const [form, setForm] = useState({ full_name: '', phone: '', date_of_birth: '', age: '', gender: '', address: '', notes: '' })
   const [saving, setSaving] = useState(false)
 

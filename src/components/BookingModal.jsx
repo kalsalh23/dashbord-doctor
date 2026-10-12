@@ -3,7 +3,7 @@ import { UserPlus, CalendarCheck } from 'lucide-react'
 import { Modal, Button, Input, Select, Field, Spinner, EmptyState } from './ui'
 import { useApp, audit } from '../lib/store'
 import { useSchedules, fetchBookedMap, friendlyDbError } from '../lib/hooks'
-import { isNizarStyle } from '../lib/clinicStyle'
+import { usesNumericAge } from '../lib/clinicStyle'
 import { slotsForDay } from '../lib/slots'
 import { todayStr, addDays, dayLabel, formatDateShort, nowMinutes, timeToMin, genderLabel, ageFrom } from '../lib/format'
 import { supabase } from '../lib/supabase'
@@ -19,7 +19,7 @@ import { supabase } from '../lib/supabase'
  */
 export default function BookingModal({ open, onClose, onBooked, presetPatient, presetDate, moveAppointment }) {
   const { profile, settings, toast } = useApp()
-  const isNizar = isNizarStyle(profile, settings)
+  const isNizar = usesNumericAge(profile, settings)
   const [schedules] = useSchedules()
   const [search, setSearch] = useState('')
   const [results, setResults] = useState([])
@@ -98,7 +98,7 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
       return
     }
     setCreatingPatient(true)
-    // عيادات أسلوب نزار (نزار، ريام...): العمر يُكتب مباشرة — يُحوَّل لتاريخ ميلاد تقريبي يخدم حساب العمر لاحقاً
+    // عيادات إدخال العمر رقمياً (نزار، عارف...): العمر يُكتب مباشرة — يُحوَّل لتاريخ ميلاد تقريبي يخدم حساب العمر لاحقاً
     let dob = newPatient.date_of_birth || null
     if (isNizar && !dob && String(newPatient.age).trim() !== '') {
       const a = Number(newPatient.age)

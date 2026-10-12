@@ -98,36 +98,66 @@ export default function DentalPrices() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-4xl">
       <PageHeader
         title="أسعاري"
-        subtitle="فئات التشخيص وعلاجاتها وأسعارها — السعر المثبت هنا يُحسب تلقائياً على حساب المريض في الكشف"
+        subtitle="أسعار العيادة على مخطط الأسنان — تُحسب تلقائياً على حساب المريض عند الكشف"
         actions={
-          <Button size="sm" variant="secondary" onClick={seedDefaults} loading={seeding} title="يضيف الفئات والعلاجات غير الموجودة فقط">
-            <Plus size={14} />
-            إضافة القائمة الافتراضية
+          <Button variant="secondary" size="sm" onClick={() => setAddedOpen(true)} className="print:hidden">
+            <RotateCcw size={14} />
+            استعادة القائمة الافتراضية
           </Button>
         }
       />
 
+      {/* نموذج إضافة علاج جديد — ثابت في أعلى الواجهة لسهولة الوصول */}
+      {rows !== null && (
+        <div className="sticky top-14 z-20 -mx-1 mb-4 bg-slate-50/95 px-1 py-1 backdrop-blur">
+          <Card title="إضافة علاج جديد" subtitle="العلاج المضاف يظهر في أعلى قائمة فئته مباشرة">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="الفئة">
+                <Select value={newRow.category} onChange={(e) => setNewRow((r) => ({ ...r, category: e.target.value }))}>
+                  <option value="">— اختر فئة أو اكتب جديدة —</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="أو فئة جديدة" hint="اتركها فارغة إذا اخترت فئة من القائمة">
+                <Input value={newRow.category && !categories.includes(newRow.category) ? newRow.category : ''} onChange={(e) => setNewRow((r) => ({ ...r, category: e.target.value }))} placeholder="مثال: جراحة الفم" />
+              </Field>
+              <Field label="اسم العلاج" required>
+                <Input value={newRow.treatment} onChange={(e) => setNewRow((r) => ({ ...r, treatment: e.target.value }))} placeholder="مثال: حشو ضوئي" />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="السعر">
+                  <Input type="number" dir="ltr" value={newRow.price} onChange={(e) => setNewRow((r) => ({ ...r, price: e.target.value }))} placeholder="150000" />
+                </Field>
+                <Field label="اللون على الفك">
+                  <input
+                    type="color"
+                    value={newRow.color}
+                    onChange={(e) => setNewRow((r) => ({ ...r, color: e.target.value }))}
+                    className="h-10 w-full cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
+                  />
+                </Field>
+              </div>
+            </div>
+            <div className="mt-3 flex justify-start">
+              <Button onClick={addRow} loading={adding}>
+                <Plus size={15} />
+                إضافة العلاج
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* قائمة الفئات — الأحدث أولاً داخل كل فئة */}
       {rows === null ? (
         <SkeletonRows rows={5} />
-      ) : rows.length === 0 ? (
-        <Card>
-          <EmptyState
-            icon={Wallet}
-            title="لم تُدخل أسعارك بعد"
-            message="حمّل القائمة الافتراضية الكاملة (فئات وعلاجات بألوانها) وعدّل الأسعار، أو أضف علاجاتك بنفسك"
-            action={
-              <Button onClick={seedDefaults} loading={seeding}>
-                <Plus size={15} />
-                تحميل القائمة الافتراضية
-              </Button>
-            }
-          />
-        </Card>
       ) : (
-        <div className="space-y-4">
+      <div className="space-y-4">
           {grouped.map(([category, items]) => (
             <Card key={category} title={category} bodyClass="!p-0">
               <ul className="divide-y divide-slate-100">
@@ -172,48 +202,16 @@ export default function DentalPrices() {
               </ul>
             </Card>
           ))}
+          {rows !== null && rows.length === 0 && (
+            <Card>
+              <EmptyState
+                icon={Wallet}
+                title="لا توجد أسعار محفوظة بعد"
+                message="أضف علاجاً من النموذج في الأعلى — أو استعد القائمة الافتراضية وعدّلها"
+              />
+            </Card>
+          )}
         </div>
-      )}
-
-      {/* إضافة علاج جديد */}
-      {rows !== null && (
-        <Card title="إضافة علاج جديد" className="mt-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="الفئة">
-              <Select value={newRow.category} onChange={(e) => setNewRow((r) => ({ ...r, category: e.target.value }))}>
-                <option value="">— اختر فئة أو اكتب جديدة —</option>
-                {categories.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="أو فئة جديدة" hint="اتركها فارغة إذا اخترت فئة من القائمة">
-              <Input value={newRow.category && !categories.includes(newRow.category) ? newRow.category : ''} onChange={(e) => setNewRow((r) => ({ ...r, category: e.target.value }))} placeholder="مثال: جراحة الفم" />
-            </Field>
-            <Field label="اسم العلاج" required>
-              <Input value={newRow.treatment} onChange={(e) => setNewRow((r) => ({ ...r, treatment: e.target.value }))} placeholder="مثال: حشو ضوئي" />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="السعر">
-                <Input type="number" dir="ltr" value={newRow.price} onChange={(e) => setNewRow((r) => ({ ...r, price: e.target.value }))} placeholder="150000" />
-              </Field>
-              <Field label="اللون على الفك">
-                <input
-                  type="color"
-                  value={newRow.color}
-                  onChange={(e) => setNewRow((r) => ({ ...r, color: e.target.value }))}
-                  className="h-10 w-full cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
-                />
-              </Field>
-            </div>
-          </div>
-          <div className="mt-4 flex justify-start">
-            <Button onClick={addRow} loading={adding}>
-              <Plus size={15} />
-              إضافة العلاج
-            </Button>
-          </div>
-        </Card>
       )}
 
       {rows !== null && rows.length > 0 && (

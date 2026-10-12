@@ -7,6 +7,7 @@ import {
 import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { hidesPatientsPage } from '../../lib/clinicStyle'
+import { playAlert } from '../../lib/alert'
 import { Card, Button, EmptyState, SkeletonRows, Avatar, PageHeader, StatCard, Modal, Field, Textarea, Toggle, ConfirmDialog, Input } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
 import EmergencyApology from '../../components/EmergencyApology'
@@ -105,7 +106,9 @@ export default function DentalDashboard() {
     audit(profile.clinic_id, 'emergency_broadcast', 'appointments', null, { notified: count })
     setEmergencyOpen(false)
     setEmergencyNote('')
-    // قائمة مرضى اليوم جاهزة → شاشة إرسال الاعتذار الجماعي (واتساب لكل مريض)
+    // تنبيه صوتي داخل العيادة + إشعار خارجي للمرضى (صوت النظام عبر الدفع)
+    playAlert('emergency')
+    // قائمة مرضى اليوم جاهزة → شاشة إرسال الاعتذاز الجماعي (واتساب لكل مريض)
     if (data?.list) setEmergencyTargets({ list: data.list, note: emergencyNote.trim(), cancelled: emergencyCancel })
     else setEmergencyDone(count ?? 0)
     load()

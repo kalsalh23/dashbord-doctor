@@ -8,7 +8,6 @@ import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { Button, Card, Badge, APPT_STATUS, Tag, EmptyState, Spinner, Modal } from '../components/ui'
 import PatientFormModal from '../components/PatientFormModal'
-import MedicalInfoModal from '../components/MedicalInfoModal'
 import BookingModal from '../components/BookingModal'
 import { ageFrom, genderLabel, formatDateShort, formatDateTime, money, todayStr } from '../lib/format'
 
@@ -27,14 +26,12 @@ export default function PatientProfile() {
   const [params, setParams] = useSearchParams()
 
   const [patient, setPatient] = useState(null)
-  const [medInfo, setMedInfo] = useState(null)
   const [visits, setVisits] = useState(null)
   const [attachments, setAttachments] = useState([])
   const [todayAppt, setTodayAppt] = useState(null)
   const [dentalHistory, setDentalHistory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(params.get('edit') === '1')
-  const [medOpen, setMedOpen] = useState(false)
   const [booking, setBooking] = useState(false)
   const [expanded, setExpanded] = useState(null)
   const [uploadCat, setUploadCat] = useState('document')
@@ -137,14 +134,6 @@ export default function PatientProfile() {
   const latest = visits?.[0]
   const history = visits?.slice(1) || []
 
-  const infoCards = [
-    { key: 'chronic_diseases', label: 'أمراض مزمنة', icon: HeartPulse, value: medInfo?.chronic_diseases, tone: 'rose' },
-    { key: 'allergies', label: 'حساسية', icon: AlertTriangle, value: medInfo?.allergies, tone: 'amber' },
-    { key: 'current_medications', label: 'أدوية حالية', icon: Pill, value: medInfo?.current_medications, tone: 'teal' },
-    { key: 'previous_surgeries', label: 'عمليات سابقة', icon: Scissors, value: medInfo?.previous_surgeries, tone: 'slate' },
-    { key: 'important_notes', label: 'ملاحظات طبية مهمة', icon: ClipboardList, value: medInfo?.important_notes, tone: 'blue' },
-  ]
-
   return (
     <div>
       {/* header */}
@@ -199,45 +188,7 @@ export default function PatientProfile() {
         </Card>
       </div>
 
-      {/* important medical info — مستبعدة من عيادة د. نزار (لا حاجة لها) */}
-      {!isNizar && (
-      <div className="mb-5">
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-700">معلومات طبية مهمة</h2>
-          {isDoctor && (
-            <Button size="sm" variant="secondary" onClick={() => setMedOpen(true)}>
-              <PencilLine size={13} />
-              تعديل
-            </Button>
-          )}
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {infoCards.map((c) => {
-            const has = !!c.value?.trim()
-            return (
-              <div
-                key={c.key}
-                className={`rounded-xl border p-3.5 ${
-                  has
-                    ? c.key === 'allergies'
-                      ? 'border-rose-200 bg-rose-50'
-                      : 'border-slate-200 bg-white'
-                    : 'border-rose-100 bg-slate-50'
-                }`}
-              >
-                <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
-                  <c.icon size={13} className={has && c.key === 'allergies' ? 'text-rose-600' : 'text-slate-400'} />
-                  {c.label}
-                </p>
-                <p className={`text-sm leading-relaxed ${has ? 'font-semibold text-slate-800' : 'text-slate-300'}`}>
-                  {has ? c.value : 'لا يوجد'}
-                </p>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-      )}
+      {/* قسم «معلومات طبية مهمة» أُزيل بطلب العيادتين (لا حاجة له) */}
 
       {/* latest visit */}
       <div className="mb-5">
@@ -337,7 +288,6 @@ export default function PatientProfile() {
       </div>
 
       <PatientFormModal open={editOpen} onClose={() => { setEditOpen(false); setParams({}, { replace: true }) }} patient={patient} onSaved={load} />
-      <MedicalInfoModal open={medOpen} onClose={() => setMedOpen(false)} patientId={id} info={medInfo} onSaved={load} />
       <BookingModal open={booking} onClose={() => setBooking(false)} presetPatient={patient} onBooked={load} />
     </div>
   )

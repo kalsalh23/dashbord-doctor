@@ -9,6 +9,7 @@ import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
 import { isNizarStyle, hidesPatientsPage } from '../lib/clinicStyle'
+import { playAlert, unlockAudio } from '../lib/alert'
 import AccountSwitcher from './AccountSwitcher'
 import { DEVELOPER_NAME } from '../lib/config'
 import { Avatar, Badge } from './ui'
@@ -53,6 +54,7 @@ function NotificationsBell() {
   const { profile, effectiveRole } = useApp()
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState([])
+  const seenRef = useRef(null) // معرّفات الإشعارات المعروضة — لتمييز الجديد وتشغيل الصوت
   const ref = useRef(null)
   const nav = useNavigate()
   useOutsideClose(ref, () => setOpen(false))
@@ -64,17 +66,37 @@ function NotificationsBell() {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(15)
-    setItems(data || [])
+    const list = data || []
+    setItems(list)
+    // إشعار جديد → تنبيه صوتي داخل التطبيق (حجز جديد، رسالة، حالة إسعافية)
+    const ids = list.map((n) => n.id)
+    if (seenRef.current !== null) {
+      const fresh = list.filter((n) => !seenRef.current.includes(n.id))
+      if (fresh.length > 0) {
+        playAlert(fresh.some((n) => n.type === 'cancellation' || (n.title || '').includes('إسعاف')) ? 'emergency' : 'new')
+      }
+    }
+    seenRef.current = ids
   }
 
   useEffect(() => {
     load()
-    const t = setInterval(load, 60000)
+    const t = setInterval(load, 20000)
     const onFocus = () => load()
     window.addEventListener('focus', onFocus)
+    // أول لمسة تفتح قناة الصوت للتنبيهات (سياسة المتصفحات)
+    const unlock = () => unlockAudio()
+    window.addEventListener('pointerdown', unlock, { once: true })
+    // إشعار خارجي وصل والتطبيق مفتوح → شغّل النغمة الداخلية أيضاً
+    const onSwMessage = (e) => {
+      if (e.data?.type === 'clinic-alert') playAlert(e.data.kind === 'emergency' ? 'emergency' : 'new')
+    }
+    navigator.serviceWorker?.addEventListener('message', onSwMessage)
     return () => {
       clearInterval(t)
       window.removeEventListener('focus', onFocus)
+      window.removeEventListener('pointerdown', unlock)
+      navigator.serviceWorker?.removeEventListener('message', onSwMessage)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.clinic_id, effectiveRole])
