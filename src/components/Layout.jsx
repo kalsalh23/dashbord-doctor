@@ -8,7 +8,8 @@ import {
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
-import { isNizarStyle } from '../lib/clinicStyle'
+import { isNizarStyle, hidesPatientsPage } from '../lib/clinicStyle'
+import AccountSwitcher from './AccountSwitcher'
 import { DEVELOPER_NAME } from '../lib/config'
 import { Avatar, Badge } from './ui'
 import { todayStr, formatDateLong } from '../lib/format'
@@ -301,6 +302,10 @@ export default function Layout() {
   if (APP_SCOPE !== 'owner' && isSuper && loc.pathname.startsWith('/super')) {
     navItems = NAV.super
   }
+  // عيادات لا تحتاج واجهة «المرضى» (عيادتا الدكتور عارف والدكتورة ريام)
+  if (hidesPatientsPage(profile)) {
+    navItems = navItems.filter((i) => i.to !== '/doctor/patients')
+  }
   const mobileMain = navItems.slice(0, 4)
   const mobileMoreItems = navItems.slice(4)
 
@@ -364,6 +369,7 @@ export default function Layout() {
             <p className="hidden text-xs font-medium text-slate-400 lg:block">{formatDateLong(todayStr())}</p>
           </div>
           <div className="flex items-center gap-1.5">
+            {APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && <AccountSwitcher compact />}
             <NotificationsBell />
             <UserMenu />
           </div>

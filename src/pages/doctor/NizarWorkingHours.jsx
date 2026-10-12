@@ -81,7 +81,8 @@ export default function NizarWorkingHours() {
         actions={
           <Button onClick={save} loading={saving} disabled={!schedules.length}>
             <Save size={16} />
-            حفظ أوقات الدوام
+            <span className="hidden sm:inline">حفظ أوقات الدوام</span>
+            <span className="sm:hidden">حفظ</span>
           </Button>
         }
       />
@@ -97,38 +98,40 @@ export default function NizarWorkingHours() {
               {WEEK_ORDER.filter((wd) => schedules.some((s) => s.weekday === wd)).map((wd) => {
                 const r = rowFor(wd)
                 return (
-                  <li key={wd} className="flex flex-wrap items-center gap-3 px-4 py-3.5 sm:px-5">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-800">
-                      <Clock size={18} />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-800">{WEEKDAY_NAMES[wd]}</p>
-                      <p className="text-[11px] text-slate-400">
-                       {r.active
-                           ? `دوام ${r.start} — ${r.end} · ${slotsCount(r)} موعداً (فاصل ${slotMinutes} دقائق)`
-                           : 'عطلة — لا حجز في هذا اليوم'}
-                      </p>
+                  <li key={wd} className="px-4 py-3 sm:px-5">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-800 sm:h-10 sm:w-10">
+                        <Clock size={17} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-800">{WEEKDAY_NAMES[wd]}</p>
+                        <p className="text-[11px] leading-relaxed text-slate-400">
+                          {r.active
+                            ? `${slotsCount(r)} موعداً · فاصل ${slotMinutes} دقائق`
+                            : 'عطلة — لا حجز في هذا اليوم'}
+                        </p>
+                      </div>
+                      <Toggle checked={r.active} onChange={(v) => setRow(wd, { active: v })} label={r.active ? 'دوام' : 'عطلة'} />
                     </div>
                     {r.active && (
-                      <div className="flex items-center gap-2" dir="ltr">
+                      <div className="mt-2.5 flex items-center gap-2 sm:ms-12" dir="ltr">
                         <input
                           type="time"
                           value={r.start}
                           onChange={(e) => setRow(wd, { start: e.target.value })}
-                          className="input-base !w-auto !py-1.5"
+                          className="input-base h-10 min-w-0 flex-1 !py-0 sm:!w-32 sm:flex-none"
                           aria-label={`بداية دوام ${WEEKDAY_NAMES[wd]}`}
                         />
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="shrink-0 text-xs text-slate-400">—</span>
                         <input
                           type="time"
                           value={r.end}
                           onChange={(e) => setRow(wd, { end: e.target.value })}
-                          className="input-base !w-auto !py-1.5"
+                          className="input-base h-10 min-w-0 flex-1 !py-0 sm:!w-32 sm:flex-none"
                           aria-label={`نهاية دوام ${WEEKDAY_NAMES[wd]}`}
                         />
                       </div>
                     )}
-                    <Toggle checked={r.active} onChange={(v) => setRow(wd, { active: v })} label={r.active ? 'دوام' : 'عطلة'} />
                   </li>
                 )
               })}

@@ -9,7 +9,7 @@ import { specialtyLabel } from '../lib/specialties'
  * زر «تبديل الحساب» — للتنقل بين حسابي الطبيبين على نفس الجهاز
  * (مثل عيادة الدكتور محمد عارف والدكتورة ريام: تطبيق واحد ولكل حساب لوحته وبياناته).
  */
-export default function AccountSwitcher({ className = '' }) {
+export default function AccountSwitcher({ className = '', compact = false }) {
   const { session, toast } = useApp()
   const [open, setOpen] = useState(false)
   const [accounts, setAccounts] = useState([])
@@ -36,9 +36,15 @@ export default function AccountSwitcher({ className = '' }) {
 
   return (
     <>
-      <Button variant="secondary" className={className} onClick={openMenu} title="التنقل بين حسابي الدكتور والدكتورة">
+      <Button
+        variant="secondary"
+        size={compact ? 'sm' : 'md'}
+        className={className}
+        onClick={openMenu}
+        title="التنقل بين حسابي الدكتور والدكتورة"
+      >
         <Repeat2 size={16} />
-        تبديل الحساب
+        <span className={compact ? 'hidden sm:inline' : ''}>تبديل الحساب</span>
       </Button>
 
       <Modal open={open} onClose={() => setOpen(false)} title="تبديل الحساب" subtitle="اختر الحساب الذي تريد الانتقال إليه — كل حساب بلوحته وبياناته المستقلة">

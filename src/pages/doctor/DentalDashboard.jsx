@@ -6,9 +6,9 @@ import {
 } from 'lucide-react'
 import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
+import { hidesPatientsPage } from '../../lib/clinicStyle'
 import { Card, Button, EmptyState, SkeletonRows, Avatar, PageHeader, StatCard, Modal, Field, Textarea, Toggle, ConfirmDialog, Input } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
-import AccountSwitcher from '../../components/AccountSwitcher'
 import EmergencyApology from '../../components/EmergencyApology'
 import { todayStr, timeToMin, ageFrom, nowMinutes, minToTime, addDays } from '../../lib/format'
 
@@ -124,7 +124,6 @@ export default function DentalDashboard() {
         subtitle={`${profile?.full_name} — ${profile?.clinic?.name || ''}`}
         actions={
           <div className="flex gap-2">
-            <AccountSwitcher />
             {/* حالة إسعافية: إشعار جماعي لكل مرضى اليوم + إلغاء مواعيدهم لتحرير الأوقات */}
             <Button
               variant="dangerGhost"
@@ -154,7 +153,8 @@ export default function DentalDashboard() {
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {[
           { to: '/doctor/consultation', label: 'جلسة جديدة', sub: 'كشف ومخطط أسنان للمريض', icon: SmilePlus, primary: true },
-          { to: '/doctor/patients', label: 'المرضى', sub: 'ملفات المرضى، الأسنان، الفلقات', icon: FolderOpen, badge: null },
+          // واجهة «المرضى» غير مطلوبة في هذه العيادة — يظهر الأرشيف فقط
+          ...(hidesPatientsPage(profile) ? [] : [{ to: '/doctor/patients', label: 'المرضى', sub: 'ملفات المرضى، الأسنان، الفلقات', icon: FolderOpen, badge: null }]),
           { to: '/doctor/schedule', label: 'مواعيد اليوم', sub: 'جدول اليوم والمواعيد القادمة', icon: CalendarDays },
           { to: '/doctor/today-log', label: 'سجلي اليوم', sub: 'ما تم إنجازه اليوم', icon: NotebookPen },
           { to: '/doctor/payments', label: 'الدفعات', sub: 'قبايل الوصولات والأدوية المفترة', icon: Banknote },
