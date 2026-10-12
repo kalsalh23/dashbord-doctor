@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Loader2, Search, CheckCircle2, AlertTriangle, Info, Inbox } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -158,7 +159,9 @@ export function Modal({ open, onClose, title, subtitle, children, footer, wide }
   }, [open, onClose])
 
   if (!open) return null
-  return (
+  // بوابة إلى body: النافذة ثابتة بالنسبة للشاشة لا لأيقونة فتحها —
+  // وإلا حُصرت داخل الشريط العلوي (backdrop-blur يصنع سياحاً حاوياً للعناصر الثابتة)
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} />
       <div
@@ -176,7 +179,8 @@ export function Modal({ open, onClose, title, subtitle, children, footer, wide }
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer && <footer className="border-t border-slate-100 bg-slate-50/60 px-5 py-3">{footer}</footer>}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

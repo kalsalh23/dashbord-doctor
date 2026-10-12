@@ -1,6 +1,8 @@
 // ============================================================
 // اختبار التخطيط: زر التبديل في الشريط العلوي + إخفاء «المرضى» + واجهة الدوام
 //   node scripts/cdp-test-layout.cjs
+// ملاحظة: يُشغَّل بملف متصفح نظيف (chrome-test جديد) — بيانات العمل تبقى
+// بين التشغيلات فلا تُستبدل بذرة اختبار آخر.
 // المتطلبات: vite preview على 4173 + Chrome على منفذ 9223
 // ============================================================
 const fs = require('fs')
@@ -110,6 +112,24 @@ async function main() {
       })()
     `)
     ok(inTopbar, 'زر «تبديل الحساب» موجود في الشريط العلوي (حساب الدكتور عارف)')
+
+    // 1ب) النافذة تُفتح داخل الشاشة (لا تُحصر داخل الشريط العلوي بسبب backdrop-blur)
+    await evalJs(`[...document.querySelectorAll('header button')].find(b => b.textContent.includes('تبديل الحساب')).click()`)
+    const modal = await waitFor(async () => {
+      const r = await evalJs(`
+        (() => {
+          const overlay = [...document.querySelectorAll('body > div')].find(d => d.className && String(d.className).includes('fixed inset-0'))
+          if (!overlay) return null
+          const b = overlay.getBoundingClientRect()
+          return { top: b.top, bottom: b.bottom, h: b.height, vh: window.innerHeight, parent: overlay.parentElement.tagName }
+        })()
+      `)
+      return r && r.parent === 'BODY' ? r : null
+    }, 10000)
+    ok(!!modal && modal.top >= -1 && modal.bottom <= modal.vh + 1 && modal.parent === 'BODY', `نافذة التبديل تُرسم داخل الشاشة (أعلى=${modal && Math.round(modal.top)}، أسفل=${modal && Math.round(modal.bottom)} من ${modal && modal.vh})`)
+    await evalJs(`document.querySelector('body > div.fixed.inset-0 .absolute')?.click()`)
+    await sleep(300)
+    ok(!(await evalJs(`!!document.querySelector('body > div.fixed.inset-0')`)), 'النافذة تُغلق بالنقر خارجها')
     ok(!(await evalJs(`[...document.querySelectorAll('h1 ~ * button, main button')].some(b => b.textContent.includes('تبديل الحساب'))`)) || true, '(الزر لم يعد مكرراً في رأس الصفحة)')
 
     // 2) واجهة «المرضى» أُزيلت من قائمة العيادة
