@@ -71,7 +71,7 @@ export default function DoctorSettings() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="Ø¥Ø¹Ø¯Ø§Ø¯Ø§ØªÙŠ" subtitle="Ù…Ø¹Ù„ÙˆÙ…Ø§ØªÙƒ ÙˆØ³Ø¹Ø± Ø§Ù„ÙƒØ´Ù ÙˆÙˆÙ‚Øª Ø§Ù„ÙƒØ´Ù" />
+      <PageHeader title="Ø¥Ø¹Ø¯Ø§Ø¯Ø§ØªÙŠ" subtitle="Ù…Ø¹Ù„ÙˆÙ…Ø§ØªÙƒ Ùˆسعر Ø§Ù„ÙƒØ´Ù Ùˆوقت Ø§Ù„ÙƒØ´Ù" />
       <div className="space-y-5">
         <Card title="Ù…Ø¹Ù„ÙˆÙ…Ø§ØªÙŠ">
           <div className="mb-4 flex items-center gap-4">
@@ -91,10 +91,10 @@ export default function DoctorSettings() {
             <Field label="Ø±Ù‚Ù… Ù‡Ø§ØªÙÙŠ"><Input value={phone} onChange={(e) => setPhone(e.target.value)} dir="ltr" /></Field>
           </div>
         </Card>
-        <Card title="Ø³Ø¹Ø± Ø§Ù„ÙƒØ´Ù ÙˆÙˆÙ‚Øª Ø§Ù„ÙƒØ´Ù" subtitle="ÙŠÙØ·Ø¨Ù‚ Ø¹Ù„Ù‰ Ø§Ù„Ø­Ø¬ÙˆØ²Ø§Øª Ø§Ù„Ø¬Ø¯ÙŠØ¯Ø©">
+        <Card title="سعر Ø§Ù„ÙƒØ´Ù Ùˆوقت Ø§Ù„ÙƒØ´Ù" subtitle="ÙŠÙØ·Ø¨Ù‚ Ø¹Ù„Ù‰ Ø§Ù„Ø­Ø¬ÙˆØ²Ø§Øª Ø§Ù„Ø¬Ø¯ÙŠØ¯Ø©">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Ø³Ø¹Ø± Ø§Ù„ÙƒØ´Ù"><Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
-            <Field label="ÙˆÙ‚Øª Ø§Ù„ÙƒØ´Ù (Ø¯Ù‚ÙŠÙ‚Ø©)" hint="Ø¨ÙŠÙ† 10 Ùˆ 60"><Input type="number" min="10" max="60" value={slotMinutes} onChange={(e) => setSlotMinutes(e.target.value)} /></Field>
+            <Field label="سعر Ø§Ù„ÙƒØ´Ù"><Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
+            <Field label="وقت Ø§Ù„ÙƒØ´Ù (Ø¯Ù‚ÙŠÙ‚Ø©)" hint="Ø¨ÙŠÙ† 10 Ùˆ 60"><Input type="number" min="10" max="60" value={slotMinutes} onChange={(e) => setSlotMinutes(e.target.value)} /></Field>
           </div>
           <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-400"><Wallet size={13} />Ø§Ù„Ø¹Ù…Ù„Ø©: {settings?.currency || '”'}</p>
         </Card>
@@ -104,3 +104,4 @@ export default function DoctorSettings() {
     </div>
   )
 }
+
