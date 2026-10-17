@@ -37,7 +37,7 @@ export function slotsForDay({ schedules, settings, dateStr }) {
   const slots = buildSlots({
     start: sched.start_time,
     end: sched.end_time,
-    slotMinutes: settings?.slot_minutes ?? 10,
+    slotMinutes: Number(settings?.examination_minutes ?? settings?.consultation_minutes ?? settings?.slot_minutes) || 10,
     slotsBeforeBreak: settings?.slots_before_break ?? 8,
     breakMinutes: settings?.break_minutes ?? 10,
   })
