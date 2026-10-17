@@ -1,0 +1,17 @@
+node_modules
+release
+.git
+dist
+build
+screenshots
+*.log
+tmp-*.json
+rej(tx.error)
+.env
+.env.local
+*-auth.json
+vapid-keys.json
+push-secret.txt
+.zcodeignore
+npm-install.log
+persist-log.txt
