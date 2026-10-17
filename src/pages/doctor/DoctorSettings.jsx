@@ -129,18 +129,18 @@ export default function DoctorSettings() {
           </div>
         </Card>
 
-        <Card title="سعر الكشف" subtitle="يُطبق على الحجوزات الجديدة في واجهة الاستقبال فور الحفظ">
-          <div className="flex flex-wrap items-end gap-3">
-            <Field label="سعر الكشف" className="w-44">
+        <Card title="سعر الكشف ووقت الكشف" subtitle="يُطبق على الحجوزات الجديدة في واجهة الاستقبال فور الحفظ">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="سعر الكشف">
               <Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
             </Field>
-            <p className="flex items-center gap-1.5 pb-2.5 text-xs text-slate-400">
-              <Wallet size={13} />
-              العملة: {settings?.currency || '—'}
-            </p>
+            <Field label="وقت الكشف (دقيقة)" hint="بين 10 و 60">
+              <Input type="number" min="10" max="60" value={slotMinutes} onChange={(e) => setSlotMinutes(e.target.value)} />
+            </Field>
           </div>
-          <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-            عند تغيير السعر يظهر السعر الجديد لموظف الاستقبال تلقائياً في الحجوزات وصفحة المدفوعات.
+          <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
+            <Wallet size={13} />
+            العملة: {settings?.currency || '—'}
           </p>
         </Card>
 
