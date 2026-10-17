@@ -41,13 +41,14 @@ export async function runRpc(client, authInternal, fn, args) {
       const prof = await myProfile()
       if (!['doctor', 'admin', 'super_admin'].includes(prof.role)) throw new Error('FORBIDDEN')
       const price = Number(args.p_price)
+      const slot = Number(args.p_slot_minutes || args.p_examination_minutes || args.slot_minutes || args.examination_minutes || 0)
       if (Number.isNaN(price) || price < 0) throw new Error('BAD_PRICE')
       const settings = await loadTable('clinic_settings')
       const s = settings.find((x) => x.clinic_id === prof.clinic_id)
       if (s) {
-        await putRows('clinic_settings', [{ ...s, consultation_price: price, updated_at: now() }])
+        await putRows('clinic_settings', [{ ...s, consultation_price: price, slot_minutes: slot || s.slot_minutes || 15, examination_minutes: slot || s.examination_minutes || 15, consultation_minutes: slot || s.consultation_minutes || 15, updated_at: now() }])
       } else {
-        await putRows('clinic_settings', [{ clinic_id: prof.clinic_id, consultation_price: price, created_at: now(), updated_at: now() }])
+        await putRows('clinic_settings', [{ clinic_id: prof.clinic_id, consultation_price: price, slot_minutes: slot || 15, examination_minutes: slot || 15, consultation_minutes: slot || 15, created_at: now(), updated_at: now() }])
       }
       return null
     }

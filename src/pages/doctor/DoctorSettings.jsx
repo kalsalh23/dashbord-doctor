@@ -58,7 +58,7 @@ export default function DoctorSettings() {
     setSaving(true)
     const { error } = await supabase.from('profiles').update({ full_name: fullName.trim(), phone: phone.trim() || null, avatar_url: avatarUrl || null }).eq('id', profile.id)
     if (error) { setSaving(false); return toast('error', friendlyDbError(error)) }
-    const { error: priceErr } = await supabase.rpc('doctor_set_consultation_price', { p_price: Number(price) || 0 })
+    const { error: priceErr } = await supabase.rpc('doctor_set_consultation_price', { p_price: Number(price) || 0, p_slot_minutes: Number(slotMinutes) || 15 })
     if (priceErr) { setSaving(false); return toast('error', friendlyDbError(priceErr)) }
     const v = Math.max(10, Math.min(60, Number(slotMinutes) || 15))
     const { error: settErr } = await supabase.from('clinic_settings').update({ slot_minutes: v, examination_minutes: v, consultation_minutes: v }).eq('clinic_id', profile.clinic_id)
