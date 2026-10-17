@@ -7,7 +7,7 @@ import {
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { Button, Card, Badge, APPT_STATUS, Tag, EmptyState, Spinner, Modal } from '../components/ui'
-import SpecialtyData from '../components/SpecialtyData'
+import SpecialtyData from '../components/SpecialtyData.jsx'
 import PatientFormModal from '../components/PatientFormModal'
 import BookingModal from '../components/BookingModal'
 import { ageFrom, genderLabel, formatDateShort, formatDateTime, money, todayStr } from '../lib/format'
