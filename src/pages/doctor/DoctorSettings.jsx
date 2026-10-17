@@ -28,13 +28,13 @@ export default function DoctorSettings() {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-    if (!file.type.startsWith('image/')) return toast('error', 'Ø§Ø®ØªØ± Ù…Ù„Ù ØµÙˆØ±Ø©')
+    if (!file.type.startsWith('image/')) return toast('error', 'اختر Ù…Ù„Ù ØµÙˆØ±Ø©')
     if (file.size > 2 * 1024 * 1024) return toast('error', 'Ø­Ø¬Ù… Ø§Ù„ØµÙˆØ±Ø© ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† Ø£Ù‚Ù„ Ù…Ù† 2 Ù…ÙŠØºØ§Ø¨Ø§ÙŠØª')
     setUploading(true)
     const ext = file.name.split('.').pop() || 'png'
     const path = profile.id + '/avatar-' + Date.now() + '.' + ext
     const { error } = await supabase.storage.from('profile-avatars').upload(path, file, { contentType: file.type })
-    if (error) { setUploading(false); return toast('error', 'ØªØ¹Ø°Ø± Ø±ÙØ¹ Ø§Ù„ØµÙˆØ±Ø©: ' + error.message) }
+    if (error) { setUploading(false); return toast('error', 'تعذر رفع Ø§Ù„ØµÙˆØ±Ø©: ' + error.message) }
     const { data } = supabase.storage.from('profile-avatars').getPublicUrl(path)
     setAvatarUrl(data.publicUrl)
     const { error: dbErr } = await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', profile.id)
@@ -66,7 +66,7 @@ export default function DoctorSettings() {
     if (settErr) return toast('error', friendlyDbError(settErr))
     audit(profile.clinic_id, 'doctor_update_settings', 'profiles', profile.id, { price: Number(price) || 0 })
     await Promise.all([refreshProfile(), refreshSettings()])
-    toast('success', 'ØªÙ… Ø§Ù„Ø­ÙØ¸')
+    toast('success', 'ØªÙ… Ø§Ù„حفظ')
   }
 
   return (
@@ -99,7 +99,7 @@ export default function DoctorSettings() {
           <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-400"><Wallet size={13} />Ø§Ù„Ø¹Ù…Ù„Ø©: {settings?.currency || '”'}</p>
         </Card>
         <PushSetupCard />
-        <div className="flex justify-end pb-4"><Button size="lg" onClick={save} loading={saving}><Save size={16} />Ø­ÙØ¸ Ø§Ù„ØªØºÙŠÙŠØ±Ø§Øª</Button></div>
+        <div className="flex justify-end pb-4"><Button size="lg" onClick={save} loading={saving}><Save size={16} />حفظ Ø§Ù„ØªØºÙŠÙŠØ±Ø§Øª</Button></div>
       </div>
     </div>
   )
