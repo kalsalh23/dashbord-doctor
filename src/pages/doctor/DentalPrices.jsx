@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Plus, , Save, Trash2, Wallet, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Save, Trash2, Wallet, ChevronDown, ChevronUp } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, EmptyState, Field, Input, PageHeader, SkeletonRows, Select } from '../../components/ui'
