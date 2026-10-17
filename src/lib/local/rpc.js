@@ -44,7 +44,11 @@ export async function runRpc(client, authInternal, fn, args) {
       if (Number.isNaN(price) || price < 0) throw new Error('BAD_PRICE')
       const settings = await loadTable('clinic_settings')
       const s = settings.find((x) => x.clinic_id === prof.clinic_id)
-      if (s) await putRows('clinic_settings', [{ ...s, consultation_price: price, updated_at: now() }])
+      if (s) {
+        await putRows('clinic_settings', [{ ...s, consultation_price: price, updated_at: now() }])
+      } else {
+        await putRows('clinic_settings', [{ clinic_id: prof.clinic_id, consultation_price: price, created_at: now(), updated_at: now() }])
+      }
       return null
     }
 
