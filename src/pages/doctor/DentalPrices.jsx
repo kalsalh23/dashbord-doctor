@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Plus, RotateCcw, Save, Trash2, Wallet, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, , Save, Trash2, Wallet, ChevronDown, ChevronUp } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, EmptyState, Field, Input, PageHeader, SkeletonRows, Select } from '../../components/ui'
@@ -126,7 +126,7 @@ export default function DentalPrices() {
         subtitle="أسعار العيادة على مخطط الأسنان — تُحسب تلقائياً على حساب المريض عند الكشف"
         actions={
           <Button variant="secondary" size="sm" onClick={seedDefaults} loading={seeding} className="print:hidden">
-            <RotateCcw size={14} />
+            
             استعادة القائمة الافتراضية
           </Button>
         }
