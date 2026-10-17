@@ -193,8 +193,8 @@ export default function Settings() {
 
         <Card title="أيام وساعات العمل" subtitle="يُعاد توليد المواعيد المتاحة تلقائيًا حسب هذه القواعد">
           <div className="mb-4 grid grid-cols-3 gap-3 rounded-xl bg-slate-50 p-3">
-            <Field label="مدة الموعد (دقيقة)">
-              <Input type="number" min="5" value={globalCfg.slot_minutes} onChange={(e) => setGlobalCfg((g) => ({ ...g, slot_minutes: e.target.value }))} />
+            <Field label="وقت الكشف (دقيقة)" hint="بين 10 و 60">
+              <Input type="number" min="10" max="60" value={globalCfg.slot_minutes} onChange={(e) => setGlobalCfg((g) => ({ ...g, slot_minutes: e.target.value }))} />
             </Field>
             <Field label="مواعيد قبل الاستراحة">
               <Input type="number" min="1" value={globalCfg.slots_before_break} onChange={(e) => setGlobalCfg((g) => ({ ...g, slots_before_break: e.target.value }))} />
