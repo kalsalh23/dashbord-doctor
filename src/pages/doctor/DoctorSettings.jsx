@@ -96,7 +96,7 @@ export default function DoctorSettings() {
             <Field label="Ø³Ø¹Ø± Ø§Ù„ÙƒØ´Ù"><Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
             <Field label="ÙˆÙ‚Øª Ø§Ù„ÙƒØ´Ù (Ø¯Ù‚ÙŠÙ‚Ø©)" hint="Ø¨ÙŠÙ† 10 Ùˆ 60"><Input type="number" min="10" max="60" value={slotMinutes} onChange={(e) => setSlotMinutes(e.target.value)} /></Field>
           </div>
-          <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-400"><Wallet size={13} />Ø§Ù„Ø¹Ù…Ù„Ø©: {settings?.currency || 'â€”'}</p>
+          <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-400"><Wallet size={13} />Ø§Ù„Ø¹Ù…Ù„Ø©: {settings?.currency || '”'}</p>
         </Card>
         <PushSetupCard />
         <div className="flex justify-end pb-4"><Button size="lg" onClick={save} loading={saving}><Save size={16} />Ø­ÙØ¸ Ø§Ù„ØªØºÙŠÙŠØ±Ø§Øª</Button></div>
