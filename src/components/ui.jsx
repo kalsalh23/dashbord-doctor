@@ -55,9 +55,9 @@ export const APPT_STATUS = {
   new: { label: 'طلب جديد', cls: 'bg-slate-100 text-slate-600 border-slate-200' },
   confirmed: { label: 'مؤكد', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
   arrived: { label: 'وصل', cls: 'bg-amber-50 text-amber-800 border-amber-200' },
-  waiting: { label: 'بانتظار الكشف', cls: 'bg-violet-50 text-violet-700 border-violet-200' },
-  in_consultation: { label: 'قيد الكشف', cls: 'bg-teal-50 text-teal-800 border-teal-200' },
-  completed: { label: 'مكتمل', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  waiting: { label: 'بانتظار الكشف', cls: 'bg-primary-50 text-primary-700 border-primary-200' },
+  in_consultation: { label: 'قيد الكشف', cls: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+  completed: { label: 'مكتمل', cls: 'bg-sky-50 text-sky-700 border-sky-200' },
   cancelled: { label: 'ملغى', cls: 'bg-rose-50 text-rose-700 border-rose-200' },
   no_show: { label: 'لم يحضر', cls: 'bg-slate-100 text-slate-500 border-slate-200' },
 }
@@ -69,7 +69,7 @@ export const PAY_STATUS = {
 
 export const FU_STATUS = {
   pending: { label: 'قيد الانتظار', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
-  scheduled: { label: 'تم الحجز', cls: 'bg-teal-50 text-teal-800 border-teal-200' },
+  scheduled: { label: 'تم الحجز', cls: 'bg-primary-50 text-primary-700 border-primary-200' },
   completed: { label: 'مكتمل', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   cancelled: { label: 'ملغى', cls: 'bg-rose-50 text-rose-700 border-rose-200' },
 }

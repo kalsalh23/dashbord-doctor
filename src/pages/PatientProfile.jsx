@@ -7,6 +7,7 @@ import {
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { Button, Card, Badge, APPT_STATUS, Tag, EmptyState, Spinner, Modal } from '../components/ui'
+import SpecialtyData from '../components/SpecialtyData'
 import PatientFormModal from '../components/PatientFormModal'
 import BookingModal from '../components/BookingModal'
 import { ageFrom, genderLabel, formatDateShort, formatDateTime, money, todayStr } from '../lib/format'
@@ -41,9 +42,8 @@ export default function PatientProfile() {
     if (!profile?.clinic_id || !id) return
     setLoading(true)
     const isDental = profile?.clinic?.specialty_key === 'dentistry'
-    const [pRes, miRes, vRes, attRes, apptRes, dentalRes] = await Promise.all([
+    const [pRes, vRes, attRes, apptRes, dentalRes] = await Promise.all([
       supabase.from('patients').select('*').eq('id', id).single(),
-      supabase.from('medical_information').select('*').eq('patient_id', id).maybeSingle(),
       supabase
         .from('visits')
         .select('*, medications(*), doctor:profiles(full_name)')
@@ -69,7 +69,6 @@ export default function PatientProfile() {
         : Promise.resolve({ data: null }),
     ])
     setPatient(pRes.data || null)
-    setMedInfo(miRes.data || null)
     setVisits(vRes.data || [])
     setAttachments(attRes.data || [])
     setTodayAppt(apptRes.data?.[0] || null)
@@ -338,17 +337,7 @@ function VisitCard({ visit, latest = false, expanded = false, onToggle }) {
               </div>
             ))}
                     {visit.specialty_data && Object.keys(visit.specialty_data).length > 0 && (
-            <div>
-              <p className="mb-1.5 text-[11px] font-bold text-slate-400">بيانات التخصص</p>
-              <ul className="space-y-1">
-                {Object.entries(visit.specialty_data).map(([label, value]) => (
-                  <li key={label} className="flex gap-2 rounded-lg bg-slate-50 px-3 py-1.5 text-xs">
-                    <span className="font-bold text-slate-500">{label}:</span>
-                    <span className="font-semibold text-slate-700">{String(value)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <SpecialtyData data={visit.specialty_data} />
           )}
           {meds.length > 0 && (
             <div>

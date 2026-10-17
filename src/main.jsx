@@ -26,7 +26,7 @@ class ErrorBoundary extends React.Component {
           </pre>
           <button
             onClick={() => location.reload()}
-            style={{ marginTop: 12, padding: '8px 16px', borderRadius: 8, background: '#0f766e', color: '#fff', border: 'none', cursor: 'pointer' }}
+            style={{ marginTop: 12, padding: '8px 16px', borderRadius: 8, background: 'var(--p700)', color: '#fff', border: 'none', cursor: 'pointer' }}
           >
             إعادة تحميل الصفحة
           </button>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { X, Search, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { ageFrom, formatDateShort, genderLabel } from '../lib/format'
+import { SECTION_LABELS, specialtyText } from './SpecialtyData'
 
 /**
  * قالب الوصفة الطبية — مطابق للورقة الأصلية (A5) مع شعار العيادة وبياناتها.
@@ -121,7 +122,7 @@ export function RosePrescriptionSheet({ settings, patient, visit, meds = [], onM
           <div className="mt-1 border-t border-dashed border-slate-300 pt-1 text-[11.5px] text-slate-600">
             {entries.map(([label, value]) => (
               <span key={label} className="me-3">
-                <b>{label}:</b> {String(value)}
+                <b>{SECTION_LABELS[label] || label}:</b> {specialtyText(label, value)}
               </span>
             ))}
           </div>

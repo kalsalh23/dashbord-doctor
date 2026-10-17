@@ -3,6 +3,9 @@ import { useEffect } from 'react'
 /**
  * يعزل قالب الطباعة: عند الطباعة يُستنسخ محتوى .print-area إلى حاوية مستقلة
  * خارج شجرة التطبيق، ويُخفى كل شيء آخر — فيخرج البطباع ورقة واحدة نظيفة.
+ *
+ * كسر الصفحات: كل ورقة بصفحة A5 مستقلة، والورقة الأخيرة بلا كسر —
+ * وإلا طبع المتصفح صفحة بيضاء زائدة بعد كل ورقة.
  */
 export function usePrintIsolation(sheetSelector = '.print-area') {
   useEffect(() => {
@@ -16,6 +19,14 @@ export function usePrintIsolation(sheetSelector = '.print-area') {
         document.body.appendChild(clone)
       }
       clone.innerHTML = area.innerHTML
+      const sheets = clone.querySelectorAll('.prescription-sheet')
+      sheets.forEach((el, i) => {
+        const last = i === sheets.length - 1
+        el.classList.toggle('is-last-sheet', last)
+        // inline كسر الصفحة (يتغلّب على قواعد CSS بلا !important)
+        el.style.pageBreakAfter = last ? 'auto' : 'always'
+        el.style.breakAfter = last ? 'auto' : 'page'
+      })
       document.documentElement.classList.add('printing')
     }
     const after = () => {

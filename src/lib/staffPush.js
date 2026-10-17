@@ -1,6 +1,10 @@
 import { supabase } from '../lib/supabase'
 
-const VAPID_PUBLIC = "BDjrzN-LXGS6IPdDzik3QocWZWqSnJPucfY7Z0wtKjdUXFbpOjiB8jiVsQYAa47jQ8hFHiJi_61N2IYfNHn0MPQ" || import.meta.env.VAPID_PUBLIC_KEY_CLIENT
+// المفتاح العمومي: من بيئة البناء أولاً (VAPID_PUBLIC_KEY_CLIENT) ثم القيمة
+// المثبّتة في المستودع كاحتياط — يجب أن يطابق زوج الخادم (VAPID_PUBLIC_KEY
+// في Vercel وأسرار الدالة الحافّة send-push) وإلا رفضت خدمة الدفع الإشعار.
+const VAPID_FALLBACK = "BDjrzN-LXGS6IPdDzik3QocWZWqSnJPucfY7Z0wtKjdUXFbpOjiB8jiVsQYAa47jQ8hFHiJi_61N2IYfNHn0MPQ"
+const VAPID_PUBLIC = import.meta.env.VAPID_PUBLIC_KEY_CLIENT || VAPID_FALLBACK
 
 function urlBase64ToUint8Array(base64) {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)

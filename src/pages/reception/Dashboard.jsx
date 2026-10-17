@@ -167,7 +167,7 @@ export default function ReceptionDashboard() {
           )}
         </Card>
 
-        {/* follow-up requests */}
+{/* follow-up requests */}
         <Card
           title="طلبات متابعة من الطبيب"
           subtitle="مرضى يطلب الطبيب مراجعتهم"

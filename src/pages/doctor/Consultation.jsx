@@ -2,16 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowRight, Stethoscope, Pill, Plus, Trash2, CheckCircle2, AlertTriangle,
-  ChevronDown, FolderOpen, HeartPulse,
+  ChevronDown, FolderOpen, HeartPulse, Search, X, Wallet,
 } from 'lucide-react'
 import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
-import { Button, Card, Field, Input, Textarea, Spinner, EmptyState, Tag } from '../../components/ui'
+import { Button, Card, Field, Input, Textarea, Spinner, EmptyState, Modal, Tag } from '../../components/ui'
 import DentalChart from '../../components/DentalChart'
 import { useSchedules, friendlyDbError } from '../../lib/hooks'
 import { specialtyByKey } from '../../lib/specialties'
+import { persistsDentalShapes, requiresPaymentPrompt } from '../../lib/clinicStyle'
 import PrescriptionStage from './PrescriptionStage'
 import { ageFrom, formatDateShort, todayStr } from '../../lib/format'
+import { fmtPrice } from '../../lib/dental'
 
 const EMPTY_FORM = {
   chief_complaint: '',
@@ -22,6 +24,16 @@ const EMPTY_FORM = {
   medical_notes: '',
 }
 const EMPTY_MED = { name: '', dosage: '', duration: '', instructions: '' }
+
+// توحيد الحروف العربية للبحث في الأدوية (همزات، تاء مربوطة، ألف مقصورة، تشكيل)
+const normMed = (s) =>
+  (s || '')
+    .toLowerCase()
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/[\u064B-\u0652\u0640]/g, '')
+    .trim()
 
 export default function Consultation() {
   const { appointmentId, patientId } = useParams()
@@ -42,9 +54,16 @@ export default function Consultation() {
 
   const [stage, setStage] = useState('consult') // consult | prescription | done
   const [favorites, setFavorites] = useState([])
+  const [medSearch, setMedSearch] = useState('') // بحث داخل الأدوية الشائعة
+  const [medSearchOpen, setMedSearchOpen] = useState(false) // إظهار كل الأدوية (للقوائم الطويلة)
+  const [rxSearch, setRxSearch] = useState('') // بحث داخل الأدوية الموصوفة
   const [dentalEntries, setDentalEntries] = useState([])
   const [specData, setSpecData] = useState({})
   const [savedVisit, setSavedVisit] = useState(null)
+  // بطاقة الدفعة عند حفظ الكشف (عيادات محددة مثل عيادة د. ريام)
+  const [payOpen, setPayOpen] = useState(false)
+  const [payAmount, setPayAmount] = useState('')
+  const promptPayment = requiresPaymentPrompt(profile)
 
   // the doctor's own specialty (set on his account) drives his tools;
   // falls back to the clinic's specialty for admins viewing doctor mode
@@ -112,6 +131,26 @@ export default function Consultation() {
     })
   }
 
+  // أدوية شائعة مُرشّحة بالبحث — مع عرض مختصر حين تكون القائمة طويلة (100 دواء مثلاً)
+  const filteredFavorites = useMemo(() => {
+    const q = normMed(medSearch)
+    if (!q) return favorites
+    return favorites.filter((f) => normMed(f.name).includes(q))
+  }, [favorites, medSearch])
+  const medsMany = favorites.length > 18
+  const shownMeds = medsMany && !medSearch && !medSearchOpen
+    ? filteredFavorites.slice(0, 18)
+    : filteredFavorites
+
+  // الأدوية الموصوفة مُرشّحة بالبحث (اسم/جرعة/تعليمات) — بحث عربي ذكي
+  const shownRx = useMemo(() => {
+    const q = normMed(rxSearch)
+    if (!q) return meds.map((m, i) => ({ m, i }))
+    return meds
+      .map((m, i) => ({ m, i }))
+      .filter(({ m }) => normMed(m.name).includes(q) || normMed(m.dosage).includes(q) || normMed(m.instructions).includes(q))
+  }, [meds, rxSearch])
+
   const startConsultation = async () => {
     if (!appointment) return setStarted(true)
     const { error } = await supabase.from('appointments').update({ status: 'in_consultation' }).eq('id', appointment.id)
@@ -126,7 +165,20 @@ export default function Consultation() {
 
   const valid = form.diagnosis.trim()
 
-  const finish = async () => {
+  // حفظ الكشف: في العيادات التي تُطلب الدفعة تظهر البطاقة أولاً (المبلغ بين 0 وسعر الكشفية)
+  const finish = () => {
+    if (!valid) {
+      return toast('error', 'التشخيص مطلوب')
+    }
+    if (promptPayment) {
+      setPayAmount(String(settings?.consultation_price ?? ''))
+      setPayOpen(true)
+      return
+    }
+    doSave(null)
+  }
+
+  const doSave = async (paid) => {
     if (!valid) {
       return toast('error', 'التشخيص مطلوب')
     }
@@ -185,6 +237,27 @@ export default function Consultation() {
         return toast('error', 'تم حفظ الزيارة لكن تعذر حفظ مخطط الأسنان: ' + dErr.message)
       }
     }
+    // حفظ الدفعة على حساب المريض — باسم المريض مع ربطه بالزيارة والموعد
+    if (promptPayment) {
+      const fee = Number(settings?.consultation_price) || 0
+      const paidNum = Math.max(0, Math.min(fee, Math.floor(Number(payAmount) || 0)))
+      const { error: pErr } = await supabase.from('payments').insert({
+        clinic_id: profile.clinic_id,
+        patient_id: patient.id,
+        appointment_id: appointment?.id || null,
+        total_amount: fee,
+        amount: paidNum,
+        remaining: Math.max(0, fee - paidNum),
+        method: 'cash',
+        status: paidNum >= fee && fee > 0 ? 'paid' : 'due_later',
+        paid_at: paidNum > 0 ? new Date().toISOString() : null,
+        created_by: profile.id,
+      })
+      if (pErr) {
+        setSaving(false)
+        return toast('error', 'تم حفظ الزيارة لكن تعذر حفظ الدفعة: ' + pErr.message)
+      }
+    }
     if (appointment) {
       const { error: aErr } = await supabase.from('appointments').update({ status: 'completed' }).eq('id', appointment.id)
       if (aErr) {
@@ -194,7 +267,7 @@ export default function Consultation() {
     }
     audit(profile.clinic_id, 'complete_visit', 'visits', visit.id)
     setSaving(false)
-    toast('success', 'تم حفظ الزيارة بنجاح')
+    toast('success', promptPayment ? 'تم حفظ الكشف وتسجيل الدفعة' : 'تم حفظ الزيارة بنجاح')
     // عيادات قالب نزار: تظهر ورقة المعاينة بعد الحفظ مباشرة لطباعة الوصفة — البقية تنتهي مباشرة
     if (settings?.prescription_template === 'nizar') {
       setSavedVisit({ ...visit, patient, medications: realMeds, doctor: { full_name: profile.full_name } })
@@ -343,8 +416,9 @@ export default function Consultation() {
         <div className="space-y-4">
           <Card title="بيانات الكشف">
             <div className="space-y-4">
-              <Field label="الأعراض">
-                <Textarea value={form.symptoms} onChange={setF('symptoms')} rows={2} />
+              {/* التشخيص أوّل حقل — الأهم للطبيبة أثناء الكشف */}
+              <Field label="التشخيص" required>
+                <Textarea value={form.diagnosis} onChange={setF('diagnosis')} rows={2} placeholder="اكتب التشخيص الأولي أو النهائي" />
               </Field>
               <Field label={spec.examLabel || "الفحص السريري"}>
                 <Textarea value={form.physical_examination} onChange={setF('physical_examination')} rows={2} />
@@ -362,23 +436,19 @@ export default function Consultation() {
                       </Field>
                     ))}
                   </div>
-                </div>
-              )}
-              <Field label="التشخيص" required>
-                <Textarea value={form.diagnosis} onChange={setF('diagnosis')} rows={2} />
-              </Field>
-              <Field label="خطة العلاج">
-                <Textarea value={form.treatment_plan} onChange={setF('treatment_plan')} rows={2} />
-              </Field>
-            </div>
+                  </div>
+                )}
+              </div>
           </Card>
 
           {isDental && (
             <Card title="مخطط الأسنان" subtitle="اضغط على السن لتحديد الإجراء — الألوان: برتقالي عولج سابقاً، أخضر زيارة اليوم">
               <DentalChart
                 patientId={patient.id}
+                age={patient?.date_of_birth ? ageFrom(patient.date_of_birth) : null}
                 entries={dentalEntries}
                 onEntriesChange={setDentalEntries}
+                persistHistory={persistsDentalShapes(profile)}
               />
             </Card>
           )}
@@ -392,31 +462,104 @@ export default function Consultation() {
               </Button>
             }
           >
+            {/* بحث داخل الأدوية الموصوفة — للعثور على دواء معيّن في الوصفة */}
+            {meds.length > 3 && (
+              <div className="relative mb-3">
+                <Search size={14} className="pointer-events-none absolute top-1/2 start-3 -translate-y-1/2 text-slate-400" />
+                <Input
+                  value={rxSearch}
+                  onChange={(e) => setRxSearch(e.target.value)}
+                  placeholder="ابحث في الأدوية الموصوفة…"
+                  className="!ps-9 !text-xs"
+                />
+                {rxSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setRxSearch('')}
+                    className="absolute top-1/2 end-2.5 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"
+                    aria-label="مسح البحث"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            )}
             {favorites.length > 0 && (
               <div className="mb-4 border-b border-slate-100 pb-4">
-                <p className="mb-2 text-[11px] font-bold text-slate-400">أدويتك الشائعة — اضغط للإدراج السريع</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {favorites.map((f) => (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => addFavorite(f)}
-                      className="inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-800 transition-colors hover:bg-primary-100"
-                      title={[f.dosage, f.duration, f.instructions].filter(Boolean).join(' · ')}
-                    >
-                      <Pill size={12} />
-                      {f.name}
-                      {f.dosage ? ` · ${f.dosage}` : ''}
-                    </button>
-                  ))}
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] font-bold text-slate-400">
+                    أدويتك الشائعة — اضغط للإدراج السريع
+                    <span className="ms-1.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">{favorites.length}</span>
+                  </p>
+                  {/* بحث داخل القائمة — ضروري حين تصول إلى 100 دواء */}
+                  {medsMany && (
+                    <div className="relative w-full sm:w-56">
+                      <Search size={13} className="pointer-events-none absolute top-1/2 start-2.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={medSearch}
+                        onChange={(e) => setMedSearch(e.target.value)}
+                        placeholder="ابحث عن دواء…"
+                        className="input-base h-8 !py-0 !ps-8 !text-xs"
+                      />
+                      {medSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setMedSearch('')}
+                          className="absolute top-1/2 end-2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"
+                          aria-label="مسح البحث"
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
+                {shownMeds.length === 0 ? (
+                  <p className="py-3 text-center text-xs text-slate-400">لا يوجد دواء بهذا الاسم في قائمتك</p>
+                ) : (
+                  <div className="flex max-h-60 flex-wrap content-start gap-1.5 overflow-y-auto">
+                    {shownMeds.map((f) => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => addFavorite(f)}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-800 transition-colors hover:bg-primary-100"
+                        title={[f.dosage, f.duration, f.instructions].filter(Boolean).join(' · ')}
+                      >
+                        <Pill size={12} />
+                        {f.name}
+                        {f.dosage ? ` · ${f.dosage}` : ''}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* عرض الكل عند القوائم الطويلة */}
+                {medsMany && !medSearch && !medSearchOpen && (
+                  <button
+                    type="button"
+                    onClick={() => setMedSearchOpen(true)}
+                    className="mt-2 text-xs font-bold text-primary-700 hover:underline"
+                  >
+                    عرض كل {favorites.length} دواءً
+                  </button>
+                )}
+                {medsMany && medSearchOpen && !medSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setMedSearchOpen(false)}
+                    className="mt-2 text-xs font-bold text-slate-500 hover:underline"
+                  >
+                    عرض مختصر
+                  </button>
+                )}
               </div>
             )}
             {meds.length === 0 ? (
               <p className="py-3 text-center text-xs text-slate-400">لا توجد أدوية — أضف دواءً إذا لزم</p>
             ) : (
               <ul className="space-y-3">
-                {meds.map((m, i) => (
+                {shownRx.map(({ m, i }) => (
                   <li key={i} className="grid grid-cols-2 gap-2.5 rounded-xl border border-slate-200 p-3 sm:grid-cols-5">
                     <div className="col-span-2 sm:col-span-1">
                       <Field label="اسم الدواء">
@@ -465,6 +608,92 @@ export default function Consultation() {
           </div>
         </div>
       )}
+
+      {/* بطاقة الدفعة — تظهر عند حفظ الكشف في العيادات التي تُطلب الدفعة (عيادة د. ريام) */}
+      <Modal
+        open={payOpen}
+        onClose={() => setPayOpen(false)}
+        title="تسجيل دفعة الكشفية"
+        subtitle={`المريض: ${patient?.full_name || ''} · سعر الكشفية ${fmtPrice(settings?.consultation_price, settings?.currency)}`}
+        footer={
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-slate-500">
+              {(() => {
+                const fee = Number(settings?.consultation_price) || 0
+                const p = Math.max(0, Math.min(fee, Math.floor(Number(payAmount) || 0)))
+                return `المتبقي على المريض: ${fmtPrice(Math.max(0, fee - p), settings?.currency)}`
+              })()}
+            </p>
+            <Button
+              size="lg"
+              loading={saving}
+              onClick={() => {
+                const fee = Number(settings?.consultation_price) || 0
+                const p = Math.max(0, Math.min(fee, Math.floor(Number(payAmount) || 0)))
+                setPayOpen(false)
+                doSave(p)
+              }}
+            >
+              <Wallet size={16} />
+              تأكيد الحفظ والدفعة
+            </Button>
+          </div>
+        }
+      >
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold text-emerald-700">سعر الكشفية (من الإعدادات)</p>
+              <p className="text-xl font-extrabold text-emerald-900" dir="ltr">
+                {fmtPrice(settings?.consultation_price, settings?.currency)}
+              </p>
+            </div>
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600 text-white">
+              <Wallet size={22} />
+            </span>
+          </div>
+        </div>
+
+        <Field label="المبلغ المدفوع الآن" className="mt-4">
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              dir="ltr"
+              min={0}
+              max={Number(settings?.consultation_price) || undefined}
+              step={1000}
+              value={payAmount}
+              onChange={(e) => {
+                const fee = Number(settings?.consultation_price) || 0
+                const raw = e.target.value
+                if (raw === '') return setPayAmount('')
+                const n = Number(raw)
+                if (!Number.isFinite(n)) return
+                setPayAmount(String(Math.max(0, Math.min(fee, Math.floor(n)))))
+              }}
+              placeholder="0"
+              className="h-11 text-base font-bold"
+            />
+            <span className="shrink-0 text-xs font-bold text-slate-500">{settings?.currency || ''}</span>
+          </div>
+        </Field>
+        <p className="mt-1 text-[11px] text-slate-400">
+          يُقبل المبلغ بين 0 و {fmtPrice(settings?.consultation_price, settings?.currency)} — يُحفظ باسم المريض كدفعة على حسابه.
+        </p>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setPayAmount(String(Number(settings?.consultation_price) || 0))}
+          >
+            كامل المبلغ
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => setPayAmount('0')}>
+            بدون دفعة (آجل)
+          </Button>
+        </div>
+      </Modal>
     </div>
   )
 }

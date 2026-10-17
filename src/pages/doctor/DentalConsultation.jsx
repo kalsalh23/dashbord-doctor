@@ -10,6 +10,7 @@ import DentalChart from '../../components/DentalChart'
 import { ageFrom, todayStr, formatDateShort } from '../../lib/format'
 import { fmtPrice, DEFAULT_CATALOG } from '../../lib/dental'
 import { friendlyDbError } from '../../lib/hooks'
+import { persistsDentalShapes } from '../../lib/clinicStyle'
 
 const FOLLOW_UP_OPTIONS = [2, 4, 7, 14, 30]
 
@@ -247,10 +248,16 @@ export default function DentalConsultation({ appointmentId, patientId }) {
           entries={entries}
           pricebook={chartPricebook}
           onEntriesChange={setEntries}
+          persistHistory={persistsDentalShapes(profile)}
         />
         {pricebook !== null && pricebook.length === 0 && (
           <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
             تُعرض الآن الأسعار الافتراضية — ثبّت أسعار عيادتك الحقيقية من صفحة «أسعاري»
+          </p>
+        )}
+        {persistsDentalShapes(profile) && (
+          <p className="mt-2 rounded-lg bg-sky-50 px-3 py-2 text-[11px] text-sky-800">
+            أشكال العلاجات والمشكلات السابقة تبقى مرسومة على الأسنان في كل زيارة — ويمكن إزالة علامة السن بعد انتهاء العلاج من نافذة السن.
           </p>
         )}
       </Card>

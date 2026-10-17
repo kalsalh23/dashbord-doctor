@@ -1,10 +1,10 @@
 -- emergency closure broadcast: apologize to ALL of today's patients in the doctor's
--- name, push to their channels, optionally cancel today's appointments for rebooking
+-- name (via WhatsApp from the app), optionally cancel today's appointments for rebooking
 create or replace function public.emergency_broadcast(p_note text default '', p_cancel boolean default true)
 returns int
 language plpgsql
 security definer
-set search_path = public, net, extensions
+set search_path to public
 as $$
 declare
   v_clinic uuid := (select clinic_id from public.profiles where id = auth.uid());
@@ -30,26 +30,6 @@ begin
              ' بسبب حالة إسعافية طارئة لدى ' || coalesce(v_doctor, 'الطبيب') || '. ' ||
              coalesce(nullif(p_note, ''), '') ||
              ' نرجو إعادة حجز موعدكم عبر دليل طبي أو بالاتصال بالعيادة. مع خالص تحياتنا، ' || coalesce(v_doctor, '');
-
-    begin
-      perform net.http_post(
-        url := 'https://ntfy.sh/pt-' || regexp_replace(coalesce(r.phone, ''), '\D', '', 'g'),
-        headers := jsonb_build_object('X-Title', 'إلغاء موعد اليوم — نعتذر', 'X-Priority', 'high', 'X-Cache', 'yes'),
-        body := to_jsonb(v_msg),
-        timeout_milliseconds := 5000
-      );
-    exception when others then null;
-    end;
-
-    begin
-      perform net.http_post(
-        url := 'https://ntfy.sh/booking-' || r.id::text,
-        headers := jsonb_build_object('X-Title', 'إلغاء موعد اليوم — نعتذر', 'X-Cache', 'yes'),
-        body := to_jsonb(v_msg),
-        timeout_milliseconds := 5000
-      );
-    exception when others then null;
-    end;
 
     v_count := v_count + 1;
   end loop;

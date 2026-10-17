@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { MessageCircle, Check, PhoneOff } from 'lucide-react'
+import { MessageCircle, MessageSquare, Check, PhoneOff, Send } from 'lucide-react'
 import { Modal, Button, Textarea, Tag } from './ui'
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { normalizePhone } from '../lib/format'
+import { smsHref, smsBulkHref, smsSegments } from '../lib/sms'
 
 /**
  * إرسال اعتذار الحالة الإسعافية — عيادة د. نزار (قالب nizar)
@@ -46,6 +47,32 @@ export default function EmergencyApology({ open, onClose, targets }) {
 
   const textFor = (p) =>
     message.replaceAll('{patient}', p.patient_name || '').replaceAll('{doctor}', doctorName)
+
+  // المتبقون الذين لم يُرسل لهم بعد ولديهم رقم صالح
+  const pendingPhones = list.filter((p) => !sentIds.has(p.id) && smsHref(p.phone, ''))
+
+  // SMS مجاني: يفتح تطبيق رسائل الهاتف بالرقم والنص جاهزين — بلا اشتراك وبلا إنترنت
+  const sendSms = async (p) => {
+    const href = smsHref(p.phone, textFor(p))
+    if (!href) return toast('error', 'لا يوجد رقم هاتف صالح لهذا المريض')
+    window.location.href = href
+    setBusyId(p.id)
+    try {
+      const { data: row } = await supabase.from('appointments').select('notes').eq('id', p.id).maybeSingle()
+      await supabase
+        .from('appointments')
+        .update({
+          notes: [row?.notes, `أُرسل اعتذار SMS — ${new Date().toTimeString().slice(0, 5)}`].filter(Boolean).join(' — '),
+        })
+        .eq('id', p.id)
+      setSentIds((s) => new Set([...s, p.id]))
+    } catch {
+      toast('error', 'تعذر تسجيل الإرسال — أُرسلت الرسالة لكن لم تُسجل')
+      setSentIds((s) => new Set([...s, p.id]))
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   const send = async (p) => {
     const phone = normalizePhone(p.phone, settings?.whatsapp_country_code)
@@ -101,9 +128,10 @@ export default function EmergencyApology({ open, onClose, targets }) {
       title="إرسال اعتذار لمرضى اليوم"
       subtitle={`${list.length} مريض${targets.cancelled ? ' — أُلغيت مواعيدهم اليوم' : ''} · أُرسل لـ ${sentIds.size} من ${list.length}`}
       footer={
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] text-slate-400">
-            يُفتح واتساب برسالة جاهزة على رقم كل مريض — اضغط إرسال في واتساب ثم «أرسلت» ليُسجل في النظام.
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[11px] leading-relaxed text-slate-400">
+            <b className="text-slate-600">SMS مجاني</b>: يفتح تطبيق رسائل هاتفك بالرقم والنص جاهزين — تضغط «إرسال» فقط، بلا إنترنت وبلا اشتراك.
+            {' '}الواتساب بديل لمن يفضّله ويحتاج اتصالاً.
           </p>
           <Button variant="secondary" onClick={onClose}>
             إنهاء
@@ -111,8 +139,27 @@ export default function EmergencyApology({ open, onClose, targets }) {
         </div>
       }
     >
-      <p className="label-base">نص الاعتذار (يُرسل للجميع — استخدم {'{patient}'} لاسم المريض)</p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <p className="label-base !mb-0">نص الاعتذار (يُرسل للجميع — استخدم {'{patient}'} لاسم المريض)</p>
+        <span className={`text-[11px] font-bold ${smsSegments(message) > 1 ? 'text-rose-600' : 'text-slate-400'}`}>
+          {message.length} حرفاً · {smsSegments(message)} شريحة SMS
+        </span>
+      </div>
       <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} />
+
+      {/* ===== إرسال جماعي مجاني: يفتح تطبيق الرسائل بكل الأرقام جاهزة ===== */}
+      {pendingPhones.length > 0 && (
+        <a
+          href={smsBulkHref(pendingPhones.map((p) => p.phone), message.replaceAll('{patient}', '') || message)}
+          className="mt-2 flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-800 transition-colors hover:bg-emerald-100"
+        >
+          <Send size={15} />
+          إرسال SMS جماعي لكل المتبقين ({pendingPhones.length})
+        </a>
+      )}
+      <p className="mt-1 text-[10px] leading-relaxed text-slate-400">
+        مجاني تماماً: يفتح تطبيق الرسائل في هاتفك بالرقم والنص جاهزين — تضغط «إرسال» فقط. لا يحتاج إنترنت ولا أي اشتراك.
+      </p>
 
       {!online && (
         <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-[11px] leading-relaxed text-rose-700">
@@ -142,16 +189,20 @@ export default function EmergencyApology({ open, onClose, targets }) {
               ) : noPhone ? (
                 <Tag tone="amber">
                   <PhoneOff size={11} />
-                  بلا واتساب — اتصال يدوي
+                  بلا رقم — اتصال يدوي
                 </Tag>
               ) : (
                 <>
                   <Button size="sm" variant="ghost" onClick={() => copyFor(p)}>
                     نسخ
                   </Button>
-                  <Button size="sm" variant={busyId === p.id ? 'secondary' : 'primary'} loading={busyId === p.id} onClick={() => send(p)}>
+                  <Button size="sm" variant="secondary" onClick={() => send(p)}>
                     <MessageCircle size={14} />
                     واتساب
+                  </Button>
+                  <Button size="sm" variant={busyId === p.id ? 'secondary' : 'primary'} loading={busyId === p.id} onClick={() => sendSms(p)}>
+                    <MessageSquare size={14} />
+                    SMS
                   </Button>
                 </>
               )}

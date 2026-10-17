@@ -300,8 +300,8 @@ export default function DentalPayments() {
         {statement && (
           <div className="print-area bg-white">
             <div style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif' }} dir="rtl">
-              <div style={{ textAlign: 'center', borderBottom: '2px solid #0f766e', paddingBottom: 8, marginBottom: 12 }}>
-                <h1 style={{ fontSize: 18, fontWeight: 800, color: '#134e4a', margin: 0 }}>{profile?.clinic?.name || 'العيادة'}</h1>
+              <div style={{ textAlign: 'center', borderBottom: '2px solid var(--p700)', paddingBottom: 8, marginBottom: 12 }}>
+                <h1 style={{ fontSize: 18, fontWeight: 800, color: 'var(--p900)', margin: 0 }}>{profile?.clinic?.name || 'العيادة'}</h1>
                 <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0 0' }}>كشف حساب المريض — {todayStr()}</p>
               </div>
               <table style={{ width: '100%', fontSize: 12, marginBottom: 12 }}>
@@ -314,10 +314,10 @@ export default function DentalPayments() {
                 </tbody>
               </table>
 
-              <p style={{ fontSize: 12, fontWeight: 800, color: '#134e4a', margin: '0 0 4px' }}>ما تم عمله في العيادة:</p>
+              <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--p900)', margin: '0 0 4px' }}>ما تم عمله في العيادة:</p>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11.5, marginBottom: 14 }}>
                 <thead>
-                  <tr style={{ background: '#f0fdfa' }}>
+                  <tr style={{ background: 'var(--p50)' }}>
                     <th style={stTh}>التاريخ</th>
                     <th style={stTh}>السن</th>
                     <th style={stTh}>الإجراء</th>
@@ -338,10 +338,10 @@ export default function DentalPayments() {
                 </tbody>
               </table>
 
-              <p style={{ fontSize: 12, fontWeight: 800, color: '#134e4a', margin: '0 0 4px' }}>الحركة المالية:</p>
+              <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--p900)', margin: '0 0 4px' }}>الحركة المالية:</p>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11.5, marginBottom: 12 }}>
                 <thead>
-                  <tr style={{ background: '#f0fdfa' }}>
+                  <tr style={{ background: 'var(--p50)' }}>
                     <th style={stTh}>الإجمالي</th>
                     <th style={stTh}>المدفوع</th>
                     <th style={stTh}>المتبقي</th>
@@ -359,7 +359,7 @@ export default function DentalPayments() {
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr style={{ fontWeight: 800, borderTop: '2px solid #0f766e' }}>
+                  <tr style={{ fontWeight: 800, borderTop: '2px solid var(--p700)' }}>
                     <td style={stTd} dir="ltr">{fmtPrice(statement.group.total)}</td>
                     <td style={stTd} dir="ltr">{fmtPrice(statement.group.paid)}</td>
                     <td style={stTd} dir="ltr">{fmtPrice(statement.group.remaining)}</td>

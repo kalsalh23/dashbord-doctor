@@ -74,7 +74,7 @@ export default function EntChart({ patientId, entries, pricebook, onEntriesChang
         category: item.category,
         treatment: item.treatment,
         price: Number(item.price) || 0,
-        color: item.color || '#0d9488',
+        color: item.color || 'var(--p600)',
         notes: notes.trim() || null,
       },
     ])
@@ -110,10 +110,10 @@ export default function EntChart({ patientId, entries, pricebook, onEntriesChang
         }${list.length ? ' — اليوم: ' + list.map((e) => e.treatment).join(' + ') : ''}${
           !list.length && historyByRegion[id + (side || '')] ? ' — سابقاً: ' + historyByRegion[id + (side || '')].procedure : ''
         }`}</title>
-        <path d={d} fill={c.fill} fillOpacity={c.staged ? 0.9 : 0.85} stroke={isActive || isHover ? '#0f766e' : '#94a3b8'} strokeWidth={isActive ? 2.6 : 1.4} />
+        <path d={d} fill={c.fill} fillOpacity={c.staged ? 0.9 : 0.85} stroke={isActive || isHover ? 'var(--p700)' : '#94a3b8'} strokeWidth={isActive ? 2.6 : 1.4} />
         {list.length > 1 && (
           <>
-            <circle cx={cx} cy={cy} r={7} fill="#0f766e" />
+            <circle cx={cx} cy={cy} r={7} fill="var(--p700)" />
             <text x={cx} y={cy + 3.2} textAnchor="middle" fontSize={9} fontWeight={800} fill="#ffffff" style={{ pointerEvents: 'none' }}>
               {list.length}
             </text>

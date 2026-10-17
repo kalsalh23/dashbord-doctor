@@ -1,13 +1,46 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* ---------- لوحة العيادة (تُبدَّل لكل عيادة) ---------- */
+  :root {
+    /* الافتراضي: برقوقي/موف أنيق — عصري وأنثوي ومريح للعين */
+    --p50: 251 245 251;
+    --p100: 245 233 246;
+    --p200: 235 210 237;
+    --p300: 217 178 220;
+    --p400: 192 136 196;
+    --p500: 167 94 173;
+    --p600: 143 77 149;
+    --p700: 118 61 124;
+    --p800: 95 49 100;
+    --p900: 74 38 80;
+    --bg: 250 247 251;
+  }
+
+  /* عيادة د. عارف: اللوحة الفيروزية الأصلية كما كانت */
+  .clinic-theme-legacy {
+    --p50: 240 253 250;
+    --p100: 204 251 241;
+    --p200: 153 246 228;
+    --p300: 94 234 212;
+    --p400: 45 212 191;
+    --p500: 20 184 166;
+    --p600: 13 148 136;
+    --p700: 15 118 110;
+    --p800: 17 94 79;
+    --p900: 19 78 74;
+    --bg: 248 250 252;
+  }
+
   html {
     @apply text-slate-800;
   }
   body {
-    @apply bg-slate-50 antialiased;
+    /* خلفية ناعمة بلون العيادة — تريح العين وتناسق اللوحة */
+    background-color: rgb(var(--bg));
+    @apply antialiased;
   }
   input,
   select,
@@ -24,8 +57,8 @@
 }
 
 @layer components {
-  .input-base {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-100 disabled:text-slate-400;
+.input-base {
+  @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-100 disabled:text-slate-400;
   }
   .label-base {
     @apply mb-1.5 block text-xs font-semibold text-slate-600;
@@ -55,11 +88,18 @@
 }
 
 
-/* print: isolate the prescription sheet into a single A5 page */
-#print-clone { display: none; }
+/* ============================================================
+ * طباعة ورقة الوصفة — ورقة A5 واحدة تماماً بحجم الورق
+ * ورقة التصميم 745px عرضاً؛ عند الطباعة تُصغّر 0.75 فتصبح 559px = 148mm
+ * وارتفاعها 1058px × 0.75 = 794px = 210mm — فتملأ الورقة حافةً لحافة
+ * (بلا هوامش بيضاء على الجانبين وبلا انقسام لورقتين)
+ * ============================================================ */
+@page { size: 105mm 148mm; margin: 0; }
 
 /* معاينة الورقة على الشاشة: بنفس عرض الطباعة (745px) مع مظهر ورقة حقيقية،
-   وتُصغّر تلقائياً بـ zoom لتناسب الشاشة — دون التأثير على الطباعة */
+   وتُصغّر تلقائياً بـ zoom لتناسب الشاشة — دون التأثير على الطباعة.
+   الارتفاع 1058px ثابت (مقاس A5 بمقياس التصميم) فالورقة لا تتمدد مهما
+   أُضيف من أدوية — والزائد يُحفظ في الأرشيف ويظهر كاملاً هناك. */
 .prescription-paper {
   width: 745px;
   margin: 0 auto;
@@ -69,37 +109,132 @@
   border-radius: 8px;
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14), 0 2px 8px rgba(15, 23, 42, 0.06);
 }
+.prescription-paper .prescription-sheet {
+  height: 1058px;
+  min-height: 1058px;
+  max-height: 1058px;
+}
 
 @media print {
   html.printing #root { display: none !important; }
+  html.printing body {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* حاوية الطباعة: بعرض ورق A6 بالضبط (105mm) — ومصدر التحجيم الوحيد */
   html.printing #print-clone {
     display: block !important;
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 745px;
-    zoom: 0.62;
-  }
-  html.printing body { background: #fff !important; }
-  #print-clone .prescription-sheet { width: 745px !important; }
-  /* إلغاء تأثير المعاينة (تصغير الشاشة والظل) عند الطباعة */
-  #print-clone .prescription-paper {
+    position: static !important;
+    width: 105mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
     zoom: 1 !important;
+    background: #fff !important;
+    overflow: hidden !important;
+  }
+
+  /* الورقة: حجم التصميم (745px) مصغّراً 0.53 ليملأ عرض A6 (105mm) وارتفاعه (148mm) */
+  html.printing #print-clone .prescription-paper {
+    zoom: 0.53 !important;
     width: 745px !important;
+    margin: 0 !important;
     padding: 0 !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    background: #fff !important;
   }
-  @page { size: A5 portrait; margin: 5mm; }
+
+  /* الورقة بارتفاع ثابت يملأ A6 (148mm ÷ 0.53 = 1054px بهامش أمان) — لا تتمدد ولا تنقسم
+     ملاحظة: كسر الصفحة بعد الورقة يُدار من print.js عبر inline لأنه لو بقي هنا
+     بأولوية !important لتغلّب على :last-of-type فأخرج صفحة بيضاء ثانية بعد كل ورقة */
+  html.printing #print-clone .prescription-sheet {
+    width: 745px !important;
+    height: 1054px !important;
+    max-height: 1054px !important;
+    min-height: 1054px !important;
+    overflow: hidden !important;
+  }
+
+  /* منطقة كتابة الوصفة تتوزّع داخل الورقة — لا تتجاوزها ولا تُقصّ */
+  html.printing #print-clone .nizar-lines {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  html.printing #print-clone .nizar-line {
+    flex: 1 1 0 !important;
+    min-height: 18px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
 }
 
-/* طباعة عدة أوراق معاينة دفعة واحدة: كل ورقة بصفحة A5 كاملة */
+/* طباعة عدة أوراق معاينة دفعة واحدة: كل ورقة بصفحة A5 كاملة
+   (الكسر الفعلي يُضبط من print.js: auto بعد الورقة الأخيرة فقط — فلا صفحة بيضاء) */
 #print-clone .prescription-sheet {
   page-break-after: always;
   break-after: page;
 }
+#print-clone .prescription-sheet.is-last-sheet,
 #print-clone .prescription-sheet:last-of-type {
   page-break-after: auto;
   break-after: auto;
+}
+/* ============================================================
+   ضمان طباعة ورقة د.نزار كاملة على A5 — بلا قص للـ QR أو التذييل
+   ============================================================ */
+html.printing #print-clone .prescription-sheet {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 1054px !important;
+  min-height: 1054px !important;
+  max-height: 1054px !important;
+  width: 745px !important;
+  overflow: hidden !important;
+}
+
+/* منطقة الكتابة تتمدد بما يتبقى وأسطرها تتوزّع بالتساوي داخل الورقة */
+html.printing #print-clone .nizar-lines {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+html.printing #print-clone .nizar-line {
+  flex: 1 1 0 !important;
+  min-height: 18px !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+/* QR: حجمه الطبيعي كاملاً بلا تحجيم ولا قصّ — يظهر كما في الورقة الأصلية */
+html.printing #print-clone .nizar-qr-row {
+  flex: 0 0 auto !important;
+  overflow: visible !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+html.printing #print-clone img.nizar-qr {
+  width: 126px !important;
+  height: 147px !important;
+  max-width: 126px !important;
+  max-height: 147px !important;
+  min-width: 126px !important;
+  min-height: 147px !important;
+  flex: 0 0 auto !important;
+  object-fit: contain !important;
+  image-rendering: auto !important;
+  display: block !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+/* الشعار والتذييل ثابتان أسفل الورقة */
+html.printing #print-clone .prescription-sheet > div:first-child {
+  flex: 0 0 auto !important;
+}
+html.printing #print-clone .prescription-sheet > div:last-child {
+  flex: 0 0 auto !important;
 }

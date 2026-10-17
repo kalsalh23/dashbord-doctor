@@ -11,10 +11,40 @@ const SUPABASE_ANON = process.env.VITE_SUPABASE_ANON_KEY
 function json(res, code, body) {
   res.statusCode = code
   res.setHeader('Content-Type', 'application/json; charset=utf-8')
+  // السماح للمنصة بقراءة النتيجة (CORS) — لا توجد بيانات حساسة في الاستجابة
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'content-type, x-bridge-secret')
   res.end(JSON.stringify(body))
 }
 
+// الحجز مرفوض: نبني رداً يحمل الرسالة للمواطن في كل الحقول الشائعة
+// حتى يظهر نصّه في تطبيق دليلك بدل «حدث خطأ حاول مجدداً» — وبنفس رمز HTTP 200
+// لأن كثيراً من الواجهات تُظهر رسالة عامة عند أي رد غير ناجح HTTP.
+function rejectBooking(res, msg, extra = {}) {
+  const text = String(msg || 'يتعذر الحجز — لديك حجز مسبق في نفس اليوم')
+  return json(res, 200, {
+    ok: false,
+    success: false,
+    booked: false,
+    accepted: false,
+    status: 'rejected',
+    code: extra.code || 'ALREADY_BOOKED',
+    error: text,
+    message: text,
+    msg: text,
+    user_message: text,
+    detail: text,
+    description: text,
+    title: 'لا يمكن إتمام الحجز',
+    reason: text,
+    pending: !!extra.pending,
+    clinic_id: extra.clinic_id || null,
+  })
+}
+
 export default async (req, res) => {
+  if (req.method === 'OPTIONS') return json(res, 200, { ok: true })
   if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' })
   const key = req.headers['x-bridge-secret'] || ''
   if (key !== BRIDGE_SECRET) return json(res, 401, { error: 'unauthorized' })
@@ -26,20 +56,43 @@ export default async (req, res) => {
   }
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON)
-  const { data, error } = await sb.rpc('bridge_create_appointment', {
-    p_secret: BRIDGE_SECRET,
-    p_platform_ref: platform_ref,
-    p_patient_name: patient_name,
-    p_patient_phone: patient_phone,
-    p_requested_date: requested_date || null,
-    p_day_label: day_label || null,
-    p_preferred_time: preferred_time || null,
-    p_note: note || null,
-    p_clinic_id: clinic_id || null,
-    p_doctor_name: doctor_name || null,
-  })
-  if (error) return json(res, 500, { ok: false, error: error.message })
-  if (data?.error) return json(res, 400, { ok: false, error: data.error })
+  let data = null
+  let rpcError = null
+  try {
+    const res2 = await sb.rpc('bridge_create_appointment', {
+      p_secret: BRIDGE_SECRET,
+      p_platform_ref: platform_ref,
+      p_patient_name: patient_name,
+      p_patient_phone: patient_phone,
+      p_requested_date: requested_date || null,
+      p_day_label: day_label || null,
+      p_preferred_time: preferred_time || null,
+      p_note: note || null,
+      p_clinic_id: clinic_id || null,
+      p_doctor_name: doctor_name || null,
+    })
+    data = res2.data
+    rpcError = res2.error
+  } catch (e) {
+    rpcError = e
+  }
+
+  if (rpcError) {
+    // خطأ تقني حقيقي — نُعيد رسالة مفهومة للمواطن لا رسالة نظام
+    return rejectBooking(res, 'تعذر إرسال طلب الحجز حالياً — حاول بعد قليل أو راجع العيادة', { code: 'BRIDGE_ERROR' })
+  }
+  // خطأ من الدالة نفسها (مثل عدم وجود عيادة)
+  if (data?.error) {
+    return rejectBooking(res, data.error, { code: 'CLINIC_ERROR', clinic_id: data.clinic_id || null })
+  }
+  // الحجز مرفوض: لدى المواطن حجز مسبق في نفس اليوم — الرسالة تظهر له في المنصة
+  if (data?.ok === false) {
+    return rejectBooking(res, data.error || 'يتعذر الحجز — لديك حجز مسبق في نفس اليوم', {
+      code: data.code || 'ALREADY_BOOKED',
+      pending: !!data.pending,
+      clinic_id: data.clinic_id || null,
+    })
+  }
   if (data?.duplicate) return json(res, 200, { ok: true, duplicate: true })
 
   // الإشعار الخارجي: لكل موظف فعّل الإشعارات في هذه العيادة

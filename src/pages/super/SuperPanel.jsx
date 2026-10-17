@@ -15,9 +15,9 @@ import { friendlyDbError } from '../../lib/hooks'
 import { SPECIALTIES } from '../../lib/specialties'
 
 const ROLE_BADGE = {
-  doctor: { label: 'طبيب', cls: 'bg-teal-50 text-teal-800 border-teal-200' },
+  doctor: { label: 'طبيب', cls: 'bg-primary-50 text-primary-700 border-primary-200' },
   reception: { label: 'استقبال', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
-  admin: { label: 'مدير العيادة', cls: 'bg-violet-50 text-violet-700 border-violet-200' },
+  admin: { label: 'مدير العيادة', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
   super_admin: { label: 'مدير النظام', cls: 'bg-slate-100 text-slate-600 border-slate-200' },
 }
 

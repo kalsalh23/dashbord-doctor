@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Hourglass, Stethoscope, CalendarDays, FolderOpen, History, Siren, CalendarPlus } from 'lucide-react'
+import { Stethoscope, CalendarDays, CalendarPlus, Siren } from 'lucide-react'
 import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
-import { Card, Button, EmptyState, SkeletonRows, Avatar, Badge, APPT_STATUS, PageHeader, Modal, Field, Textarea, Toggle, ConfirmDialog } from '../../components/ui'
-import LastVisitModal from '../../components/LastVisitModal'
+import { Card, Button, EmptyState, SkeletonRows, Avatar, Badge, APPT_STATUS, Modal, Field, Textarea, Toggle, ConfirmDialog } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
 import EmergencyApology from '../../components/EmergencyApology'
-import { todayStr, timeToMin, ageFrom, nowMinutes, minToTime } from '../../lib/format'
+import { todayStr, timeToMin, nowMinutes, formatDateLong } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
 
 const SELECT = 'id, patient_id, appointment_date, start_time, end_time, status, updated_at, patient:patients(id, full_name, phone, date_of_birth, gender)'
@@ -16,7 +15,6 @@ export default function DoctorDashboard() {
   const { profile, settings, toast } = useApp()
   const isNizar = settings?.prescription_template === 'nizar'
   const [appts, setAppts] = useState(null)
-  const [lastVisitFor, setLastVisitFor] = useState(null) // patient object for the quick-view modal
   const [emergencyOpen, setEmergencyOpen] = useState(false)
   const [emergencyNote, setEmergencyNote] = useState('')
   const [emergencyCancel, setEmergencyCancel] = useState(true)
@@ -60,8 +58,8 @@ export default function DoctorDashboard() {
     audit(profile.clinic_id, 'emergency_broadcast', 'appointments', null, { notified: count })
     setEmergencyOpen(false)
     setEmergencyNote('')
-    if (isNizar && data?.list) {
-      // عيادة نزار: شاشة إرسال الاعتذار الفعلي (واتساب) لكل مريض
+    // شاشة إرسال الاعتذار الفعلي (SMS مجاني / واتساب) لكل العيادات حين يوجد مرضى متأثرون
+    if (Array.isArray(data?.list) && data.list.length > 0) {
       setEmergencyTargets({ list: data.list, note: emergencyNote.trim(), cancelled: emergencyCancel })
     } else {
       setEmergencyDone(count ?? 0)
@@ -79,53 +77,64 @@ export default function DoctorDashboard() {
     .sort((a, b) => timeToMin(a.start_time) - timeToMin(b.start_time))
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <PageHeader
-        title="عيادة اليوم"
-        subtitle={`${profile?.full_name} — ${queue.length + current.length} مريض نشط الآن`}
-        actions={
-          <div className="flex gap-2">
-            {/* اختصاص الأنف والأذن والحنجرة: كشف برسومات تشريحية خاصة */}
-            {(profile?.specialty_key || '') === 'ent' && (
-              <Button variant="secondary" onClick={() => nav('/doctor/consultation')}>
-                <Stethoscope size={16} />
-                كشف جديد بالرسومات
-              </Button>
-            )}
-            {/* الطبيب الشامل: يحجز بنفسه — لا يوجد موظف استقبال في عيادته */}
-            {profile?.self_service && (
-              <Button variant="secondary" onClick={() => setBookingOpen(true)}>
-                <CalendarPlus size={16} />
-                حجز موعد
-              </Button>
-            )}
-            <Button
-              variant="dangerGhost"
-              onClick={() => setEmergencyOpen(true)}
-              disabled={todayCount === 0}
-              title={todayCount === 0 ? 'لا توجد مواعيد اليوم' : 'إشعار جماعي لمرضى اليوم'}
-            >
-              <Siren size={16} />
-              حالة إسعافية
+    <div className="mx-auto max-w-4xl">
+      {/* ============ ترويسة اليوم — ملخّص + إجراءات سريعة ============ */}
+      <section className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="bg-gradient-to-l from-primary-50 via-primary-50/40 to-white px-4 py-4 sm:px-5">
+          <p className="text-[11px] font-bold text-primary-700">{formatDateLong(todayStr())}</p>
+          <h1 className="mt-0.5 truncate text-lg font-black text-slate-800 sm:text-xl">أهلاً د. {profile?.full_name}</h1>
+          <p className="mt-1 text-xs text-slate-500">
+            {queue.length + current.length > 0
+              ? `${queue.length + current.length} مريض نشط اليوم · ${current.length} قيد الكشف الآن · ${queue.length} في الانتظار`
+              : 'لا يوجد مرضى نشطون الآن — ابدأ بحجز موعد'}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 border-t border-slate-100 p-3 sm:flex sm:items-center sm:p-4">
+          {/* حجز موعد — متاح للطبيبة مباشرة من لوحتها */}
+          <Button onClick={() => setBookingOpen(true)} className="justify-center sm:!w-auto">
+            <CalendarPlus size={16} />
+            حجز موعد
+          </Button>
+          {/* اختصاص الأنف والأذن والحنجرة: كشف برسومات تشريحية خاصة */}
+          {(profile?.specialty_key || '') === 'ent' && (
+            <Button variant="secondary" className="justify-center sm:!w-auto" onClick={() => nav('/doctor/consultation')}>
+              <Stethoscope size={16} />
+              كشف جديد
             </Button>
-          </div>
-        }
-      />
+          )}
+          <Button variant="secondary" className="justify-center sm:!w-auto" onClick={() => nav('/doctor/schedule')}>
+            <CalendarDays size={16} />
+            جدول المواعيد
+          </Button>
+          <Button
+            variant="dangerGhost"
+            className="justify-center sm:!w-auto"
+            onClick={() => setEmergencyOpen(true)}
+            disabled={todayCount === 0}
+            title={todayCount === 0 ? 'لا توجد مواعيد اليوم' : 'إشعار جماعي لمرضى اليوم'}
+          >
+            <Siren size={16} />
+            حالة إسعافية
+          </Button>
+        </div>
+      </section>
 
-      {/* in consultation */}
+      {/* ============ قيد الكشف الآن — الأهم، يظهر أولاً ============ */}
       {current.length > 0 && (
-        <div className="mb-5">
+        <section className="mb-5">
           <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700">
-            <Stethoscope size={16} className="text-primary-600" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-100 text-primary-700">
+              <Stethoscope size={15} />
+            </span>
             قيد الكشف الآن
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {current.map((a) => (
-              <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50/60 px-4 py-3.5">
-                <div className="flex items-center gap-3">
-                  <Avatar name={a.patient?.full_name} />
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{a.patient?.full_name}</p>
+              <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-primary-200 bg-primary-50/70 px-4 py-3.5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar name={a.patient?.full_name} className="h-11 w-11 text-sm" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-slate-800">{a.patient?.full_name}</p>
                     <p className="text-[11px] text-slate-500">موعد {a.start_time?.slice(0, 5)}</p>
                   </div>
                 </div>
@@ -135,86 +144,58 @@ export default function DoctorDashboard() {
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* waiting queue */}
-      <div className="mb-5">
-        <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700">
-          <Hourglass size={16} className="text-amber-500" />
-          بانتظار الكشف
-        </h2>
+      {/* ============ مواعيد اليوم القادمة — قائمة العمل الواضحة ============ */}
+      <section>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-slate-700">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+              <CalendarDays size={15} />
+            </span>
+            مواعيد اليوم
+          </h2>
+          {upcoming.length > 0 && (
+            <Button size="sm" variant="secondary" onClick={() => nav('/doctor/schedule')}>
+              عرض الجدول
+            </Button>
+          )}
+        </div>
         {!appts ? (
           <SkeletonRows rows={3} />
-        ) : queue.length === 0 ? (
+        ) : upcoming.length === 0 ? (
           <Card>
             <EmptyState
-              icon={Hourglass}
-              title="لا يوجد مرضى في الانتظار"
-              message="سيظهر هنا المرضى بعد أن تنقلهم الاستقبال إلى قائمة الانتظار"
+              icon={CalendarDays}
+              title="لا توجد مواعيد قادمة اليوم"
+              message="احملي مريضة جديدة أو تفحّصي جدول الأيام القادمة"
+              action={
+                <Button size="sm" onClick={() => setBookingOpen(true)}>
+                  <CalendarPlus size={14} />
+                  حجز موعد
+                </Button>
+              }
             />
           </Card>
         ) : (
-          <ul className="space-y-3">
-            {queue.map((a) => (
-              <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-card">
-                <div className="flex items-center gap-3">
-                  <Avatar name={a.patient?.full_name} />
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{a.patient?.full_name}</p>
-                    <p className="text-[11px] text-slate-500">
-                      موعد {a.start_time?.slice(0, 5)}
-                      {a.patient?.date_of_birth ? ` · ${ageFrom(a.patient.date_of_birth)} سنة` : ''}
-                      {` · وصل ${minToTime(nowMinutes())}`}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => setLastVisitFor(a.patient)}>
-                    <History size={14} />
-                    آخر زيارة
-                  </Button>
-                  <Button size="sm" variant="secondary" onClick={() => nav(`/doctor/patients/${a.patient_id}`)}>
-                    <FolderOpen size={14} />
-                    الملف
-                  </Button>
-                  <Button size="sm" onClick={() => nav(`/doctor/consultation/${a.id}`)}>
-                    <Stethoscope size={14} />
-                    بدء الكشف
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <LastVisitModal open={!!lastVisitFor} onClose={() => setLastVisitFor(null)} patient={lastVisitFor} />
-      {/* الطبيب الشامل: حجز المواعيد بنفسه */}
-      <BookingModal open={bookingOpen} onClose={() => setBookingOpen(false)} onBooked={load} />
-
-      {/* today's upcoming */}
-      <div>
-        <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700">
-          <CalendarDays size={16} className="text-slate-400" />
-          مواعيد اليوم القادمة
-        </h2>
-        <Card bodyClass="!p-0">
-          {upcoming.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs text-slate-400">لا توجد مواعيد قادمة اليوم</p>
-          ) : (
+          <Card bodyClass="!p-0">
             <ul className="divide-y divide-slate-100">
               {upcoming.map((a) => (
                 <li key={a.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
-                  <span className="w-12 text-center text-sm font-bold text-slate-700" dir="ltr">{a.start_time?.slice(0, 5)}</span>
+                  <span className="w-12 shrink-0 text-center text-sm font-bold text-slate-700" dir="ltr">{a.start_time?.slice(0, 5)}</span>
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700">{a.patient?.full_name}</span>
                   <Badge map={APPT_STATUS} value={a.status} />
                 </li>
               ))}
             </ul>
-          )}
-        </Card>
-      </div>
+          </Card>
+        )}
+      </section>
+
+      {/* نافذة حجز موعد — تُفتح من زرّ «حجز موعد» في ترويسة اللوحة */}
+      <BookingModal open={bookingOpen} onClose={() => setBookingOpen(false)} onBooked={load} />
+
       {/* emergency broadcast */}
       <Modal
         open={emergencyOpen}
@@ -236,31 +217,31 @@ export default function DoctorDashboard() {
         <p className="mb-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900">
           سيُرسل اعتذار جماعي باسمك لكل مرضى اليوم عبر قنواتهم، مع طلب إعادة الحجز.
         </p>
+        <p className="mb-3 rounded-lg border border-primary-100 bg-primary-50 px-3 py-2.5 text-xs leading-relaxed text-primary-900">
+          <b>مواعيد اليوم ستُلغى تلقائياً</b> — ولأنك لا تستقبل أحداً اليوم، تعود كل الأوقات إلى وضعها الأصلي
+          <b> قابلة للحجز</b> فوراً لأي مريض آخر.
+        </p>
         <Field label="نص إضافي (اختياري)" hint="مثال: الحالة إسعافية في المستشفى — سنرد عليكم لترتيب موعد بديل">
           <Textarea value={emergencyNote} onChange={(e) => setEmergencyNote(e.target.value)} rows={2} />
         </Field>
-        <div className="mt-3">
-          <Toggle checked={emergencyCancel} onChange={setEmergencyCancel} label="إلغاء مواعيد اليوم أيضاً (لتحرير الأوقات لإعادة الحجز)" />
-        </div>
       </Modal>
 
-      {isNizar ? (
-        /* نزار: شاشة إرسال الاعتذار الفعلي عبر واتساب لكل مريض متأثر */
-        <EmergencyApology
-          open={!!emergencyTargets}
-          onClose={() => setEmergencyTargets(null)}
-          targets={emergencyTargets}
-        />
-      ) : (
-        <ConfirmDialog
-          open={emergencyDone !== null}
-          onClose={() => setEmergencyDone(null)}
-          title="تم الإرسال بنجاح"
-          message={`وصل الاعتذار لـ ${emergencyDone} مريض عبر قنواتهم${emergencyCancel ? '، وأُلغيت مواعيدهم اليوم لتحرير الأوقات' : ''}. أُرسل إشعار للاستقبال بالاتصال وترتيب إعادة الحجز.`}
-          confirmLabel="حسناً"
-          onConfirm={() => setEmergencyDone(null)}
-        />
-      )}
+      {/* شاشة إرسال الاعتذار — SMS مجاني / واتساب (تظهر فقط عند وجود مرضى متأثرين) */}
+      <EmergencyApology
+        open={!!emergencyTargets}
+        onClose={() => setEmergencyTargets(null)}
+        targets={emergencyTargets}
+      />
+
+      {/* احتياط: إشعار داخلي فقط أو لا يوجد مرضى */}
+      <ConfirmDialog
+        open={emergencyDone !== null}
+        onClose={() => setEmergencyDone(null)}
+        title="تم الإرسال بنجاح"
+        message={`وصل الاعتذار لـ ${emergencyDone} مريض عبر قنواتهم${emergencyCancel ? '، وأُلغيت مواعيدهم اليوم لتحرير الأوقات' : ''}. أُرسل إشعار للاستقبال بالاتصال وترتيب إعادة الحجز.`}
+        confirmLabel="حسناً"
+        onConfirm={() => setEmergencyDone(null)}
+      />
     </div>
   )
 }

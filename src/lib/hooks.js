@@ -41,6 +41,10 @@ export function friendlyDbError(err, duplicateMsg) {
   if (msg.includes('WEAK_PASSWORD')) {
     return 'كلمة المرور قصيرة — 6 أحرف على الأقل'
   }
+  // حجز موعد ثانٍ لنفس الشخص في نفس اليوم (حارس قاعدة البيانات)
+  if (msg.includes('ONE_PER_DAY') || err?.code === '23523') {
+    return msg.replace(/^ONE_PER_DAY:\s*/, '') || 'لا يمكن حجز أكثر من موعد لنفس الشخص في اليوم نفسه'
+  }
   if (msg.includes('duplicate key') || err?.code === '23505') {
     return duplicateMsg || 'هذه البيانات مستخدمة مسبقًا'
   }
@@ -48,4 +52,18 @@ export function friendlyDbError(err, duplicateMsg) {
     return 'لا تملك صلاحية تنفيذ هذا الإجراء'
   }
   return 'حدث خطأ غير متوقع، حاول مرة أخرى'
+}
+
+/**
+ * تحذير مسبق: هل لدى هذا المريض موعد نشط في نفس اليوم؟
+ * يُستخدم في نافذة الحجز لإظهار تنبيه قبل محاولة الحفظ (منع الحجز المزدوج برقم الهاتف/الاسم)
+ */
+export async function patientHasAppointmentOn(clinicId, patientId, dateStr) {
+  const { data } = await supabase
+    .from('appointments')
+    .select('id, start_time, status, patient:patients(full_name, phone)')
+    .eq('clinic_id', clinicId)
+    .eq('appointment_date', dateStr)
+    .not('status', 'in', '(cancelled,no_show)')
+  return (data || []).find((a) => a.patient?.id === patientId) || null
 }

@@ -4,6 +4,7 @@ import { ArrowRight, Printer, Pill, FolderOpen, Stethoscope } from 'lucide-react
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, EmptyState, Spinner, Tag } from '../../components/ui'
+import SpecialtyData from '../../components/SpecialtyData'
 import { formatDateShort } from '../../lib/format'
 
 /**
@@ -14,6 +15,8 @@ export default function VisitReadPage() {
   const { profile, settings } = useApp()
   const nav = useNavigate()
   const [data, setData] = useState(undefined)
+  // عيادات قالب نزار فقط هي التي تملك ورقة الوصفة القابلة للطباعة
+  const canPrintRx = settings?.prescription_template === 'nizar'
 
   useEffect(() => {
     if (!visitId) return
@@ -43,7 +46,6 @@ export default function VisitReadPage() {
     { label: 'خطة العلاج', value: data.treatment_plan },
     { label: 'ملاحظات طبية', value: data.medical_notes },
   ]
-  const entries = Object.entries(data.specialty_data || {})
   const meds = data.medications || []
 
   return (
@@ -58,10 +60,12 @@ export default function VisitReadPage() {
             <FolderOpen size={14} />
             الملف الكامل
           </Button>
-          <Button size="sm" onClick={() => nav(`/print/prescription/${data.id}`)}>
-            <Printer size={14} />
-            الوصفة الطبية (A5)
-          </Button>
+          {canPrintRx && (
+            <Button size="sm" onClick={() => nav(`/print/prescription/${data.id}`)}>
+              <Printer size={14} />
+              الوصفة الطبية (A5)
+            </Button>
+          )}
         </div>
       </div>
 
@@ -88,18 +92,7 @@ export default function VisitReadPage() {
             </div>
           ))}
 
-          {entries.length > 0 && (
-            <div>
-              <p className="mb-1 text-[11px] font-bold text-slate-400">بيانات التخصص</p>
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                {entries.map(([label, value]) => (
-                  <div key={label} className="rounded-lg bg-slate-50 px-3 py-2 text-xs">
-                    <b className="text-slate-500">{label}:</b> <span className="font-semibold text-slate-700">{String(value)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <SpecialtyData data={data.specialty_data} />
 
           {meds.length > 0 && (
             <div>

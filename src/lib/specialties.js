@@ -70,6 +70,16 @@ export const SPECIALTIES = [
     ],
   },
   {
+    key: 'surgery', label: 'جراحة عامة', icon: 'Syringe',
+    examLabel: 'الفحص الجراحي العام',
+    fields: [
+      { key: 'surgical_site', label: 'الموقع الجراحي' },
+      { key: 'operation_type', label: 'نوع العملية / الاستشارة' },
+      { key: 'abdominal_exam', label: 'فحص البطن' },
+      { key: 'wound_status', label: 'حالة الجرح بعد العملية' },
+    ],
+  },
+  {
     key: 'ent', label: 'الأنف والأذن والحنجرة', icon: 'Ear',
     fields: [
       { key: 'side', label: 'الجانب المصاب' },

@@ -1,4 +1,4 @@
-import { ageFrom, formatDateShort } from '../lib/format'
+﻿import { ageFrom, formatDateShort } from '../lib/format'
 
 /**
  * قالب الوصفة الطبية — د.نزار عبدالستار الشيخ
@@ -24,10 +24,11 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
   const shownMeds = meds.slice(0, maxMedLines)
 
   return (
-    <div className="prescription-sheet relative overflow-hidden bg-white" style={{ fontFamily: '"IBM Plex Sans Arabic", serif' }}>
+    // عمود مرن: المحتوى يتمدد بمقداره والتذييل يبقى ملتصقاً بأسفل الورقة
+    <div className="prescription-sheet relative flex flex-col overflow-hidden bg-white" style={{ fontFamily: '"IBM Plex Sans Arabic", serif' }}>
       {/* ---------- header: logo centered, name below ---------- */}
-      <div className="relative px-4 pt-2 text-center">
-        <img src={logo} alt="شعار العيادة" className="mx-auto h-[92px] w-auto" />
+      <div className="relative shrink-0 px-4 pt-2 text-center">
+        <img src={logo} alt="شعار العيادة" className="mx-auto h-[74px] w-auto" />
         <p className="mt-1 text-[27px] font-bold leading-tight" style={{ color: '#1e3a5f' }}>
           د.نزار عبدالستار الشيخ
         </p>
@@ -68,7 +69,7 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
       </div>
 
       {/* ---------- sheet frame ---------- */}
-      <div className="relative mx-4 mt-3 rounded-[16px] border border-slate-300 px-5 pb-3 pt-4">
+      <div className="relative mx-4 mt-3 flex min-h-0 flex-1 flex-col rounded-[16px] border border-slate-300 px-5 pb-3 pt-4">
         {/* وصفة طبية badge — attached top-right */}
         <span
           className="absolute -top-3.5 right-4 inline-flex items-center gap-2 rounded-l-xl rounded-br-xl px-7 py-1.5 text-[14px] font-bold text-white shadow-sm"
@@ -141,14 +142,14 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
           </p>
         </div>
 
-        {/* lined writing area */}
-        <div className="relative mt-3">
-          <div className="relative space-y-[30px] py-3">
+        {/* lined writing area — أسطر تتوزّع داخل ما يتبقى من الورقة (صفحة واحدة دائماً) */}
+        <div className="relative mt-3 flex min-h-0 flex-1 flex-col">
+          <div className="nizar-lines relative flex min-h-0 flex-1 flex-col overflow-hidden py-3">
             {/* أسطر الأدوية المضافة — بسطور الورقة نفسها (حجم ثابت) مع منع التمدد */}
             {shownMeds.map((m, i) => {
               const line = [m.name, m.dosage, m.duration, m.instructions].filter(Boolean).join(' — ')
               return (
-              <p key={i} className="min-h-[16px] overflow-hidden border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800" title={line}>
+              <p key={i} className="nizar-line flex min-h-[18px] flex-1 flex-col justify-end overflow-hidden border-b border-dotted border-slate-300 pb-1 text-[13px] leading-5 text-slate-800" title={line}>
                 {onDeleteMed ? (
                   <span className="flex items-center justify-between gap-2">
                     <span className="truncate">{line}</span>
@@ -169,22 +170,22 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
             })}
             {/* سطر كتابة الدواء — في السطر الثالث مباشرة بعد الأدوية، بعلامة صغيرة للإشارة */}
             {medEntrySlot && (
-              <p className="min-h-[16px] border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800">
+              <p className="nizar-line flex min-h-[18px] flex-1 flex-col justify-end border-b border-dotted border-slate-300 pb-1 text-[13px] leading-5 text-slate-800">
                 {medEntrySlot}
               </p>
             )}
             {/* باقي الأسطر الفارغة */}
             {lineRows.slice(shownMeds.length + (medEntrySlot ? 1 : 0)).map((line, i) => (
-              <p key={'e' + i} className="min-h-[16px] border-b border-dotted border-slate-300 pb-1.5 text-[13px] leading-5 text-slate-800">
+              <p key={'e' + i} className="nizar-line flex min-h-[18px] flex-1 flex-col justify-end border-b border-dotted border-slate-300 pb-1 text-[13px] leading-5 text-slate-800">
                 {line}
               </p>
             ))}
           </div>
         </div>
 
-        {/* QR بحجمه الطبيعي (بلا تحجيم أو تمديد) + التوقيع يميناً */}
-        <div className="relative mt-2 flex items-end justify-between px-2 pb-2">
-          <img src={qr} alt="QR" className="max-w-none" />
+        {/* QR بحجمه الطبيعي الثابت (126×147 بلا تحجيم أو تمديد) + التوقيع يميناً */}
+        <div className="nizar-qr-row relative mt-2 flex shrink-0 items-end justify-between px-2 pb-2">
+          <img src={qr} alt="QR" width={126} height={147} className="nizar-qr block max-w-none" />
           <div className="text-end">
             <p className="text-[14px] font-bold text-slate-700">توقيع الطبيب وختم العيادة</p>
             <span className="mt-2 inline-block w-48 border-b border-slate-500" />
@@ -194,7 +195,7 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
       </div>
 
       {/* ---------- footer navy band ---------- */}
-      <div className="relative mx-1 mt-2 overflow-hidden rounded-t-[16px] border-t-2 px-4 py-3" style={{ background: '#1e3a5f', borderTopColor: '#e8b64c' }}>
+      <div className="relative mx-1 mt-2 shrink-0 overflow-hidden rounded-t-[16px] border-t-2 px-4 py-3" style={{ background: '#1e3a5f', borderTopColor: '#e8b64c' }}>
         <div className="flex items-center justify-between gap-3 text-[11px] font-semibold text-white">
           {/* right: booking */}
           <span className="flex items-center gap-2">
@@ -203,7 +204,7 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
           </span>
           {/* center: phones */}
           <span className="flex items-center gap-1.5 text-center leading-tight">
-            <span style={{ color: '#e8b64c' }}>☎</span>
+            <span style={{ color: '#e8b64c' }}>�?�</span>
             <span>
               دمشق
               <br />

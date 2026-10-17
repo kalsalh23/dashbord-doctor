@@ -31,8 +31,12 @@ export default function PlatformRequests({ onChanged }) {
 
   useEffect(() => {
     load()
-    const t = setInterval(load, 60000)
-    return () => clearInterval(t)
+    const t = setInterval(load, 20000)
+    window.addEventListener('focus', load)
+    return () => {
+      clearInterval(t)
+      window.removeEventListener('focus', load)
+    }
   }, [load])
 
   const accept = async (r) => {

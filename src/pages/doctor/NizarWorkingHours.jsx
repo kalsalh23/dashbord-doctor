@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { CalendarOff, Clock, Save } from 'lucide-react'
+import { CalendarOff, Clock, Save, Cloud, CloudOff, Check } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, PageHeader, Toggle, Spinner } from '../../components/ui'
 import { useSchedules } from '../../lib/hooks'
 import { timeToMin } from '../../lib/format'
 import { buildSlots } from '../../lib/slots'
+import { BRIDGE_SECRET, BRIDGE_BASE } from '../../lib/bridge'
 
 /**
  * أوقات دوامي — عيادة د. نزار عبد الستار الشيخ (قالب nizar)
@@ -20,8 +21,10 @@ const hhmm = (t) => (t || '').slice(0, 5)
 export default function NizarWorkingHours() {
   const { profile, toast, settings } = useApp()
   const [schedules, reload] = useSchedules()
+  const [loaded, setLoaded] = useState(false)
   const [edits, setEdits] = useState({}) // { [weekday]: { active?, start?, end? } } — فوق القيم المحفوظة
   const [saving, setSaving] = useState(false)
+  const [syncState, setSyncState] = useState('idle') // idle | ok | failed — حالة المزامنة مع «دليلك الطبي»
 
   // قواعد توليد المواعيد الفعلية للعيادة — كما يستخدمها الحجز نفسه (نفس افتراضات slotsForDay)
   const slotMinutes = Number(settings?.slot_minutes) || 10
@@ -42,6 +45,43 @@ export default function NizarWorkingHours() {
 
   const setRow = (wd, patch) => setEdits((m) => ({ ...m, [wd]: { ...m[wd], ...patch } }))
 
+  // مزامنة أوقات الدوام مع منصة «دليلك الطبي» يدوياً — يضمن وصول الجدول حتى لو تعذّر الإرسال الآلي
+  const syncToDirectory = async () => {
+    if (!profile?.clinic_id || schedules.length === 0) return
+    setSyncState('idle')
+    try {
+      const workHours = {}
+      for (const s of schedules) {
+        const r = rowFor(s.weekday)
+        const key = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][s.weekday]
+        workHours[key] = r.active ? `${r.start} - ${r.end}` : 'مغلق'
+      }
+      const res = await fetch(`${BRIDGE_BASE}/api/bridge-hours`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-bridge-secret': BRIDGE_SECRET },
+        body: JSON.stringify({
+          clinic_id: profile.clinic_id,
+          clinic_name: profile.clinic?.name || '',
+          days: schedules.map((s) => {
+            const r = rowFor(s.weekday)
+            return { weekday: s.weekday, active: r.active, start: r.start, end: r.end }
+          }),
+          work_hours: workHours,
+          slot_minutes: slotMinutes,
+          slots_before_break: slotsBeforeBreak,
+          break_minutes: breakMinutes,
+          event: 'SYNC',
+          updated_at: new Date().toISOString(),
+        }),
+      })
+      setSyncState(res.ok ? 'ok' : 'failed')
+      return res.ok
+    } catch {
+      setSyncState('failed')
+      return false
+    }
+  }
+
   const save = async () => {
     if (!schedules.length) return
     for (const s of schedules) {
@@ -51,6 +91,7 @@ export default function NizarWorkingHours() {
       }
     }
     setSaving(true)
+    setSyncState('idle')
     try {
       for (const s of schedules) {
         const r = rowFor(s.weekday)
@@ -62,13 +103,43 @@ export default function NizarWorkingHours() {
       }
       setEdits({})
       await reload()
-      toast('success', 'تم حفظ أوقات الدوام — أيام العطلة تختفي من الحجز فوراً')
+      // تحقّق فعلي من الحفظ: سياسة الأمان قد تُسقط التعديل بصمت بلا خطأ
+      const { data: fresh } = await supabase
+        .from('doctor_schedules')
+        .select('id, weekday, is_active, start_time, end_time')
+        .eq('clinic_id', profile.clinic_id)
+      const mismatch = (fresh || []).find((row) => {
+        const r = rowFor(row.weekday)
+        return (
+          !!row.is_active !== !!r.active ||
+          String(row.start_time).slice(0, 5) !== r.start ||
+          String(row.end_time).slice(0, 5) !== r.end
+        )
+      })
+      if (mismatch) {
+        throw new Error(
+          `تعذّر حفظ يوم ${WEEKDAY_NAMES[mismatch.weekday]} — لا تملك صلاحية التعديل. ` +
+            'تأكد أن حسابك طبيب أو مشرف في هذه العيادة.'
+        )
+      }
+      // مزامنة «دليلك الطبي» — تُعرض نتيجتها للطبيب بوضوح
+      const synced = await syncToDirectory()
+      if (synced) {
+        toast('success', 'تم حفظ أوقات الدوام وتحديثها في دليلك الطبي')
+      } else {
+        toast('info', 'تم حفظ أوقات الدوام — تعذّر تحديث «دليلك الطبي» تلقائياً، اضغط «مزامنة مع الدليل»')
+      }
     } catch (e) {
       toast('error', 'تعذر الحفظ: ' + (e?.message || e))
     } finally {
       setSaving(false)
     }
   }
+
+  // هل انتهى تحميل الجدول؟ (حتى لا تظهر «لا توجد أيام دوام» لحظة التحميل)
+  useEffect(() => {
+    if (schedules.length > 0) setLoaded(true)
+  }, [schedules])
 
   const slotsCount = (r) =>
     buildSlots({ start: r.start, end: r.end, slotMinutes, slotsBeforeBreak, breakMinutes }).length
@@ -79,15 +150,38 @@ export default function NizarWorkingHours() {
         title="أوقات دوامي"
         subtitle="حدد دوام كل يوم — واجعل اليوم عطلة فيختفي من الحجز تماماً"
         actions={
-          <Button onClick={save} loading={saving} disabled={!schedules.length}>
-            <Save size={16} />
-            <span className="hidden sm:inline">حفظ أوقات الدوام</span>
-            <span className="sm:hidden">حفظ</span>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" onClick={syncToDirectory} disabled={!schedules.length || saving}>
+              {syncState === 'ok' ? <Check size={15} /> : syncState === 'failed' ? <CloudOff size={15} /> : <Cloud size={15} />}
+              <span className="hidden sm:inline">مزامنة مع الدليل</span>
+              <span className="sm:hidden">مزامنة</span>
+            </Button>
+            <Button onClick={save} loading={saving} disabled={!schedules.length}>
+              <Save size={16} />
+              <span className="hidden sm:inline">حفظ أوقات الدوام</span>
+              <span className="sm:hidden">حفظ</span>
+            </Button>
+          </div>
         }
       />
 
-      {schedules.length === 0 ? (
+      {/* حالة المزامنة مع «دليلك الطبي» */}
+      {syncState === 'ok' && (
+        <p className="mb-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-[11px] font-semibold text-emerald-800">
+          <Cloud size={14} /> تم تحديث أوقات الدوام في «دليلك الطبي» بنجاح
+        </p>
+      )}
+      {syncState === 'failed' && (
+        <p className="mb-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] font-semibold text-amber-800">
+          <CloudOff size={14} /> تعذّر تحديث «دليلك الطبي» — الحفظ داخل العيادة تم بنجاح. أعد المحاولة بزر «مزامنة مع الدليل».
+        </p>
+      )}
+
+      {!loaded && schedules.length === 0 ? (
+        <Card>
+          <Spinner label="جارٍ تحميل أوقات الدوام..." />
+        </Card>
+      ) : schedules.length === 0 ? (
         <Card>
           <EmptyState icon={CalendarOff} title="لا توجد أيام دوام معرّفة" message="راجع إعدادات العيادة أو أضف أيام الدوام من هناك" />
         </Card>
@@ -114,22 +208,27 @@ export default function NizarWorkingHours() {
                       <Toggle checked={r.active} onChange={(v) => setRow(wd, { active: v })} label={r.active ? 'دوام' : 'عطلة'} />
                     </div>
                     {r.active && (
-                      <div className="mt-2.5 flex items-center gap-2 sm:ms-12" dir="ltr">
-                        <input
-                          type="time"
-                          value={r.start}
-                          onChange={(e) => setRow(wd, { start: e.target.value })}
-                          className="input-base h-10 min-w-0 flex-1 !py-0 sm:!w-32 sm:flex-none"
-                          aria-label={`بداية دوام ${WEEKDAY_NAMES[wd]}`}
-                        />
-                        <span className="shrink-0 text-xs text-slate-400">—</span>
-                        <input
-                          type="time"
-                          value={r.end}
-                          onChange={(e) => setRow(wd, { end: e.target.value })}
-                          className="input-base h-10 min-w-0 flex-1 !py-0 sm:!w-32 sm:flex-none"
-                          aria-label={`نهاية دوام ${WEEKDAY_NAMES[wd]}`}
-                        />
+                      <div className="mt-3 flex flex-col gap-2.5" dir="ltr">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-slate-500">بداية الدوام</span>
+                          <input
+                            type="time"
+                            value={r.start}
+                            onChange={(e) => setRow(wd, { start: e.target.value })}
+                            className="input-base h-10 flex-1 !py-0 sm:!w-32"
+                            aria-label={`بداية دوام ${WEEKDAY_NAMES[wd]}`}
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-slate-500">نهاية الدوام</span>
+                          <input
+                            type="time"
+                            value={r.end}
+                            onChange={(e) => setRow(wd, { end: e.target.value })}
+                            className="input-base h-10 flex-1 !py-0 sm:!w-32"
+                            aria-label={`نهاية دوام ${WEEKDAY_NAMES[wd]}`}
+                          />
+                        </div>
                       </div>
                     )}
                   </li>

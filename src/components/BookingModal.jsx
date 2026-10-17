@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { UserPlus, CalendarCheck } from 'lucide-react'
+import { UserPlus, CalendarCheck, RefreshCw, AlertTriangle } from 'lucide-react'
 import { Modal, Button, Input, Select, Field, Spinner, EmptyState } from './ui'
 import { useApp, audit } from '../lib/store'
-import { useSchedules, fetchBookedMap, friendlyDbError } from '../lib/hooks'
+import { useSchedules, fetchBookedMap, friendlyDbError, patientHasAppointmentOn } from '../lib/hooks'
 import { usesNumericAge } from '../lib/clinicStyle'
 import { slotsForDay } from '../lib/slots'
 import { todayStr, addDays, dayLabel, formatDateShort, nowMinutes, timeToMin, genderLabel, ageFrom } from '../lib/format'
@@ -82,6 +82,36 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
     }
   }, [open, date, profile?.clinic_id])
 
+  // تحذير مسبق: لدى المريض موعد في نفس اليوم؟ (لا يُسمح بموعدين في اليوم)
+  useEffect(() => {
+    if (!open || !profile?.clinic_id || !patient?.id || !date || moveAppointment) {
+      setSameDayAppt(null)
+      return
+    }
+    let alive = true
+    patientHasAppointmentOn(profile.clinic_id, patient.id, date).then((a) => alive && setSameDayAppt(a || null))
+    return () => {
+      alive = false
+    }
+  }, [open, patient?.id, date, profile?.clinic_id, moveAppointment])
+
+  // إعادة تحميل الأوقات المحجوزة يدوياً — بعد إلغاء/حالة إسعافية دون إغلاق النافذة
+  const [refreshing, setRefreshing] = useState(false)
+  const [sameDayAppt, setSameDayAppt] = useState(null) // موعد موجود لنفس المريض في نفس اليوم
+  const refreshBooked = async () => {
+    if (!profile?.clinic_id || !date) return
+    setRefreshing(true)
+    const m = await fetchBookedMap(profile.clinic_id, date)
+    setBooked(m)
+    setRefreshing(false)
+    if (slot && m[slot.start]) {
+      setSlot(null)
+      toast('info', 'هذا الوقت أصبح محجوزاً — اختر وقتاً آخر')
+    } else {
+      toast('success', 'تم تحديث الأوقات المحجوزة')
+    }
+  }
+
   const { closed, slots } = useMemo(
     () => slotsForDay({ schedules, settings, dateStr: date }),
     [schedules, settings, date]
@@ -122,6 +152,9 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
 
   const confirm = async () => {
     if (!patient || !slot) return
+    if (sameDayAppt) {
+      return toast('error', `لدى ${patient.full_name} موعد محفوظ في نفس اليوم (${sameDayAppt.start_time?.slice(0, 5)}) — لا يمكن حجز موعدين في اليوم نفسه`)
+    }
     setSaving(true)
     const payloadBase = {
       appointment_date: date,
@@ -142,7 +175,15 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
       }))
     }
     setSaving(false)
-    if (error) return toast('error', friendlyDbError(error, 'هذا الموعد محجوز الآن، اختر وقتًا آخر'))
+    if (error) {
+      // انتهت صلاحية الخريطة (حُذف/أُلغي الحجز من جهاز آخر) — تحديث فوري وإعادة المحاولة مسموحة
+      const isDup = String(error.code) === '23505' || /duplicate key/i.test(error.message || '')
+      if (isDup) {
+        const fresh = await fetchBookedMap(profile.clinic_id, date)
+        setBooked(fresh)
+      }
+      return toast('error', friendlyDbError(error, 'هذا الموعد محجوز الآن، اختر وقتًا آخر'))
+    }
     audit(profile.clinic_id, moveAppointment ? 'move_appointment' : 'book_appointment', 'appointments', moveAppointment?.id, { date, ...slot })
     toast('success', moveAppointment ? 'تم تعديل الموعد بنجاح' : 'تم حجز الموعد بنجاح')
     onBooked?.()
@@ -151,6 +192,7 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
 
   const price = settings?.consultation_price
   const currency = settings?.currency
+  const slotIsPast = slot ? isPastSlot(slot) : false
 
   return (
     <Modal
@@ -171,9 +213,9 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
               'أكمل اختيار المريض والوقت'
             )}
           </p>
-          <Button onClick={confirm} disabled={!patient || !slot} loading={saving} className="min-w-36">
+          <Button onClick={confirm} disabled={!patient || !slot || !!sameDayAppt} loading={saving} className="min-w-36">
             <CalendarCheck size={16} />
-            {moveAppointment ? 'حفظ التعديل' : 'تأكيد الحجز'}
+            {moveAppointment ? 'حفظ التعديل' : slotIsPast ? 'تأكيد الحجز (وقت منقضٍ)' : 'تأكيد الحجز'}
           </Button>
         </div>
       }
@@ -222,6 +264,15 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
               <div className="col-span-2">
                 <Button onClick={createPatient} loading={creatingPatient} size="sm">حفظ المريض</Button>
               </div>
+            </div>
+          )}
+
+          {sameDayAppt && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-[11px] font-semibold text-rose-800">
+              <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+              <span>
+                لدى {patient.full_name} موعد محفوظ في نفس اليوم ({sameDayAppt.start_time?.slice(0, 5)}) — لا يمكن حجز أكثر من موعد لنفس الشخص في اليوم.
+              </span>
             </div>
           )}
 
@@ -287,8 +338,19 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
 
       {/* 3) slots */}
       <div>
-        <p className="label-base">
-          الوقت المتاح <span className="font-normal text-slate-400">({formatDateShort(date)})</span>
+        <p className="label-base flex items-center justify-between gap-2">
+          <span>
+            الوقت المتاح <span className="font-normal text-slate-400">({formatDateShort(date)})</span>
+          </span>
+          <button
+            type="button"
+            onClick={refreshBooked}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-bold text-slate-500 hover:border-primary-300 hover:text-primary-700 print:hidden"
+            title="إعادة تحميل الأوقات المحجوزة"
+          >
+            <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+            تحديث الأوقات
+          </button>
         </p>
         {closed ? (
           schedules.length > 0 ? (
@@ -305,7 +367,7 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
             {slots.map((s) => {
               const taken = booked[s.start]
               const past = isPastSlot(s)
-              const disabled = !!taken || past
+              const disabled = !!taken
               const selected = slot?.start === s.start
               return (
                 <button
@@ -317,16 +379,27 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
                       ? 'border-primary-700 bg-primary-700 text-white shadow-sm'
                       : disabled
                         ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-primary-400 hover:bg-primary-50/50'
+                        : past
+                          ? 'border-dashed border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-primary-400 hover:bg-primary-50/50'
                   }`}
-                  title={taken ? 'محجوز' : past ? 'وقت منقضٍ' : ''}
+                  title={taken ? 'محجوز' : past ? 'وقت منقضٍ — يمكن الحجز بتأكيد' : ''}
                 >
                   {s.start}
-                  {taken && <span className="text-[9px] font-medium">محجوز</span>}
+                  {taken ? (
+                    <span className="text-[9px] font-medium">محجوز</span>
+                  ) : past ? (
+                    <span className="text-[8px] font-medium">منقضٍ</span>
+                  ) : null}
                 </button>
               )
             })}
           </div>
+        )}
+        {slotIsPast && (
+          <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-800">
+            تنبيه: الوقت المحدد ({slot.start}) قد انقضى اليوم — يمكن تأكيد الحجز عليه (مثلاً بعد إعادة الترتيب أو الحالة الإسعافية).
+          </p>
         )}
       </div>
     </Modal>

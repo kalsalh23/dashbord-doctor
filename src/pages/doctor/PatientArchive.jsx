@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Archive, Pill, ChevronDown, Printer, FolderOpen, Stethoscope, FileText, RefreshCw, Users, FileSearch } from 'lucide-react'
+import { Archive, Pill, ChevronDown, Printer, FolderOpen, Stethoscope, FileText, RefreshCw, Users, FileSearch, CalendarDays, Trash2 } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
-import { Card, Button, EmptyState, SkeletonRows, PageHeader, SearchInput, Tag, Avatar, Tabs } from '../../components/ui'
+import { Card, Button, EmptyState, SkeletonRows, PageHeader, SearchInput, Tag, Avatar, Tabs, ConfirmDialog } from '../../components/ui'
 import PrescriptionSheet from '../../components/PrescriptionSheet'
+import { specialtyText } from '../../components/SpecialtyData'
 import { formatDateShort } from '../../lib/format'
+import { friendlyDbError } from '../../lib/hooks'
+import { usesCardArchive } from '../../lib/clinicStyle'
 
 /**
  * أرشيف المرضى — مبني على جدول المرضى نفسه (كل المرضى يظهرون حتى بدون زيارات)،
@@ -28,9 +31,10 @@ const norm = (s) =>
     .trim()
 
 export default function PatientArchive() {
-  const { profile, settings } = useApp()
-  // أسلوب أوراق المعاينة خاص بعيادة د. نزار فقط (قالب nizar) — باقي العيادات بطاقات
-  const isNizar = settings?.prescription_template === 'nizar'
+  const { profile, settings, toast } = useApp()
+  // أسلوب أوراق المعاينة خاص بعيادة د. نزار — لكن عيادته تعرض الأرشيف بنفس
+  // أسلوب البطاقات في عيادة د. عارف (تُستثنى عبر usesCardArchive)
+  const isNizar = settings?.prescription_template === 'nizar' && !usesCardArchive(profile)
   const [patients, setPatients] = useState(null)
   const [visits, setVisits] = useState(null)
   const [error, setError] = useState(null)
@@ -39,7 +43,21 @@ export default function PatientArchive() {
   const [openPatient, setOpenPatient] = useState(null)
   const [openVisit, setOpenVisit] = useState(null)
   const [viewingVisit, setViewingVisit] = useState(null) // { patientId, visit } — عرض ورقة بحجمها الكامل
+  const [confirmDelete, setConfirmDelete] = useState(null) // مراجعة awaiting تأكيد الحذف
+  const [deleting, setDeleting] = useState(false)
   const nav = useNavigate()
+
+  // حذف كشف/مراجعة نهائياً (سجلات الدفع تبقى في صفحة الدفعات)
+  const deleteVisit = async () => {
+    if (!confirmDelete) return
+    setDeleting(true)
+    const { error: delErr } = await supabase.from('visits').delete().eq('id', confirmDelete.id)
+    setDeleting(false)
+    if (delErr) return toast('error', friendlyDbError(delErr))
+    setConfirmDelete(null)
+    toast('success', 'حُذف الكشف من الأرشيف')
+    load()
+  }
 
   const load = useCallback(async () => {
     if (!profile?.clinic_id) return
@@ -85,7 +103,11 @@ export default function PatientArchive() {
 
   const rows = useMemo(() => {
     if (patients === null) return null
-    const list = patients.map((p) => ({ patient: p, visits: visitsByPatient.get(p.id) || [] }))
+    // نرفق المريض بكل زيارة كي تُعرض الأسماء في البطاقات ونافذة تأكيد الحذف
+    const list = patients.map((p) => ({
+      patient: p,
+      visits: (visitsByPatient.get(p.id) || []).map((v) => ({ ...v, patient: p })),
+    }))
 
     // بحث فوري: الاسم، الهاتف، أو أي تشخيص/شكوى ضمن الزيارات
     // (نسخة نزار: الاسم والهاتف فقط — لا نصوص تشخيص في الأرشفة)
@@ -211,68 +233,73 @@ export default function PatientArchive() {
                   <EmptyState icon={Stethoscope} title="لا مراجعات مسجلة" message="ستظهر هنا كل كشوف وزيارات هذا المريض" />
                 </Card>
               ) : (
-                <div className="space-y-2.5">
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
                   {g.visits.map((v) => {
-                    const vOpen = openVisit === v.id
                     const meds = v.medications || []
+                    const treatments = v.specialty_data?.treatments
+                    const findings = v.specialty_data?.findings
+                    const specLines = []
+                    if (Array.isArray(treatments) && treatments.length) specLines.push(specialtyText('treatments', treatments))
+                    if (Array.isArray(findings) && findings.length) specLines.push(specialtyText('findings', findings))
                     return (
-                      <div key={v.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card">
-                        <button
-                          onClick={() => setOpenVisit(vOpen ? null : v.id)}
-                          className="flex w-full flex-wrap items-center gap-2.5 px-4 py-3 text-start transition-colors hover:bg-primary-50/40"
-                        >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-700">
-                            <Stethoscope size={15} />
+                      <div key={v.id} className="flex flex-col gap-2.5 rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
+                        {/* ترويسة البطاقة: تاريخ الكشف + عدد الأدوية */}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary-50 px-2.5 py-1 text-xs font-bold text-primary-800">
+                            <CalendarDays size={13} />
+                            {formatDateShort(v.visit_date)}
                           </span>
-                          <span className="text-xs font-bold text-slate-800">{formatDateShort(v.visit_date)}</span>
-                          <span className="min-w-0 flex-1 truncate text-xs text-slate-500">
-                            {v.chief_complaint || '—'}
-                            {v.diagnosis ? ` — ${v.diagnosis}` : ''}
-                          </span>
-                          {meds.length > 0 && <Tag tone="teal">{meds.length} دواء</Tag>}
-                          <ChevronDown size={15} className={`shrink-0 text-slate-400 transition-transform ${vOpen ? 'rotate-180' : ''}`} />
-                        </button>
+                          {meds.length > 0 && (
+                            <Tag tone="teal">
+                              <Pill size={11} />
+                              {meds.length} دواء
+                            </Tag>
+                          )}
+                        </div>
 
-                        {vOpen && (
-                          <div className="space-y-2.5 border-t border-slate-100 px-4 py-3">
-                            {[
-                              { label: 'الشكوى', value: v.chief_complaint },
-                              { label: 'التشخيص', value: v.diagnosis },
-                              { label: 'خطة العلاج', value: v.treatment_plan },
-                              { label: 'ملاحظات', value: v.medical_notes },
-                            ].filter((r) => r.value?.trim()).map((r) => (
-                              <p key={r.label} className="text-xs leading-relaxed text-slate-600">
-                                <b className="text-slate-400">{r.label}:</b> {r.value}
-                              </p>
-                            ))}
-                            {meds.length > 0 && (
-                              <ul className="space-y-1">
-                                {meds.map((m, i) => (
-                                  <li key={i} className="flex flex-wrap items-center gap-x-2 rounded bg-slate-50 px-2.5 py-1.5 text-[11px]">
-                                    <Pill size={11} className="text-primary-600" />
-                                    <b className="text-slate-700">{m.name}</b>
-                                    {m.dosage && <span className="text-slate-500">{m.dosage}</span>}
-                                    {m.duration && <span className="text-slate-400">· {m.duration}</span>}
-                                    {m.instructions && <span className="text-slate-400">· {m.instructions}</span>}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                            <div className="flex flex-wrap justify-between gap-2 border-t border-slate-50 pt-2">
-                              {v.doctor?.full_name && <p className="self-center text-[11px] text-slate-400">الطبيب: {v.doctor.full_name}</p>}
-                              <div className="flex gap-2">
-                                <Button size="sm" variant="secondary" onClick={() => nav(`/doctor/visit/${v.id}`)}>
-                                  <FileText size={13} />
-                                  فتح الكشف
-                                </Button>
-                                <Button size="sm" onClick={() => nav(`/print/prescription/${v.id}`)}>
-                                  <Printer size={13} />
-                                  الوصفة الطبية
-                                </Button>
-                              </div>
-                            </div>
+                        {/* ملخّص الكشف */}
+                        <div className="space-y-1">
+                          {v.chief_complaint && (
+                            <p className="text-xs leading-relaxed text-slate-600">
+                              <b className="text-slate-400">الشكوى:</b> {v.chief_complaint}
+                            </p>
+                          )}
+                          {v.diagnosis && (
+                            <p className="text-xs font-semibold leading-relaxed text-slate-700">
+                              <b className="text-slate-400">التشخيص:</b> {v.diagnosis}
+                            </p>
+                          )}
+                          {specLines.map((line, i) => (
+                            <p key={i} className="rounded-lg bg-primary-50/60 px-2.5 py-1.5 text-[11px] leading-relaxed text-primary-900">
+                              {line}
+                            </p>
+                          ))}
+                          {meds.length > 0 && (
+                            <p className="text-[11px] text-slate-500">
+                              {meds.slice(0, 3).map((m) => m.name).join(' · ')}
+                              {meds.length > 3 ? ` +${meds.length - 3}` : ''}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* تذييل: الطبيب + الإجراءات */}
+                        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-slate-50 pt-2.5">
+                          {v.doctor?.full_name ? (
+                            <p className="text-[11px] text-slate-400">د. {v.doctor.full_name}</p>
+                          ) : (
+                            <span />
+                          )}
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="secondary" onClick={() => nav(`/doctor/visit/${v.id}`)}>
+                              <FileText size={13} />
+                              فتح الكشف
+                            </Button>
+                            <Button size="sm" variant="dangerGhost" onClick={() => setConfirmDelete(v)}>
+                              <Trash2 size={13} />
+                              حذف الكشف
+                            </Button>
                           </div>
-                        )}
+                        </div>
                       </div>
                     )
                   })}
@@ -456,9 +483,14 @@ export default function PatientArchive() {
                                         <FileText size={13} />
                                         فتح الكشف
                                       </Button>
+                                      {/* قالب نزار فقط: ورقة الوصفة القابلة للطباعة */}
                                       <Button size="sm" onClick={() => nav(`/print/prescription/${v.id}`)}>
                                         <Printer size={13} />
                                         الوصفة الطبية
+                                      </Button>
+                                      <Button size="sm" variant="dangerGhost" onClick={() => setConfirmDelete(v)}>
+                                        <Trash2 size={13} />
+                                        حذف الكشف
                                       </Button>
                                     </div>
                                   </div>
@@ -510,6 +542,18 @@ export default function PatientArchive() {
           )}
         </>
       )}
+
+      {/* تأكيد حذف كشف — الحذف نهائي ولا يمكن الرجوع عنه */}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onClose={() => !deleting && setConfirmDelete(null)}
+        title="حذف الكشف"
+        message={`سيُحذف كشف ${confirmDelete?.patient?.full_name || ''} بتاريخ ${confirmDelete ? formatDateShort(confirmDelete.visit_date) : ''} من الأرشيف نهائياً. لا يمكن التراجع عن هذه الخطوة.`}
+        confirmLabel="حذف نهائي"
+        danger
+        loading={deleting}
+        onConfirm={deleteVisit}
+      />
     </div>
   )
 }

@@ -236,8 +236,14 @@ begin
   end if;
   return jsonb_build_object(
     'targets', coalesce((
-      select jsonb_agg(jsonb_build_object('endpoint', s.endpoint, 'keys', jsonb_build_object('p256dh', s.p256dh, 'auth', s.auth)))
-      from public.staff_push_subscriptions s where s.clinic_id = p_clinic_id
+      select jsonb_agg(jsonb_build_object('endpoint', t.endpoint, 'keys', jsonb_build_object('p256dh', t.p256dh, 'auth', t.auth)))
+      from (
+        -- الجدول الذي تكتبه واجهة «تفعيل الإشعارات» في التطبيق
+        select endpoint, p256dh, auth from public.push_subscriptions where clinic_id = p_clinic_id
+        union
+        -- الجدول القديم (توافق خلفي)
+        select endpoint, p256dh, auth from public.staff_push_subscriptions where clinic_id = p_clinic_id
+      ) t
     ), '[]'::jsonb)
   );
 end; $$;

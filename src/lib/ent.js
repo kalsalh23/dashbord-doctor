@@ -76,8 +76,8 @@ export const ENT_DEFAULT_CATALOG = [
   {
     category: 'إجراءات وجراحة',
     items: [
-      { treatment: 'تنظير أنفي', price: 150000, color: '#0d9488' },
-      { treatment: 'غسيل وأنفوس', price: 100000, color: '#14b8a6' },
+      { treatment: 'تنظير أنفي', price: 150000, color: 'var(--p600)' },
+      { treatment: 'غسيل وأنفوس', price: 100000, color: 'var(--p500)' },
       { treatment: 'استئصال لوزتين', price: 800000, color: '#7c3aed' },
       { treatment: 'ترميم طبلة', price: 1000000, color: '#2563eb' },
       { treatment: 'تركيب أنبوب تهوية', price: 600000, color: '#059669' },

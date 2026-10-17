@@ -51,7 +51,7 @@ export async function runRpc(client, authInternal, fn, args) {
     case 'emergency_broadcast': {
       const prof = await myProfile()
       if (!['doctor', 'admin', 'super_admin'].includes(prof.role)) throw new Error('FORBIDDEN')
-      const cancel = args.p_cancel !== false
+      
       const clinics = await loadTable('clinics')
       const clinicName = clinics.find((c) => c.id === prof.clinic_id)?.name || 'العيادة'
       const appts = await loadTable('appointments')
@@ -61,6 +61,13 @@ export async function runRpc(client, authInternal, fn, args) {
           a.clinic_id === prof.clinic_id &&
           a.appointment_date === today() &&
           ['confirmed', 'new', 'arrived', 'waiting', 'in_consultation'].includes(a.status)
+      )
+      // مواعيد اليوم المكتملة — تُلغي أيضاً لتعود كل أوقات الدوام قابلة للحجز
+      const completedToday = appts.filter(
+        (a) =>
+          a.clinic_id === prof.clinic_id &&
+          a.appointment_date === today() &&
+          a.status === 'completed'
       )
       // قائمة المتأثرين ببياناتهم — الشاشة ترسل لهم رسالة الاعتذار (واتساب) واحداً واحداً
       const list = todays.map((a) => {
@@ -72,8 +79,10 @@ export async function runRpc(client, authInternal, fn, args) {
           phone: p?.phone || '',
         }
       })
-      if (cancel) {
-        const cancelled = todays.map((a) => ({
+      // المواعيد تُلغى دائماً عند الحالة الإسعافية — تعود الأوقات قابلة للحجز فوراً
+      // (الفهرس appointments_slot_uniq يستثني الملغى فيتحرّر الموعد)
+      {
+        const cancelled = [...todays, ...completedToday].map((a) => ({
           ...a,
           status: 'cancelled',
           notes: [a.notes, 'أُلغي بسبب حالة إسعافية'].filter(Boolean).join(' — '),
@@ -89,8 +98,7 @@ export async function runRpc(client, authInternal, fn, args) {
           title: 'حالة إسعافية — إلغاء مواعيد اليوم',
           body:
             'أُرسل اعتذار جماعي باسم ' + (prof.full_name || 'الطبيب') + ' إلى ' + list.length +
-            ' مريض' + (cancel ? ' وأُلغيت مواعيدهم اليوم لتحرير الأوقات' : '') +
-            '. يرجى الاتصال بالمرضى وترتيب إعادة الحجز.',
+            ' مريض وأُلغيت مواعيدهم اليوم لتعود الأوقات قابلة للحجز. يرجى الاتصال بالمرضى وترتيب إعادة الحجز.',
           type: 'cancellation',
           is_read: false,
           created_at: now(),
@@ -106,7 +114,7 @@ export async function runRpc(client, authInternal, fn, args) {
           created_at: now(),
         },
       ])
-      return { count: list.length, cancelled: cancel, list }
+      return { count: list.length, cancelled: true, list }
     }
 
     case 'platform_request_accept': {

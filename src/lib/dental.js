@@ -58,121 +58,7 @@ export function dentitionLabel(type) {
   return 'أسنان دائمة'
 }
 
-// فئات التشخيص الافتراضية (مطابقة لبرامج الأسنان المعروفة) مع العلاجات والألوان والأشكال
-export const DEFAULT_CATALOG = [
-  {
-    category: 'فحص وتشخيص',
-    items: [
-      { treatment: 'فحص وتشخيص', price: 50000, color: '#64748b' },
-    ],
-  },
-  {
-    category: 'الصور الخاصة',
-    items: [
-      { treatment: 'أشعة سنّية', price: 25000, color: '#7dd3fc' },
-      { treatment: 'أشعة بانوراما', price: 100000, color: '#38bdf8' },
-      { treatment: 'أشعة سيفالومترية', price: 80000, color: '#0ea5e9' },
-    ],
-  },
-  {
-    category: 'الحشوات',
-    items: [
-      { treatment: 'تسوس', price: 0, color: '#dc2626' },
-      { treatment: 'حشو ضوئي', price: 150000, color: '#2563eb' },
-      { treatment: 'حشو عادي (أملغم)', price: 100000, color: '#475569' },
-      { treatment: 'حشو زجاجي', price: 120000, color: '#3b82f6' },
-      { treatment: 'حشو مؤقت', price: 50000, color: '#a8a29e' },
-    ],
-  },
-  {
-    category: 'علاج العصب',
-    items: [
-      { treatment: 'علاج عصب سن أمامي', price: 300000, color: '#f97316' },
-      { treatment: 'علاج عصب ضرس', price: 400000, color: '#f97316' },
-      { treatment: 'إعادة علاج عصب', price: 500000, color: '#ea580c' },
-      { treatment: 'فتح قناة إسعافي', price: 100000, color: '#fb923c' },
-    ],
-  },
-  {
-    category: 'خلع',
-    items: [
-      { treatment: 'خلع', price: 100000, color: '#1e293b' },
-      { treatment: 'خلع جراحي', price: 250000, color: '#334155' },
-      { treatment: 'خلع ضرس عقل مغطى', price: 400000, color: '#0f172a' },
-      { treatment: 'قلع جذر', price: 150000, color: '#1f2937' },
-    ],
-  },
-  {
-    category: 'معالجة جراحية صغرى',
-    items: [
-      { treatment: 'بضع خراج', price: 150000, color: '#b91c1c' },
-      { treatment: 'استئصال لحم زائد', price: 200000, color: '#991b1b' },
-      { treatment: 'بضع سنخ', price: 120000, color: '#7f1d1d' },
-      { treatment: 'رأب لثة', price: 300000, color: '#881337' },
-    ],
-  },
-  {
-    category: 'معالجات لثوية',
-    items: [
-      { treatment: 'تنظيف عميق (كحت)', price: 200000, color: '#e11d48' },
-      { treatment: 'علاج التهاب لثة', price: 100000, color: '#f43f5e' },
-      { treatment: 'تطعيم لثة', price: 400000, color: '#be123c' },
-      { treatment: 'تلبيد الأسنان', price: 250000, color: '#9f1239' },
-    ],
-  },
-  {
-    category: 'تركيبات خزفية',
-    items: [
-      { treatment: 'تلبيسة زيركون', price: 800000, color: '#d4a017' },
-      { treatment: 'تلبيسة إيماكس', price: 900000, color: '#eab308' },
-      { treatment: 'تلبيسة معدنية', price: 400000, color: '#b08d57' },
-      { treatment: 'فينير خزفي', price: 700000, color: '#f5d020' },
-      { treatment: 'جسر خزفي', price: 1500000, color: '#7c3aed' },
-      { treatment: 'طوق أسنان', price: 350000, color: '#be185d' },
-    ],
-  },
-  {
-    category: 'أطفال',
-    items: [
-      { treatment: 'حشو طفل', price: 80000, color: '#0ea5e9' },
-      { treatment: 'خلع سن لبني', price: 50000, color: '#6366f1' },
-      { treatment: 'فلورايد وقائي', price: 40000, color: '#14b8a6' },
-      { treatment: 'حشو وقائي (سدود)', price: 60000, color: '#22c55e' },
-    ],
-  },
-  {
-    category: 'وقائية',
-    items: [
-      { treatment: 'تنظيف جير', price: 150000, color: '#06b6d4' },
-      { treatment: 'تطعيم وقائي', price: 40000, color: '#84cc16' },
-    ],
-  },
-  {
-    category: 'تبييض وتجميل',
-    items: [
-      { treatment: 'تبييض بالليزر', price: 700000, color: '#f472b6' },
-      { treatment: 'تبييض منزلي', price: 400000, color: '#f9a8d4' },
-    ],
-  },
-  {
-    category: 'زراعة وتقويم',
-    items: [
-      { treatment: 'زراعة', price: 3000000, color: '#059669' },
-      { treatment: 'تقويم ثابت', price: 2500000, color: '#ec4899' },
-      { treatment: 'تقويم متحرك', price: 800000, color: '#c026d3' },
-      { treatment: 'تركيب براكت', price: 300000, color: '#db2777' },
-    ],
-  },
-  {
-    category: 'معالجات أخرى',
-    items: [
-      { treatment: 'ضماد', price: 30000, color: '#a3a3a3' },
-      { treatment: 'إزالة تركيبة', price: 80000, color: '#78716c' },
-      { treatment: 'تركيبة مؤقتة', price: 60000, color: '#d6d3d1' },
-      { treatment: 'معالجة منزلية', price: 50000, color: '#57534e' },
-    ],
-  },
-]
+
 
 /**
  * شكل العلاج المميز على السن — يُشتق من اسم العلاج (يعمل مع أي أسعار يضيفها الطبيب):
@@ -189,6 +75,8 @@ export function treatmentGlyph(treatment = '') {
   if (t.includes('تقويم') || t.includes('براكت')) return 'ortho'
   if (t.includes('خلع') || t.includes('قلع')) return 'extraction'
   if (t.includes('عصب') || t.includes('قناة') || t.includes('لبّاً') || t.includes('معالجة لب')) return 'rct'
+  // حشوة أملغم معدنية (رمادي لامع) — تختلف بصرياً عن الكمبوزيت بلون السن
+  if (t.includes('أملغم') || t.includes('عادي (أملغم)') || t.includes('حشو عادي')) return 'amalgam'
   if (t.includes('حشو')) return 'filling'
   if (t.includes('تسوس')) return 'caries'
   if (t.includes('لثة') || t.includes('كحت') || t.includes('تلبيد') || t.includes('خراج') || t.includes('سنخ') || t.includes('لحم')) return 'perio'
@@ -206,6 +94,182 @@ export const LEGEND_DEFAULTS = [
   { label: 'سليم', color: '#f8fafc', stroke: '#cbd5e1' },
   { label: 'عولج سابقاً', color: '#fef9c3', stroke: '#facc15' },
 ]
+
+/* ============================================================
+ * شجرة العلاجات وأنواعها — القاعدة الوحيدة للمخطط و«أسعاري»:
+ * كل علاج (عائلة) له أنواع تُسعَّر ويختار الطبيب النوع المناسب على السن.
+ * عند إضافة نوع جديد للعائلة يظهر فوراً في شبكة الحالات وفي «أسعاري».
+ * ============================================================
+ */
+export const TREATMENT_TREE = [
+  {
+    family: 'حشوة',
+    glyph: 'filling',
+    items: [
+      { treatment: 'حشو ضوئي', price: 150000, color: '#2563eb' },
+      { treatment: 'حشو أملغم', price: 100000, color: '#475569' },
+      { treatment: 'حشو زجاجي', price: 120000, color: '#3b82f6' },
+      { treatment: 'حشو مؤقت', price: 50000, color: '#a8a29e' },
+      { treatment: 'حشو طفل', price: 80000, color: '#0ea5e9' },
+      { treatment: 'إعادة حشو', price: 200000, color: '#1d4ed8' },
+    ],
+  },
+  {
+    family: 'تاج',
+    glyph: 'crown',
+    items: [
+      { treatment: 'تلبيسة زيركون', price: 800000, color: '#d4a017' },
+      { treatment: 'تلبيسة إيماكس', price: 900000, color: '#eab308' },
+      { treatment: 'تلبيسة معدنية', price: 400000, color: '#b08d57' },
+      { treatment: 'طوق أسنان', price: 350000, color: '#be185d' },
+      { treatment: 'تلبيسة مؤقتة', price: 150000, color: '#cbd5e1' },
+      { treatment: 'إعادة تلبيس', price: 300000, color: '#a16207' },
+    ],
+  },
+  {
+    family: 'علاج عصب',
+    glyph: 'rct',
+    items: [
+      { treatment: 'علاج عصب سن أمامي', price: 300000, color: '#f97316' },
+      { treatment: 'علاج عصب ضرس', price: 400000, color: '#ea580c' },
+      { treatment: 'إعادة علاج عصب', price: 500000, color: '#c2410c' },
+      { treatment: 'فتح قناة إسعافي', price: 100000, color: '#fb923c' },
+      { treatment: 'معالجة لبّاً', price: 350000, color: '#f97316' },
+    ],
+  },
+  {
+    family: 'خلع',
+    glyph: 'extraction',
+    items: [
+      { treatment: 'خلع بسيط', price: 100000, color: '#1e293b' },
+      { treatment: 'خلع جراحي', price: 250000, color: '#334155' },
+      { treatment: 'خلع ضرس عقل', price: 400000, color: '#0f172a' },
+      { treatment: 'خلع ضرس عقل مغطى', price: 450000, color: '#1e293b' },
+      { treatment: 'قلع جذر', price: 150000, color: '#1f2937' },
+      { treatment: 'خلع سن لبني', price: 50000, color: '#6366f1' },
+    ],
+  },
+  {
+    family: 'زراعة',
+    glyph: 'implant',
+    items: [
+      { treatment: 'زراعة مع تاج', price: 3000000, color: '#059669' },
+      { treatment: 'زرعة بدون تاج', price: 2200000, color: '#047857' },
+      { treatment: 'رفع عظم جي بي', price: 1200000, color: '#065f46' },
+      { treatment: 'تركيب دعامة', price: 600000, color: '#10b981' },
+      { treatment: 'إزالة زراعة فاشلة', price: 500000, color: '#065f46' },
+    ],
+  },
+  {
+    family: 'جسر',
+    glyph: 'bridge',
+    items: [
+      { treatment: 'جسر خزفي 3 وحدات', price: 1500000, color: '#7c3aed' },
+      { treatment: 'جسر زركون 3 وحدات', price: 2000000, color: '#6d28d9' },
+      { treatment: 'جسر زركون 4 وحدات', price: 2600000, color: '#5b21b6' },
+      { treatment: 'جسر معدني', price: 900000, color: '#4c1d95' },
+      { treatment: 'إعادة تثبيت جسر', price: 300000, color: '#7c3aed' },
+    ],
+  },
+  {
+    family: 'تقويم',
+    glyph: 'ortho',
+    items: [
+      { treatment: 'تقويم ثابت — فك واحد', price: 2500000, color: '#ec4899' },
+      { treatment: 'تقويم ثابت — فكين', price: 4000000, color: '#db2777' },
+      { treatment: 'تقويم متحرك', price: 800000, color: '#c026d3' },
+      { treatment: 'تركيب براكت', price: 300000, color: '#be185d' },
+      { treatment: 'متابعة تقويم شهرية', price: 150000, color: '#f472b6' },
+      { treatment: 'حافظ أسنان', price: 200000, color: '#f9a8d4' },
+    ],
+  },
+  {
+    family: 'فينير',
+    glyph: 'veneer',
+    items: [
+      { treatment: 'فينير خزفي', price: 700000, color: '#38bdf8' },
+      { treatment: 'فينير كومبوزيت', price: 300000, color: '#0ea5e9' },
+      { treatment: 'فينير مؤقت', price: 100000, color: '#7dd3fc' },
+    ],
+  },
+  {
+    family: 'لثة',
+    glyph: 'perio',
+    items: [
+      { treatment: 'تنظيف عميق (كحت)', price: 200000, color: '#e11d48' },
+      { treatment: 'علاج التهاب لثة', price: 100000, color: '#f43f5e' },
+      { treatment: 'تطعيم لثة', price: 400000, color: '#be123c' },
+      { treatment: 'تلبيد الأسنان', price: 250000, color: '#9f1239' },
+      { treatment: 'رأب لثة', price: 300000, color: '#881337' },
+      { treatment: 'علاج جيب لثوي', price: 150000, color: '#e11d48' },
+    ],
+  },
+  {
+    family: 'وقاية',
+    glyph: 'preventive',
+    items: [
+      { treatment: 'تنظيف جير', price: 150000, color: '#06b6d4' },
+      { treatment: 'فلورايد وقائي', price: 40000, color: '#84cc16' },
+      { treatment: 'حشو وقائي (سدود)', price: 60000, color: '#22c55e' },
+      { treatment: 'تلميع وتنظيف', price: 30000, color: '#14b8a6' },
+      { treatment: 'واقي أسنان رياضي', price: 150000, color: '#10b981' },
+    ],
+  },
+  {
+    family: 'تبييض',
+    glyph: 'whitening',
+    items: [
+      { treatment: 'تبييض بالليزر', price: 700000, color: '#f472b6' },
+      { treatment: 'تبييض منزلي', price: 400000, color: '#f9a8d4' },
+      { treatment: 'تبييض داخلي (سن واحدة)', price: 350000, color: '#fbcfe8' },
+    ],
+  },
+  {
+    family: 'جراحة',
+    glyph: 'other',
+    items: [
+      { treatment: 'بضع خراج', price: 150000, color: '#b91c1c' },
+      { treatment: 'استئصال لحم زائد', price: 200000, color: '#991b1b' },
+      { treatment: 'بضع سنخ', price: 120000, color: '#7f1d1d' },
+      { treatment: 'استئصال كيسة', price: 250000, color: '#dc2626' },
+      { treatment: 'فك ضرس منطمر', price: 350000, color: '#7f1d1d' },
+    ],
+  },
+  {
+    family: 'تشخيص',
+    glyph: 'xray',
+    items: [
+      { treatment: 'فحص وتشخيص', price: 50000, color: '#64748b' },
+      { treatment: 'أشعة سنّية', price: 25000, color: '#7dd3fc' },
+      { treatment: 'أشعة بانوراما', price: 100000, color: '#38bdf8' },
+      { treatment: 'أشعة سيفالومترية', price: 80000, color: '#0ea5e9' },
+      { treatment: 'استشارة أخصائي', price: 200000, color: '#475569' },
+    ],
+  },
+]
+
+// فئات التشخيص الافتراضية (مطابقة لبرامج الأسنان المعروفة) مع العلاجات والألوان والأشكال
+// الخانات: الزيركون 530.000 · الذهب 700.000 · الزركون المغطى بالخزف 600.000 (أسعار تقديرية)
+// فئات التشخيص الافتراضية — تُبنى من شجرة العلاجات وأنواعها (TREATMENT_TREE)
+// حتى يبقى «أسعاري» ومخطط الأسنان والمتجر الافتراضي على مصدر واحد للعلاجات.
+export const DEFAULT_CATALOG = TREATMENT_TREE.map((g) => ({
+  category: g.family,
+  items: g.items.map((i) => ({ treatment: i.treatment, price: i.price, color: i.color })),
+}))
+
+/** عائلات العلاجات بالترتيب — اسم العائلة: حالة الشكل عليها في المخطط */
+export const TREATMENT_FAMILIES = TREATMENT_TREE.map((g) => ({
+  family: g.family,
+  glyph: g.glyph,
+  treatments: g.items.map((i) => i.treatment),
+}))
+
+/** البحث عن عائلة علاج باسم محدد (يستخدم في المخطط لمعرفة أنواع كل علاج) */
+export function familyOfTreatment(treatment = '') {
+  const t = String(treatment)
+  for (const g of TREATMENT_TREE) if (g.items.some((i) => i.treatment === t)) return g.family
+  return null
+}
 
 export function fmtPrice(n, currency = 'ل.س') {
   const v = Number(n || 0).toLocaleString('en-US')

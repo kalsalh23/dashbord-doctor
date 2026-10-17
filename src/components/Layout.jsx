@@ -8,7 +8,7 @@ import {
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
-import { isNizarStyle, hidesPatientsPage } from '../lib/clinicStyle'
+import { isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts } from '../lib/clinicStyle'
 import { playAlert, unlockAudio } from '../lib/alert'
 import AccountSwitcher from './AccountSwitcher'
 import { DEVELOPER_NAME } from '../lib/config'
@@ -58,6 +58,8 @@ function NotificationsBell() {
   const ref = useRef(null)
   const nav = useNavigate()
   useOutsideClose(ref, () => setOpen(false))
+  // نغمة عالية وطويلة في عيادات الصالات الصاخبة (د. عارف ود. ريام)
+  const loud = usesLoudAlerts(profile)
 
   const load = async () => {
     if (!profile?.clinic_id) return
@@ -73,7 +75,27 @@ function NotificationsBell() {
     if (seenRef.current !== null) {
       const fresh = list.filter((n) => !seenRef.current.includes(n.id))
       if (fresh.length > 0) {
-        playAlert(fresh.some((n) => n.type === 'cancellation' || (n.title || '').includes('إسعاف')) ? 'emergency' : 'new')
+        const isEmergency = fresh.some((n) => n.type === 'cancellation' || (n.title || '').includes('إسعاف'))
+        playAlert(isEmergency ? 'emergency' : 'new', { loud })
+        // إشعار مجاني من داخل المتصفح — يظهر أعلى الشاشة مع نغمة النظام
+        try {
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            const n = fresh[0]
+            const bn = new Notification(n.title || 'إشعار جديد', {
+              body: n.body || '',
+              dir: 'rtl',
+              lang: 'ar',
+              tag: 'clinic-' + n.id,
+              icon: '/favicon.svg',
+            })
+            bn.onclick = () => {
+              window.focus()
+              if (n.link) nav(n.link)
+            }
+          }
+        } catch {
+          /* المتصفح لا يدعم إشعارات الويب */
+        }
       }
     }
     seenRef.current = ids
@@ -89,7 +111,7 @@ function NotificationsBell() {
     window.addEventListener('pointerdown', unlock, { once: true })
     // إشعار خارجي وصل والتطبيق مفتوح → شغّل النغمة الداخلية أيضاً
     const onSwMessage = (e) => {
-      if (e.data?.type === 'clinic-alert') playAlert(e.data.kind === 'emergency' ? 'emergency' : 'new')
+      if (e.data?.type === 'clinic-alert') playAlert(e.data.kind === 'emergency' ? 'emergency' : 'new', { loud })
     }
     navigator.serviceWorker?.addEventListener('message', onSwMessage)
     return () => {
@@ -328,6 +350,10 @@ export default function Layout() {
   if (hidesPatientsPage(profile)) {
     navItems = navItems.filter((i) => i.to !== '/doctor/patients')
   }
+  // عيادات لا تحتاج «أدويتي الشائعة» — تُستبدل بـ«أوقات دوامي»
+  if (hidesFavorites(profile)) {
+    navItems = navItems.filter((i) => i.to !== '/doctor/favorites')
+  }
   const mobileMain = navItems.slice(0, 4)
   const mobileMoreItems = navItems.slice(4)
 
@@ -345,9 +371,11 @@ export default function Layout() {
 
   // عيادات الأسنان: شريط تنقل علوي أفقي بدل الجانبي — كما في برامج الأسنان
   const isDentalNav = APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isDental
+  // لوحة ألوان العيادة — اللون فقط: الفيروزي لعيادة د. عارف، البرقوقي لبقية العيادات
+  const themeClass = clinicThemeClass(profile)
 
   return (
-    <div className="flex min-h-screen">
+    <div className={`flex min-h-screen ${themeClass}`}>
       {/* -------- desktop sidebar (right in RTL) -------- */}
       {!isDentalNav && (
         <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-s border-slate-200 bg-white lg:flex">
@@ -391,7 +419,7 @@ export default function Layout() {
             <p className="hidden text-xs font-medium text-slate-400 lg:block">{formatDateLong(todayStr())}</p>
           </div>
           <div className="flex items-center gap-1.5">
-            {APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && <AccountSwitcher compact />}
+            {APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && !hidesAccountSwitcher(profile) && <AccountSwitcher compact />}
             <NotificationsBell />
             <UserMenu />
           </div>
