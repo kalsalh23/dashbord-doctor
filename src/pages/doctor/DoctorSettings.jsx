@@ -12,12 +12,16 @@ export default function DoctorSettings() {
   const [phone, setPhone] = useState(profile?.phone || '')
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '')
   const [price, setPrice] = useState(settings?.consultation_price ?? 0)
+  const [slotMinutes, setSlotMinutes] = useState(settings?.slot_minutes ?? 10)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const fileRef = useRef(null)
 
   useEffect(() => {
-    if (settings) setPrice(settings.consultation_price ?? 0)
+    if (settings) {
+      setPrice(settings.consultation_price ?? 0)
+      setSlotMinutes(settings.slot_minutes ?? 10)
+    }
   }, [settings])
 
   const onUpload = async (e) => {
@@ -69,8 +73,16 @@ export default function DoctorSettings() {
     const { error: priceErr } = await supabase.rpc('doctor_set_consultation_price', {
       p_price: Number(price) || 0,
     })
+    if (priceErr) {
+      setSaving(false)
+      return toast('error', friendlyDbError(priceErr))
+    }
+    const { error: settErr } = await supabase
+      .from('clinic_settings')
+      .update({ slot_minutes: Math.max(10, Math.min(60, Number(slotMinutes) || 10)) })
+      .eq('clinic_id', profile.clinic_id)
     setSaving(false)
-    if (priceErr) return toast('error', friendlyDbError(priceErr))
+    if (settErr) return toast('error', friendlyDbError(settErr))
     audit(profile.clinic_id, 'doctor_update_settings', 'profiles', profile.id, { price: Number(price) || 0 })
     await Promise.all([refreshProfile(), refreshSettings()])
     toast('success', 'تم الحفظ — سعر الكشف الجديد يظهر مباشرة في واجهة الاستقبال')
