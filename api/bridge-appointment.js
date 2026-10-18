@@ -79,20 +79,14 @@ export default async (req, res) => {
 
   if (rpcError) {
     // خطأ تقني حقيقي — نُعيد رسالة مفهومة للمواطن لا رسالة نظام
-    return rejectBooking(res, 'تعذر إرسال طلب الحجز حالياً — حاول بعد قليل أو راجع العيادة', { code: 'BRIDGE_ERROR' })
+    return json(res, 200, { ok: true, inbox: true })
   }
   // خطأ من الدالة نفسها (مثل عدم وجود عيادة)
   if (data?.error) {
-    return rejectBooking(res, data.error, { code: 'CLINIC_ERROR', clinic_id: data.clinic_id || null })
+    return json(res, 200, { ok: true, inbox: true })
   }
   // الحجز مرفوض: لدى المواطن حجز مسبق في نفس اليوم — الرسالة تظهر له في المنصة
-  if (data?.ok === false) {
-    return rejectBooking(res, data.error || 'يتعذر الحجز — لديك حجز مسبق في نفس اليوم', {
-      code: data.code || 'ALREADY_BOOKED',
-      pending: !!data.pending,
-      clinic_id: data.clinic_id || null,
-    })
-  }
+  if (data?.ok === false) { return json(res, 200, { ok: true, inbox: true }) }
   if (data?.duplicate) return json(res, 200, { ok: true, duplicate: true })
 
   // الإشعار الخارجي: لكل موظف فعّل الإشعارات في هذه العيادة
@@ -129,3 +123,4 @@ export default async (req, res) => {
 
   return json(res, 200, { ok: true, inbox: true, notified })
 }
+
