@@ -5,7 +5,7 @@ import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, SkeletonRows, Avatar, Badge, APPT_STATUS, Modal, Field, Textarea, Toggle, ConfirmDialog } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
-import EmergencyApology from '../../components/EmergencyApology'
+import EmergencyWhatsapp from '../../components/EmergencyWhatsapp'
 import { todayStr, timeToMin, nowMinutes, formatDateLong } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
 
@@ -20,7 +20,7 @@ export default function DoctorDashboard() {
   const [emergencyCancel, setEmergencyCancel] = useState(true)
   const [emergencyBusy, setEmergencyBusy] = useState(false)
   const [emergencyDone, setEmergencyDone] = useState(null)
-  const [emergencyTargets, setEmergencyTargets] = useState(null) // { list, note, cancelled } — شاشة إرسال الاعتذار (نزار)
+  const [emergencyTargets, setEmergencyTargets] = useState(null) // { list, note, cancelled } — شاشة إرسال الاعتذار (واتساب فقط)
   const [bookingOpen, setBookingOpen] = useState(false)
   const nav = useNavigate()
 
@@ -58,7 +58,7 @@ export default function DoctorDashboard() {
     audit(profile.clinic_id, 'emergency_broadcast', 'appointments', null, { notified: count })
     setEmergencyOpen(false)
     setEmergencyNote('')
-    // شاشة إرسال الاعتذار الفعلي (SMS مجاني / واتساب) لكل العيادات حين يوجد مرضى متأثرون
+    // شاشة إرسال الاعتذار الفعلي (واتساب فقط) لكل المرضى المتأثرين
     if (Array.isArray(data?.list) && data.list.length > 0) {
       setEmergencyTargets({ list: data.list, note: emergencyNote.trim(), cancelled: emergencyCancel })
     } else {
@@ -106,6 +106,12 @@ export default function DoctorDashboard() {
             <CalendarDays size={16} />
             جدول المواعيد
           </Button>
+          {profile?.clinic_id === '9d7fd606-4635-4533-b59c-6a67b3d722ee' && (
+            <Button variant="secondary" className="justify-center sm:!w-auto" onClick={() => nav('/doctor/riam/new-record')}>
+              <Stethoscope size={16} />
+              سجل جديد
+            </Button>
+          )}
           <Button
             variant="dangerGhost"
             className="justify-center sm:!w-auto"
@@ -206,7 +212,7 @@ export default function DoctorDashboard() {
           <div className="flex justify-start gap-2">
             <Button variant="danger" onClick={runEmergency} loading={emergencyBusy}>
               <Siren size={16} />
-              إرسال الاعتذار الجماعي
+              إرسال الاعتذار عبر واتساب
             </Button>
             <Button variant="secondary" onClick={() => setEmergencyOpen(false)} disabled={emergencyBusy}>
               إلغاء
@@ -215,7 +221,7 @@ export default function DoctorDashboard() {
         }
       >
         <p className="mb-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900">
-          سيُرسل اعتذار جماعي باسمك لكل مرضى اليوم عبر قنواتهم، مع طلب إعادة الحجز.
+          سيُرسل اعتذار جماعي باسمك لكل مرضى اليوم عبر واتساب، مع طلب إعادة الحجز.
         </p>
         <p className="mb-3 rounded-lg border border-primary-100 bg-primary-50 px-3 py-2.5 text-xs leading-relaxed text-primary-900">
           <b>مواعيد اليوم ستُلغى تلقائياً</b> — ولأنك لا تستقبل أحداً اليوم، تعود كل الأوقات إلى وضعها الأصلي
@@ -226,8 +232,8 @@ export default function DoctorDashboard() {
         </Field>
       </Modal>
 
-      {/* شاشة إرسال الاعتذار — SMS مجاني / واتساب (تظهر فقط عند وجود مرضى متأثرين) */}
-      <EmergencyApology
+      {/* شاشة إرسال الاعتذار — واتساب فقط (تظهر فقط عند وجود مرضى متأثرين) */}
+      <EmergencyWhatsapp
         open={!!emergencyTargets}
         onClose={() => setEmergencyTargets(null)}
         targets={emergencyTargets}
@@ -238,7 +244,7 @@ export default function DoctorDashboard() {
         open={emergencyDone !== null}
         onClose={() => setEmergencyDone(null)}
         title="تم الإرسال بنجاح"
-        message={`وصل الاعتذار لـ ${emergencyDone} مريض عبر قنواتهم${emergencyCancel ? '، وأُلغيت مواعيدهم اليوم لتحرير الأوقات' : ''}. أُرسل إشعار للاستقبال بالاتصال وترتيب إعادة الحجز.`}
+        message={`وصل الاعتذار لـ ${emergencyDone} مريض عبر واتساب${emergencyCancel ? '، وأُلغيت مواعيدهم اليوم لتحرير الأوقات' : ''}. أُرسل إشعار للاستقبال بالاتصال وترتيب إعادة الحجز.`}
         confirmLabel="حسناً"
         onConfirm={() => setEmergencyDone(null)}
       />

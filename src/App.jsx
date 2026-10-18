@@ -30,6 +30,7 @@ import VisitReadPage from './pages/doctor/VisitReadPage'
 import PrescriptionPage from './pages/doctor/PrescriptionPage'
 import Favorites from './pages/doctor/Favorites'
 import DoctorSettings from './pages/doctor/DoctorSettings'
+import RiamNewRecord from './pages/doctor/RiamNewRecord'
 import DentalDashboard from './pages/doctor/DentalDashboard'
 import SuperPanel from './pages/super/SuperPanel'
 
@@ -211,6 +212,7 @@ function AppRoutes() {
             <Route path="/doctor/favorites" element={<RequireRole role="doctor"><Favorites /></RequireRole>} />
             <Route path="/doctor/expenses" element={<RequireRole role="doctor"><Expenses /></RequireRole>} />
             <Route path="/doctor/settings" element={<RequireRole role="doctor"><DoctorSettings /></RequireRole>} />
+            <Route path="/doctor/riam/new-record" element={<RequireRole role="doctor"><RiamNewRecord /></RequireRole>} />
             <Route path="/doctor/consultation" element={<RequireRole role="doctor"><ConsultationSwitch /></RequireRole>} />
             <Route path="/doctor/consultation/:appointmentId" element={<RequireRole role="doctor"><ConsultationSwitch /></RequireRole>} />
             <Route path="/doctor/consultation/new/:patientId" element={<RequireRole role="doctor"><ConsultationSwitch /></RequireRole>} />

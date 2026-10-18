@@ -10,7 +10,7 @@ import { hidesPatientsPage, hidesFavorites, usesLoudAlerts } from '../../lib/cli
 import { playAlert } from '../../lib/alert'
 import { Button, Avatar, PageHeader, StatCard, Modal, Field, Textarea, Toggle, ConfirmDialog, Input } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
-import EmergencyApology from '../../components/EmergencyApology'
+import EmergencyWhatsapp from '../../components/EmergencyWhatsapp'
 import { todayStr, addDays } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
 
@@ -28,7 +28,7 @@ export default function DentalDashboard() {
   const [emergencyCancel, setEmergencyCancel] = useState(true)
   const [emergencyBusy, setEmergencyBusy] = useState(false)
   const [emergencyDone, setEmergencyDone] = useState(null)
-  const [emergencyTargets, setEmergencyTargets] = useState(null) // { list, note, cancelled } — شاشة إرسال الاعتذار الجماعي
+  const [emergencyTargets, setEmergencyTargets] = useState(null) // { list, note, cancelled } — شاشة إرسال الاعتذار الجماعي (واتساب فقط)
   const [addOpen, setAddOpen] = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
   const [newP, setNewP] = useState({ name: '', age: '', phone: '' })
@@ -283,7 +283,7 @@ export default function DentalDashboard() {
           <div className="flex justify-start gap-2">
             <Button variant="danger" onClick={runEmergency} loading={emergencyBusy}>
               <Siren size={16} />
-              إرسال الاعتذار الجماعي
+              إرسال الاعتذار عبر واتساب
             </Button>
             <Button variant="secondary" onClick={() => setEmergencyOpen(false)} disabled={emergencyBusy}>
               إلغاء
@@ -303,7 +303,7 @@ export default function DentalDashboard() {
       </Modal>
 
       {/* شاشة إرسال الاعتذار الجماعي عبر واتساب لكل مريض متأثر */}
-      <EmergencyApology
+      <EmergencyWhatsapp
         open={!!emergencyTargets}
         onClose={() => setEmergencyTargets(null)}
         targets={emergencyTargets}

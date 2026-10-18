@@ -56,15 +56,18 @@ export default function DoctorSettings() {
   const save = async () => {
     if (!fullName.trim()) return toast('error', 'الاسم مطلوب')
     setSaving(true)
-    const { error } = await supabase.from('profiles').update({ full_name: fullName.trim(), phone: phone.trim() || null, avatar_url: avatarUrl || null }).eq('id', profile.id)
-    if (error) { setSaving(false); return toast('error', friendlyDbError(error)) }
-    const { error: priceErr } = await supabase.rpc('doctor_set_consultation_price', { p_price: Number(price) || 0, p_slot_minutes: Number(slotMinutes) || 15 })
-    if (priceErr) { setSaving(false); return toast('error', friendlyDbError(priceErr)) }
     const v = Math.max(10, Math.min(60, Number(slotMinutes) || 15))
-    const { error: settErr } = await supabase.from('clinic_settings').update({ slot_minutes: v, examination_minutes: v, consultation_minutes: v }).eq('clinic_id', profile.clinic_id)
+    const { error: upErr } = await supabase.from('profiles').update({ full_name: fullName.trim(), phone: phone.trim() || null, avatar_url: avatarUrl || null }).eq('id', profile.id)
+    if (upErr) { setSaving(false); return toast('error', friendlyDbError(upErr)) }
+    const { error: setErr } = await supabase.from('clinic_settings').update({
+      consultation_price: Number(price) || 0,
+      slot_minutes: v,
+      examination_minutes: v,
+      consultation_minutes: v,
+    }).eq('clinic_id', profile.clinic_id)
     setSaving(false)
-    if (settErr) return toast('error', friendlyDbError(settErr))
-    audit(profile.clinic_id, 'doctor_update_settings', 'profiles', profile.id, { price: Number(price) || 0 })
+    if (setErr) return toast('error', friendlyDbError(setErr))
+    audit(profile.clinic_id, 'doctor_update_settings', 'profiles', profile.id, { price: Number(price) || 0, minutes: v })
     await Promise.all([refreshProfile(), refreshSettings()])
     toast('success', 'تم الحفظ')
   }

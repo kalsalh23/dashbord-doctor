@@ -1,11 +1,11 @@
--- ============================================================
--- ترقية الجسر: صندوق «طلبات واردة من دليل طيبة» + إشعار خارجي للموظفين
--- 1) طلب المنصة لا يدخل جدول المواعيد إطلاقاً — يبقى في platform_requests
---    حتى يقبله موظف الاستقبال (فيصبح موعداً حقيقياً) أو يرفضه
--- 2) عند وصول طلب: إشعار خارجي (web-push) لكل موظف فعّل الإشعارات في العيادة
+﻿-- ============================================================
+-- ØªØ±Ù‚ÙŠØ© Ø§Ù„Ø¬Ø³Ø±: ØµÙ†Ø¯ÙˆÙ‚ Â«Ø·Ù„Ø¨Ø§Øª ÙˆØ§Ø±Ø¯Ø© Ù…Ù† Ø¯Ù„ÙŠÙ„ Ø·ÙŠØ¨Ø©Â» + Ø¥Ø´Ø¹Ø§Ø± Ø®Ø§Ø±Ø¬ÙŠ Ù„Ù„Ù…ÙˆØ¸ÙÙŠÙ†
+-- 1) Ø·Ù„Ø¨ Ø§Ù„Ù…Ù†ØµØ© Ù„Ø§ ÙŠØ¯Ø®Ù„ Ø¬Ø¯ÙˆÙ„ Ø§Ù„Ù…ÙˆØ§Ø¹ÙŠØ¯ Ø¥Ø·Ù„Ø§Ù‚Ø§Ù‹ â€” ÙŠØ¨Ù‚Ù‰ ÙÙŠ platform_requests
+--    Ø­ØªÙ‰ ÙŠÙ‚Ø¨Ù„Ù‡ Ù…ÙˆØ¸Ù Ø§Ù„Ø§Ø³ØªÙ‚Ø¨Ø§Ù„ (ÙÙŠØµØ¨Ø­ Ù…ÙˆØ¹Ø¯Ø§Ù‹ Ø­Ù‚ÙŠÙ‚ÙŠØ§Ù‹) Ø£Ùˆ ÙŠØ±ÙØ¶Ù‡
+-- 2) Ø¹Ù†Ø¯ ÙˆØµÙˆÙ„ Ø·Ù„Ø¨: Ø¥Ø´Ø¹Ø§Ø± Ø®Ø§Ø±Ø¬ÙŠ (web-push) Ù„ÙƒÙ„ Ù…ÙˆØ¸Ù ÙØ¹Ù‘Ù„ Ø§Ù„Ø¥Ø´Ø¹Ø§Ø±Ø§Øª ÙÙŠ Ø§Ù„Ø¹ÙŠØ§Ø¯Ø©
 -- ============================================================
 
--- ===== 1) صندوق الطلبات الواردة =====
+-- ===== 1) ØµÙ†Ø¯ÙˆÙ‚ Ø§Ù„Ø·Ù„Ø¨Ø§Øª Ø§Ù„ÙˆØ§Ø±Ø¯Ø© =====
 create table if not exists public.platform_requests (
   id uuid primary key default gen_random_uuid(),
   clinic_id uuid not null references public.clinics(id) on delete cascade,
@@ -19,14 +19,15 @@ create table if not exists public.platform_requests (
   status text not null default 'new' check (status in ('new','confirmed','rejected')),
   created_at timestamptz not null default now()
 );
-create index platform_requests_clinic_idx on public.platform_requests (clinic_id, created_at desc);
+create index if not exists platform_requests_clinic_idx on public.platform_requests (clinic_id, created_at desc);
 alter table public.platform_requests enable row level security;
 
+drop policy if exists platform_requests_read on public.platform_requests;
 create policy platform_requests_read on public.platform_requests
 for select to authenticated
 using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.clinic_id = platform_requests.clinic_id));
 
--- ===== 2) استقبال الطلب: إلى الصندوق فقط (لا مواعيد، لا مرضى) =====
+-- ===== 2) Ø§Ø³ØªÙ‚Ø¨Ø§Ù„ Ø§Ù„Ø·Ù„Ø¨: Ø¥Ù„Ù‰ Ø§Ù„ØµÙ†Ø¯ÙˆÙ‚ ÙÙ‚Ø· (Ù„Ø§ Ù…ÙˆØ§Ø¹ÙŠØ¯ØŒ Ù„Ø§ Ù…Ø±Ø¶Ù‰) =====
 create or replace function public.bridge_create_appointment(
   p_secret text,
   p_platform_ref uuid,
@@ -47,38 +48,52 @@ begin
     return jsonb_build_object('error', 'unauthorized');
   end if;
   if p_platform_ref is null then
-    return jsonb_build_object('error', 'platform_ref مطلوب');
+    return jsonb_build_object('error', 'platform_ref Ù…Ø·Ù„ÙˆØ¨');
   end if;
 
   if p_clinic_id is not null then
     select id into v_clinic from public.clinics where id = p_clinic_id and is_active;
   end if;
+  if v_clinic is null and p_doctor_name is not null and trim(p_doctor_name) != '' then
+    select c.id into v_clinic
+    from public.clinics c
+    join public.profiles p on p.clinic_id = c.id and p.role = 'doctor'
+    where c.is_active and lower(trim(coalesce(p.full_name, ''))) = lower(trim(p_doctor_name))
+    limit 1;
+  end if;
+  if v_clinic is null and p_doctor_name is not null and trim(p_doctor_name) != '' then
+    select c.id into v_clinic
+    from public.clinics c
+    join public.clinic_settings s on s.clinic_id = c.id
+    where c.is_active and lower(trim(coalesce(s.doctor_name, ''))) like '%' || lower(trim(p_doctor_name)) || '%'
+    limit 1;
+  end if;
   if v_clinic is null then
     select id into v_clinic from public.clinics where is_active order by created_at limit 1;
   end if;
   if v_clinic is null then
-    return jsonb_build_object('error', 'لا توجد عيادة مسجلة في النظام');
+    return jsonb_build_object('error', 'Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¹ÙŠØ§Ø¯Ø© Ù…Ø³Ø¬Ù„Ø© ÙÙŠ Ø§Ù„Ù†Ø¸Ø§Ù…');
   end if;
 
-  -- منع التكرار
+  -- Ù…Ù†Ø¹ Ø§Ù„ØªÙƒØ±Ø§Ø±
   if exists (select 1 from public.platform_requests where platform_ref = p_platform_ref) then
     return jsonb_build_object('ok', true, 'duplicate', true);
   end if;
 
-  -- الصندوق فقط: لا مواعيد ولا مرضى قبل قرار الاستقبال
+  -- Ø§Ù„ØµÙ†Ø¯ÙˆÙ‚ ÙÙ‚Ø·: Ù„Ø§ Ù…ÙˆØ§Ø¹ÙŠØ¯ ÙˆÙ„Ø§ Ù…Ø±Ø¶Ù‰ Ù‚Ø¨Ù„ Ù‚Ø±Ø§Ø± Ø§Ù„Ø§Ø³ØªÙ‚Ø¨Ø§Ù„
   insert into public.platform_requests (clinic_id, platform_ref, patient_name, patient_phone, requested_date, day_label, preferred_time, note)
   values (v_clinic, p_platform_ref, btrim(p_patient_name), btrim(p_patient_phone), p_requested_date, p_day_label, btrim(coalesce(p_preferred_time, '')), nullif(btrim(coalesce(p_note, '')), ''));
 
   insert into public.notifications (clinic_id, target_role, title, body, type, link)
   values (v_clinic, 'all',
-    'طلب موعد جديد من دليل طيبة الإمام',
-    p_patient_name || ' — ' || coalesce(p_day_label, '') || ' ' || btrim(coalesce(p_preferred_time, '')),
+    'Ø·Ù„Ø¨ Ù…ÙˆØ¹Ø¯ Ø¬Ø¯ÙŠØ¯ Ù…Ù† Ø¯Ù„ÙŠÙ„ Ø·ÙŠØ¨Ø© Ø§Ù„Ø¥Ù…Ø§Ù…',
+    p_patient_name || ' â€” ' || coalesce(p_day_label, '') || ' ' || btrim(coalesce(p_preferred_time, '')),
     'booking', '/reception/appointments');
 
   return jsonb_build_object('ok', true, 'inbox', true, 'clinic_id', v_clinic);
 end; $$;
 
--- ===== 3) قبول الطلب: يصبح مريضاً + موعداً حقيقياً في جدول المواعيد =====
+-- ===== 3) Ù‚Ø¨ÙˆÙ„ Ø§Ù„Ø·Ù„Ø¨: ÙŠØµØ¨Ø­ Ù…Ø±ÙŠØ¶Ø§Ù‹ + Ù…ÙˆØ¹Ø¯Ø§Ù‹ Ø­Ù‚ÙŠÙ‚ÙŠØ§Ù‹ ÙÙŠ Ø¬Ø¯ÙˆÙ„ Ø§Ù„Ù…ÙˆØ§Ø¹ÙŠØ¯ =====
 create or replace function public.platform_request_accept(p_request_id uuid)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare
@@ -96,39 +111,39 @@ begin
 
   select * into v_req from public.platform_requests where id = p_request_id;
   if v_req.id is null then
-    return jsonb_build_object('error', 'الطلب غير موجود');
+    return jsonb_build_object('error', 'Ø§Ù„Ø·Ù„Ø¨ ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯');
   end if;
   if v_req.clinic_id <> v_staff_clinic then
-    return jsonb_build_object('error', 'الطلب يخص عيادة أخرى');
+    return jsonb_build_object('error', 'Ø§Ù„Ø·Ù„Ø¨ ÙŠØ®Øµ Ø¹ÙŠØ§Ø¯Ø© Ø£Ø®Ø±Ù‰');
   end if;
   if v_req.status <> 'new' then
-    return jsonb_build_object('error', 'تم معالجة هذا الطلب مسبقاً');
+    return jsonb_build_object('error', 'ØªÙ… Ù…Ø¹Ø§Ù„Ø¬Ø© Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨ Ù…Ø³Ø¨Ù‚Ø§Ù‹');
   end if;
 
-  -- المريض: دمج بالهاتف أو إنشاء
+  -- Ø§Ù„Ù…Ø±ÙŠØ¶: Ø¯Ù…Ø¬ Ø¨Ø§Ù„Ù‡Ø§ØªÙ Ø£Ùˆ Ø¥Ù†Ø´Ø§Ø¡
   select id into v_patient from public.patients
   where clinic_id = v_req.clinic_id and phone = v_req.patient_phone limit 1;
   if v_patient is null then
     insert into public.patients (clinic_id, full_name, phone, notes)
     values (v_req.clinic_id, v_req.patient_name, v_req.patient_phone,
-            'مريض من دليل طيبة الإمام الطبي — أول طلب: ' || to_char(now(), 'YYYY-MM-DD'))
+            'Ù…Ø±ÙŠØ¶ Ù…Ù† Ø¯Ù„ÙŠÙ„ Ø·ÙŠØ¨Ø© Ø§Ù„Ø¥Ù…Ø§Ù… Ø§Ù„Ø·Ø¨ÙŠ â€” Ø£ÙˆÙ„ Ø·Ù„Ø¨: ' || to_char(now(), 'YYYY-MM-DD'))
     returning id into v_patient;
   end if;
 
-  -- الموعد: التاريخ المطلوب + الوقت من النص المفضل (افتراضياً 09:00) ومدة 30 دقيقة
+  -- Ø§Ù„Ù…ÙˆØ¹Ø¯: Ø§Ù„ØªØ§Ø±ÙŠØ® Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ + Ø§Ù„ÙˆÙ‚Øª Ù…Ù† Ø§Ù„Ù†Øµ Ø§Ù„Ù…ÙØ¶Ù„ (Ø§ÙØªØ±Ø§Ø¶ÙŠØ§Ù‹ 09:00) ÙˆÙ…Ø¯Ø© 30 Ø¯Ù‚ÙŠÙ‚Ø©
   v_start := coalesce((substring(coalesce(v_req.preferred_time, '') from '(\d{1,2}:\d{2})'))::time, '09:00'::time);
 
   insert into public.appointments (clinic_id, patient_id, appointment_date, start_time, end_time, status, notes)
   values (v_req.clinic_id, v_patient, coalesce(v_req.requested_date, current_date),
           v_start, v_start + interval '30 minutes', 'confirmed',
-          'من دليل طيبة الإمام (' || coalesce(v_req.day_label, '') || ') — ' || coalesce(v_req.preferred_time, ''))
+          'Ù…Ù† Ø¯Ù„ÙŠÙ„ Ø·ÙŠØ¨Ø© Ø§Ù„Ø¥Ù…Ø§Ù… (' || coalesce(v_req.day_label, '') || ') â€” ' || coalesce(v_req.preferred_time, ''))
   returning id into v_appt;
 
   update public.platform_requests set status = 'confirmed' where id = p_request_id;
   return jsonb_build_object('ok', true, 'appointment_id', v_appt, 'patient_id', v_patient);
 end; $$;
 
--- ===== 4) رفض الطلب =====
+-- ===== 4) Ø±ÙØ¶ Ø§Ù„Ø·Ù„Ø¨ =====
 create or replace function public.platform_request_reject(p_request_id uuid)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare
@@ -141,13 +156,13 @@ begin
   end if;
   select * into v_req from public.platform_requests where id = p_request_id;
   if v_req.id is null then
-    return jsonb_build_object('error', 'الطلب غير موجود');
+    return jsonb_build_object('error', 'Ø§Ù„Ø·Ù„Ø¨ ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯');
   end if;
   if v_req.clinic_id <> v_staff_clinic then
-    return jsonb_build_object('error', 'الطلب يخص عيادة أخرى');
+    return jsonb_build_object('error', 'Ø§Ù„Ø·Ù„Ø¨ ÙŠØ®Øµ Ø¹ÙŠØ§Ø¯Ø© Ø£Ø®Ø±Ù‰');
   end if;
   if v_req.status <> 'new' then
-    return jsonb_build_object('error', 'تم معالجة هذا الطلب مسبقاً');
+    return jsonb_build_object('error', 'ØªÙ… Ù…Ø¹Ø§Ù„Ø¬Ø© Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨ Ù…Ø³Ø¨Ù‚Ø§Ù‹');
   end if;
   update public.platform_requests set status = 'rejected' where id = p_request_id;
   return jsonb_build_object('ok', true);
@@ -156,7 +171,7 @@ end; $$;
 grant execute on function public.platform_request_accept(uuid) to authenticated;
 grant execute on function public.platform_request_reject(uuid) to authenticated;
 
--- ===== 5) عودة الحالة للمنصة: من صندوق الطلبات (بعد القبول/الرفض) =====
+-- ===== 5) Ø¹ÙˆØ¯Ø© Ø§Ù„Ø­Ø§Ù„Ø© Ù„Ù„Ù…Ù†ØµØ©: Ù…Ù† ØµÙ†Ø¯ÙˆÙ‚ Ø§Ù„Ø·Ù„Ø¨Ø§Øª (Ø¨Ø¹Ø¯ Ø§Ù„Ù‚Ø¨ÙˆÙ„/Ø§Ù„Ø±ÙØ¶) =====
 create or replace function public.bridge_status_to_platform()
 returns trigger language plpgsql security definer as $$
 begin
@@ -178,10 +193,10 @@ drop trigger if exists trg_bridge_status_platform on public.platform_requests;
 create trigger trg_bridge_status_platform after update on public.platform_requests
 for each row execute function bridge_status_to_platform();
 
--- إلغاء مشغل المواعيد القديم (لم يعد يستخدم — المواعيد لا تحمل platform_ref بعد الآن)
+-- Ø¥Ù„ØºØ§Ø¡ Ù…Ø´ØºÙ„ Ø§Ù„Ù…ÙˆØ§Ø¹ÙŠØ¯ Ø§Ù„Ù‚Ø¯ÙŠÙ… (Ù„Ù… ÙŠØ¹Ø¯ ÙŠØ³ØªØ®Ø¯Ù… â€” Ø§Ù„Ù…ÙˆØ§Ø¹ÙŠØ¯ Ù„Ø§ ØªØ­Ù…Ù„ platform_ref Ø¨Ø¹Ø¯ Ø§Ù„Ø¢Ù†)
 drop trigger if exists trg_bridge_status on public.appointments;
 
--- ===== 6) اشتراكات الموظفين للإشعار الخارجي =====
+-- ===== 6) Ø§Ø´ØªØ±Ø§ÙƒØ§Øª Ø§Ù„Ù…ÙˆØ¸ÙÙŠÙ† Ù„Ù„Ø¥Ø´Ø¹Ø§Ø± Ø§Ù„Ø®Ø§Ø±Ø¬ÙŠ =====
 create table if not exists public.staff_push_subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -193,6 +208,7 @@ create table if not exists public.staff_push_subscriptions (
 );
 alter table public.staff_push_subscriptions enable row level security;
 
+drop policy if exists staff_push_own on public.staff_push_subscriptions;
 create policy staff_push_own on public.staff_push_subscriptions
 for all to authenticated
 using (user_id = auth.uid())
@@ -209,7 +225,7 @@ begin
     return jsonb_build_object('error', 'unauthorized');
   end if;
   if coalesce(p_endpoint, '') = '' or coalesce(p_p256dh, '') = '' or coalesce(p_auth, '') = '' then
-    return jsonb_build_object('error', 'بيانات ناقصة');
+    return jsonb_build_object('error', 'Ø¨ÙŠØ§Ù†Ø§Øª Ù†Ø§Ù‚ØµØ©');
   end if;
   insert into public.staff_push_subscriptions (user_id, clinic_id, endpoint, p256dh, auth)
   values (v_user, v_clinic, p_endpoint, p_p256dh, p_auth)
@@ -227,7 +243,7 @@ end; $$;
 grant execute on function public.staff_push_register(text, text, text) to authenticated;
 grant execute on function public.staff_push_unregister(text) to authenticated;
 
--- أهداف الإشعار الخارجي: للاستدعاء الآمن من /api/bridge-appointment
+-- Ø£Ù‡Ø¯Ø§Ù Ø§Ù„Ø¥Ø´Ø¹Ø§Ø± Ø§Ù„Ø®Ø§Ø±Ø¬ÙŠ: Ù„Ù„Ø§Ø³ØªØ¯Ø¹Ø§Ø¡ Ø§Ù„Ø¢Ù…Ù† Ù…Ù† /api/bridge-appointment
 create or replace function public.bridge_staff_targets(p_secret text, p_clinic_id uuid)
 returns jsonb language plpgsql security definer set search_path = public as $$
 begin
@@ -238,10 +254,10 @@ begin
     'targets', coalesce((
       select jsonb_agg(jsonb_build_object('endpoint', t.endpoint, 'keys', jsonb_build_object('p256dh', t.p256dh, 'auth', t.auth)))
       from (
-        -- الجدول الذي تكتبه واجهة «تفعيل الإشعارات» في التطبيق
+        -- Ø§Ù„Ø¬Ø¯ÙˆÙ„ Ø§Ù„Ø°ÙŠ ØªÙƒØªØ¨Ù‡ ÙˆØ§Ø¬Ù‡Ø© Â«ØªÙØ¹ÙŠÙ„ Ø§Ù„Ø¥Ø´Ø¹Ø§Ø±Ø§ØªÂ» ÙÙŠ Ø§Ù„ØªØ·Ø¨ÙŠÙ‚
         select endpoint, p256dh, auth from public.push_subscriptions where clinic_id = p_clinic_id
         union
-        -- الجدول القديم (توافق خلفي)
+        -- Ø§Ù„Ø¬Ø¯ÙˆÙ„ Ø§Ù„Ù‚Ø¯ÙŠÙ… (ØªÙˆØ§ÙÙ‚ Ø®Ù„ÙÙŠ)
         select endpoint, p256dh, auth from public.staff_push_subscriptions where clinic_id = p_clinic_id
       ) t
     ), '[]'::jsonb)
@@ -250,6 +266,8 @@ end; $$;
 
 grant execute on function public.bridge_staff_targets(text, uuid) to anon;
 
--- ===== 7) تنظيف: حذف الطلبات التي دخلت المواعيد سابقاً قبل هذه الترقية (إن وجدت ولم تُعالج) =====
--- (الموعد الحقيقي لكل طلب قديم يُعاد إنشاؤه عند قبول الاستقبال من الصندوق الجديد)
+-- ===== 7) ØªÙ†Ø¸ÙŠÙ: Ø­Ø°Ù Ø§Ù„Ø·Ù„Ø¨Ø§Øª Ø§Ù„ØªÙŠ Ø¯Ø®Ù„Øª Ø§Ù„Ù…ÙˆØ§Ø¹ÙŠØ¯ Ø³Ø§Ø¨Ù‚Ø§Ù‹ Ù‚Ø¨Ù„ Ù‡Ø°Ù‡ Ø§Ù„ØªØ±Ù‚ÙŠØ© (Ø¥Ù† ÙˆØ¬Ø¯Øª ÙˆÙ„Ù… ØªÙØ¹Ø§Ù„Ø¬) =====
+-- (Ø§Ù„Ù…ÙˆØ¹Ø¯ Ø§Ù„Ø­Ù‚ÙŠÙ‚ÙŠ Ù„ÙƒÙ„ Ø·Ù„Ø¨ Ù‚Ø¯ÙŠÙ… ÙŠÙØ¹Ø§Ø¯ Ø¥Ù†Ø´Ø§Ø¤Ù‡ Ø¹Ù†Ø¯ Ù‚Ø¨ÙˆÙ„ Ø§Ù„Ø§Ø³ØªÙ‚Ø¨Ø§Ù„ Ù…Ù† Ø§Ù„ØµÙ†Ø¯ÙˆÙ‚ Ø§Ù„Ø¬Ø¯ÙŠØ¯)
 delete from public.appointments where platform_ref is not null and status = 'new';
+
+
