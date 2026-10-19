@@ -15,6 +15,7 @@ export default function EmergencyWhatsapp({ open, onClose, targets }) {
   const [message, setMessage] = useState('')
   const [sentIds, setSentIds] = useState(() => new Set())
   const [busyId, setBusyId] = useState(null)
+  const [sendingAll, setSendingAll] = useState(false)
   const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true)
 
   useEffect(() => {
