@@ -99,7 +99,7 @@ export async function runRpc(client, authInternal, fn, args) {
           clinic_id: prof.clinic_id,
           user_id: prof.id,
           action: 'emergency_broadcast',
-          details: { notified: list.length, cancelled: cancel, note: args.p_note || '' },
+          details: { notified: list.length, cancelled: args.p_cancel, note: args.p_note || '' },
           created_at: now(),
         },
       ])
