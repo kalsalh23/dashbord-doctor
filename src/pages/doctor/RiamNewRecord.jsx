@@ -5,6 +5,7 @@ import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, Field, Input, Textarea } from '../../components/ui'
 import { friendlyDbError } from '../../lib/hooks'
+import { todayStr } from '../../lib/format'
 
 export default function RiamNewRecord() {
   const { profile, toast } = useApp()
@@ -91,9 +92,9 @@ export default function RiamNewRecord() {
           clinic_id: profile.clinic_id,
           patient_id: patientId,
           doctor_id: profile.id,
+          visit_date: todayStr(),
           diagnosis: diagnosis.trim() || null,
-          notes: importantNotes.trim() || null,
-          status: 'completed',
+          medical_notes: importantNotes.trim() || null,
         })
         .select('id')
         .single()
