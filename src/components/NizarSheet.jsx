@@ -5,7 +5,7 @@
  * الصورة por.jpg هي التصميم الكامل للورقة. نضع فوقها فقط الحقول المطلوبة:
  * الاسم (يتم تعبئته تلقائياً)، العمر (يتم تعبئته تلقائياً)، التشخيص (يكتبه الطبيب)، التاريخ، وحقل اختيار الدواء.
  */
-export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null, dateValue = null, onDateEdit = null, medEntrySlot = null, onDeleteMed = null, paperImage = '/por.jpg' }) {
+export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null, dateValue = null, onDateEdit = null, medEntrySlot = null, onDeleteMed = null, paperImage = '/ima.jpg' }) {
   const age = patient?.date_of_birth ? ageFrom(patient.date_of_birth) : ''
 
   const shownMeds = meds.slice(0, 20)
