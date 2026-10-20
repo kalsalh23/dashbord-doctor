@@ -3,13 +3,14 @@ import { Modal, Button, Input, Select, Field, Textarea } from './ui'
 import { useApp, audit } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { friendlyDbError } from '../lib/hooks'
-import { usesNumericAge } from '../lib/clinicStyle'
+import { usesNumericAge, isFatimaClinic } from '../lib/clinicStyle'
 import { ageFrom } from '../lib/format'
 
 /** Add / edit basic patient information (reception & admin). */
 export default function PatientFormModal({ open, onClose, patient, onSaved }) {
   const { profile, settings, toast } = useApp()
   const isNizar = usesNumericAge(profile, settings)
+  const isFatima = isFatimaClinic(profile)
   const [form, setForm] = useState({ full_name: '', phone: '', date_of_birth: '', age: '', gender: '', address: '', notes: '' })
   const [saving, setSaving] = useState(false)
 
@@ -21,15 +22,15 @@ export default function PatientFormModal({ open, onClose, patient, onSaved }) {
             full_name: patient.full_name || '',
             phone: patient.phone || '',
             date_of_birth: patient.date_of_birth || '',
-            // العمر يُعرض رقماً في عيادات أسلوب نزار — مقداراً من تاريخ الميلاد المحفوظ
-            age: isNizar && patient.date_of_birth ? String(ageFrom(patient.date_of_birth)) : '',
+            // العمر يُعرض رقماً لعيادة الدكتورة فاطمة وعيادات أسلوب نزار
+            age: (isFatima || isNizar) && patient.date_of_birth ? String(ageFrom(patient.date_of_birth)) : '',
             gender: patient.gender || '',
             address: patient.address || '',
             notes: patient.notes || '',
           }
         : { full_name: '', phone: '', date_of_birth: '', age: '', gender: '', address: '', notes: '' }
     )
-  }, [open, patient, isNizar])
+  }, [open, patient, isNizar, isFatima])
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
@@ -104,7 +105,7 @@ export default function PatientFormModal({ open, onClose, patient, onSaved }) {
         <Field label="العنوان">
           <Input value={form.address} onChange={set('address')} placeholder="المدينة / الحي" />
         </Field>
-        {isNizar && (
+        {(isFatima || isNizar) && (
           <Field label="العمر (سنة)">
             <Input
               type="number"

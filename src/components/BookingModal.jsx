@@ -3,7 +3,7 @@ import { UserPlus, CalendarCheck, RefreshCw, AlertTriangle } from 'lucide-react'
 import { Modal, Button, Input, Select, Field, Spinner, EmptyState } from './ui'
 import { useApp, audit } from '../lib/store'
 import { useSchedules, fetchBookedMap, friendlyDbError, patientHasAppointmentOn } from '../lib/hooks'
-import { usesNumericAge } from '../lib/clinicStyle'
+import { usesNumericAge, isFatimaClinic } from '../lib/clinicStyle'
 import { slotsForDay } from '../lib/slots'
 import { todayStr, addDays, dayLabel, formatDateShort, nowMinutes, timeToMin, genderLabel, ageFrom } from '../lib/format'
 import { supabase } from '../lib/supabase'
@@ -20,6 +20,7 @@ import { supabase } from '../lib/supabase'
 export default function BookingModal({ open, onClose, onBooked, presetPatient, presetDate, moveAppointment }) {
   const { profile, settings, toast } = useApp()
   const isNizar = usesNumericAge(profile, settings)
+  const isFatima = isFatimaClinic(profile)
   const [schedules] = useSchedules()
   const [search, setSearch] = useState('')
   const [results, setResults] = useState([])
@@ -128,9 +129,9 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
       return
     }
     setCreatingPatient(true)
-    // عيادات إدخال العمر رقمياً (نزار، عارف...): العمر يُكتب مباشرة — يُحوَّل لتاريخ ميلاد تقريبي يخدم حساب العمر لاحقاً
+    // عيادات إدخال العمر رقمياً (نزار، عارف، فاطمة...): العمر يُكتب مباشرة — يُحوَّل لتاريخ ميلاد تقريبي يخدم حساب العمر لاحقاً
     let dob = newPatient.date_of_birth || null
-    if (isNizar && !dob && String(newPatient.age).trim() !== '') {
+    if ((isNizar || isFatima) && !dob && String(newPatient.age).trim() !== '') {
       const a = Number(newPatient.age)
       if (Number.isFinite(a) && a >= 0 && a < 120) {
         const now = new Date()
@@ -252,7 +253,7 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
                   <option value="female">أنثى</option>
                 </Select>
               </Field>
-              {isNizar ? (
+              {(isFatima || isNizar) ? (
                 <Field label="العمر (سنة)">
                   <Input type="number" dir="ltr" min={0} max={120} value={newPatient.age} onChange={(e) => setNewPatient({ ...newPatient, age: e.target.value })} placeholder="مثال: 20" />
                 </Field>

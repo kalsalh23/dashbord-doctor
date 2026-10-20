@@ -326,7 +326,7 @@ export default function Consultation() {
   const allergies = medInfo?.allergies?.trim()
 
   return (
-    <div className="mx-auto max-w-3xl pb-24">
+    <div className="mx-auto max-w-3xl pb-24 sm:max-w-4xl">
       <button onClick={() => nav('/doctor')} className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700">
         <ArrowRight size={14} />
         رجوع لقائمة الانتظار
@@ -415,37 +415,53 @@ export default function Consultation() {
         </Card>
       ) : (
         <div className="space-y-4">
-          <Card title="بيانات الكشف">
-            <div className="space-y-4">
-              {/* التشخيص أوّل حقل — الأهم للطبيبة أثناء الكشف */}
-              <Field label="التشخيص" required>
-                <Textarea value={form.diagnosis} onChange={setF('diagnosis')} rows={2} placeholder="اكتب التشخيص الأولي أو النهائي" />
-              </Field>
-              <Field label={spec.examLabel || "الفحص السريري"}>
-                <Textarea value={form.physical_examination} onChange={setF('physical_examination')} rows={2} />
-              </Field>
-              {spec.fields?.length > 0 && (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
-                  <p className="mb-2 text-[11px] font-bold text-slate-500">بيانات {spec.label} الخاصة</p>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {spec.fields.map((f) => (
-                      <Field key={f.key} label={f.label}>
-                        <Input
-                          value={specData[f.label] || ''}
-                          onChange={(e) => setSpecData((d) => ({ ...d, [f.label]: e.target.value }))}
-                        />
-                      </Field>
-                    ))}
-                  </div>
-                  </div>
-                )}
+          {isFatimaClinic(profile) ? (
+            <>
+              {/* عيادة الدكتورة فاطمة: تشخيص + وجه فقط */}
+              <Card title="بيانات الكشف">
+                <div className="space-y-4">
+                  <Field label="التشخيص" required>
+                    <Textarea value={form.diagnosis} onChange={setF('diagnosis')} rows={2} placeholder="اكتب التشخيص" />
+                  </Field>
+                  {isFatimaClinic(profile) && (
+                    <FaceChart patientId={patient.id} onChange={(fp) => setSpecData((d) => ({ ...d, ...fp }))} />
+                  )}
+                </div>
+              </Card>
+            </>
+          ) : (
+            <Card title="بيانات الكشف">
+              <div className="space-y-4">
+                {/* التشخيص أوّل حقل — الأهم للطبيبة أثناء الكشف */}
+                <Field label="التشخيص" required>
+                  <Textarea value={form.diagnosis} onChange={setF('diagnosis')} rows={2} placeholder="اكتب التشخيص الأولي أو النهائي" />
+                </Field>
+                <Field label={spec.examLabel || "الفحص السريري"}>
+                  <Textarea value={form.physical_examination} onChange={setF('physical_examination')} rows={2} />
+                </Field>
+                {spec.fields?.length > 0 && (
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                    <p className="mb-2 text-[11px] font-bold text-slate-500">بيانات {spec.label} الخاصة</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {spec.fields.map((f) => (
+                        <Field key={f.key} label={f.label}>
+                          <Input
+                            value={specData[f.label] || ''}
+                            onChange={(e) => setSpecData((d) => ({ ...d, [f.label]: e.target.value }))}
+                          />
+                        </Field>
+                      ))}
+                    </div>
+                    </div>
+                  )}
                 {isFatimaClinic(profile) && (
                   <FaceChart patientId={patient.id} onChange={(fp) => setSpecData((d) => ({ ...d, ...fp }))} />
                 )}
               </div>
-          </Card>
+            </Card>
+          )}
 
-          {isDental && (
+          {!isFatimaClinic(profile) && isDental && (
             <Card title="مخطط الأسنان" subtitle="اضغط على السن لتحديد الإجراء — الألوان: برتقالي عولج سابقاً، أخضر زيارة اليوم">
               <DentalChart
                 patientId={patient.id}
@@ -457,8 +473,9 @@ export default function Consultation() {
             </Card>
           )}
 
-          <Card
-            title="الأدوية الموصوفة"
+          {!isFatimaClinic(profile) && (
+            <Card
+              title="الأدوية الموصوفة"
             actions={
               <Button size="sm" variant="secondary" onClick={() => setMeds((m) => [...m, { ...EMPTY_MED }])}>
                 <Plus size={14} />
@@ -591,10 +608,13 @@ export default function Consultation() {
               </ul>
             )}
           </Card>
+          )}
 
-          <Card title="ملاحظات طبية إضافية">
-            <Textarea value={form.medical_notes} onChange={setF('medical_notes')} rows={2} />
-          </Card>
+          {!isFatimaClinic(profile) && (
+            <Card title="ملاحظات طبية إضافية">
+              <Textarea value={form.medical_notes} onChange={setF('medical_notes')} rows={2} />
+            </Card>
+          )}
         </div>
       )}
 
