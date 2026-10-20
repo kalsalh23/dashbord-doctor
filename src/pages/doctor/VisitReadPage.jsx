@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowRight, Printer, Pill, FolderOpen, Stethoscope } from 'lucide-react'
+import { ArrowRight, Pill, FolderOpen, Stethoscope } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, EmptyState, Spinner, Tag } from '../../components/ui'
@@ -8,15 +8,14 @@ import SpecialtyData from '../../components/SpecialtyData'
 import { formatDateShort } from '../../lib/format'
 
 /**
- * واجهة قراءة زيارة — يعرض الكشف كاملاً للطبيب لقراءته، مع طباعة الوصفة.
+ * واجهة قراءة زيارة — يعرض الكشف كاملاً للطبيب لقراءته.
+ * (بلا زر «الوصفة الطبية (A5)» — الطباعة من واجهة «المعاينة»)
  */
 export default function VisitReadPage() {
   const { visitId } = useParams()
-  const { profile, settings } = useApp()
+  const { profile } = useApp()
   const nav = useNavigate()
   const [data, setData] = useState(undefined)
-  // عيادات قالب نزار فقط هي التي تملك ورقة الوصفة القابلة للطباعة
-  const canPrintRx = settings?.prescription_template === 'nizar'
 
   useEffect(() => {
     if (!visitId) return
@@ -60,12 +59,6 @@ export default function VisitReadPage() {
             <FolderOpen size={14} />
             الملف الكامل
           </Button>
-          {canPrintRx && (
-            <Button size="sm" onClick={() => nav(`/print/prescription/${data.id}`)}>
-              <Printer size={14} />
-              الوصفة الطبية (A5)
-            </Button>
-          )}
         </div>
       </div>
 
