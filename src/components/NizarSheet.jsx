@@ -16,7 +16,7 @@ export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null
       style={{ backgroundImage: `url(${paperImage})`, fontFamily: '"IBM Plex Sans Arabic", serif' }}
     >
       {/* الحقول التفاعلية فقط - فوق الصورة بدون تكرار للتصميم */}
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-12 pb-28" style={{ paddingTop: '15%' }}>
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-12 pb-28" style={{ paddingTop: 'calc(15% + 40px)' }}>
         {/* صف الاسم والعمر والتشخيص والتاريخ */}
         <div className="mt-6 flex flex-wrap items-end gap-x-2 gap-y-1 text-[12px] text-slate-900">
           <div className="flex items-end gap-1">
