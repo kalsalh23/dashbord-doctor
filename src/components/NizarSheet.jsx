@@ -69,7 +69,7 @@ export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null
         </div>
 
         {/* منطقة الأدوية */}
-        <div className="absolute bottom-28 left-12 right-12 flex min-h-0 flex-col text-[15px] font-bold text-slate-900" style={{ top: 'calc(33% + 35px)' }}>
+        <div className="absolute bottom-28 left-12 right-12 flex min-h-0 flex-col text-[15px] font-bold text-slate-900" style={{ top: 'calc(36% + 35px)' }}>
           <div className="flex min-h-0 flex-1 flex-col">
             {shownMeds.map((m, i) => {
               const line = [m.name, m.dosage, m.duration, m.instructions].filter(Boolean).join(' — ')
