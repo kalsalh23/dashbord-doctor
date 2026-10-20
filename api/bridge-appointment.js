@@ -83,10 +83,16 @@ export default async (req, res) => {
   }
   // خطأ من الدالة نفسها (مثل عدم وجود عيادة)
   if (data?.error) {
-    return json(res, 200, { ok: true, inbox: true })
+    return rejectBooking(res, data.error, { code: 'CLINIC_ERROR', clinic_id: data.clinic_id || null })
   }
   // الحجز مرفوض: لدى المواطن حجز مسبق في نفس اليوم — الرسالة تظهر له في المنصة
-  if (data?.ok === false) { return json(res, 200, { ok: true, inbox: true }) }
+  if (data?.ok === false) {
+    return rejectBooking(res, data.error || 'يتعذر الحجز — لديك حجز مسبق في نفس اليوم', {
+      code: data.code || 'ALREADY_BOOKED',
+      pending: !!data.pending,
+      clinic_id: data.clinic_id || null,
+    })
+  }
   if (data?.duplicate) return json(res, 200, { ok: true, duplicate: true })
 
   // الإشعار الخارجي: لكل موظف فعّل الإشعارات في هذه العيادة
@@ -123,4 +129,3 @@ export default async (req, res) => {
 
   return json(res, 200, { ok: true, inbox: true, notified })
 }
-

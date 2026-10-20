@@ -8,7 +8,7 @@ import {
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
-import { isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts } from '../lib/clinicStyle'
+import { isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts, clinicFatimaThemeClass, isFatimaClinic, FATIMA_DOCTOR_NAV_ORDER } from '../lib/clinicStyle'
 import { playAlert, unlockAudio } from '../lib/alert'
 import AccountSwitcher from './AccountSwitcher'
 import { DEVELOPER_NAME } from '../lib/config'
@@ -342,6 +342,11 @@ export default function Layout() {
     const at = navItems.findIndex((i) => i.to === '/doctor/schedule')
     navItems = at >= 0 ? [...navItems.slice(0, at + 1), hoursItem, ...navItems.slice(at + 1)] : [hoursItem, ...navItems]
   }
+  // عيادة الدكتورة فاطمة: ترتيب واجهات فريد لها وحدها
+  if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isFatimaClinic(profile)) {
+    const byPath = Object.fromEntries(navItems.map((i) => [i.to, i]))
+    navItems = FATIMA_DOCTOR_NAV_ORDER.map((path) => byPath[path]).filter(Boolean)
+  }
   // مدير النظام وهو داخل لوحة الإدارة: يرى قائمة اللوحة فقط
   if (APP_SCOPE !== 'owner' && isSuper && loc.pathname.startsWith('/super')) {
     navItems = NAV.super
@@ -373,9 +378,10 @@ export default function Layout() {
   const isDentalNav = APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isDental
   // لوحة ألوان العيادة — اللون فقط: الفيروزي لعيادة د. عارف، البرقوقي لبقية العيادات
   const themeClass = clinicThemeClass(profile)
+  const fatimaThemeClass = clinicFatimaThemeClass(profile)
 
   return (
-    <div className={`flex min-h-screen ${themeClass}`}>
+    <div className={`flex min-h-screen ${themeClass} ${fatimaThemeClass}`}>
       {/* -------- desktop sidebar (right in RTL) -------- */}
       {!isDentalNav && (
         <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-s border-slate-200 bg-white lg:flex">

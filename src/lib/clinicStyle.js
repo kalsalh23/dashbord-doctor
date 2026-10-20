@@ -22,6 +22,40 @@ export const clinicThemeClass = (profile) =>
   profile?.clinic_id && LEGACY_THEME_CLINICS[profile.clinic_id] ? 'clinic-theme-legacy' : ''
 
 /* ============================================================
+ * لوحة ألوان عيادة الدكتورة فاطمة سالم الجاموس — ألوان فريدة لها وحدها
+ * ============================================================ */
+const FATIMA_CLINIC_ID = 'f17b6085-7a49-453a-b4b7-49feb5c6a601'
+
+const FATIMA_THEME_CLINICS = {
+  [FATIMA_CLINIC_ID]: 'عيادة الدكتورة فاطمة سالم الجاموس',
+}
+
+/** صنف CSS للوحة عيادة الدكتورة فاطمة */
+export const clinicFatimaThemeClass = (profile) =>
+  profile?.clinic_id && FATIMA_THEME_CLINICS[profile.clinic_id] ? 'clinic-theme-fatima' : ''
+
+/** هل هذه العيادة هي عيادة الدكتورة فاطمة؟ */
+export function isFatimaClinic(profile) {
+  return !!profile?.clinic_id && FATIMA_THEME_CLINICS[profile.clinic_id]
+}
+
+/* ============================================================
+ * ترتيب واجهات عيادة الدكتورة فاطمة — ترتيب فريد لها وحدها
+ * (يُطبّق في Layout.jsx مباشرة لأهمية الأيقونات)
+ * ============================================================ */
+export const FATIMA_DOCTOR_NAV_ORDER = [
+  '/doctor',
+  '/doctor/schedule',
+  '/doctor/patients',
+  '/doctor/archive',
+  '/doctor/expenses',
+  '/doctor/today-log',
+  '/doctor/payments',
+  '/doctor/favorites',
+  '/doctor/settings',
+]
+
+/* ============================================================
  * زر «تبديل الحساب» — عيادة د. نزار لا تريده إطلاقاً
  * ============================================================ */
 const NO_ACCOUNT_SWITCH_CLINICS = {

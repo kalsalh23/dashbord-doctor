@@ -10,8 +10,9 @@ import { Button, Card, Field, Input, Textarea, Spinner, EmptyState, Modal, Tag }
 import DentalChart from '../../components/DentalChart'
 import { useSchedules, friendlyDbError } from '../../lib/hooks'
 import { specialtyByKey } from '../../lib/specialties'
-import { persistsDentalShapes, requiresPaymentPrompt } from '../../lib/clinicStyle'
+import { persistsDentalShapes, requiresPaymentPrompt, isFatimaClinic } from '../../lib/clinicStyle'
 import PrescriptionStage from './PrescriptionStage'
+import FaceChart from '../../components/FaceChart'
 import { ageFrom, formatDateShort, todayStr } from '../../lib/format'
 import { fmtPrice } from '../../lib/dental'
 
@@ -437,6 +438,9 @@ export default function Consultation() {
                     ))}
                   </div>
                   </div>
+                )}
+                {isFatimaClinic(profile) && (
+                  <FaceChart patientId={patient.id} onChange={(fp) => setSpecData((d) => ({ ...d, ...fp }))} />
                 )}
               </div>
           </Card>
