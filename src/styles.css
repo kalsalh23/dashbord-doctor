@@ -261,3 +261,8 @@ html.printing #print-clone .prescription-sheet > div:first-child {
 html.printing #print-clone .prescription-sheet > div:last-child {
   flex: 0 0 auto !important;
 }
+
+  /* طباعة قالب نزار مع حقول موضوعة مطلقاً */
+  html.printing #print-clone .prescription-sheet .absolute {
+    position: absolute !important;
+  }
