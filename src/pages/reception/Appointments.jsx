@@ -94,7 +94,7 @@ export default function Appointments() {
         <span className="ms-auto text-xs font-semibold text-slate-500">{dayLabel(date)}</span>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 overflow-x-auto">
         <Tabs
           value={filter}
           onChange={setFilter}
@@ -138,13 +138,15 @@ export default function Appointments() {
                       <span className="h-px flex-1 bg-slate-200" />
                     </div>
                   )}
-                  <div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
-                    <div className="w-14 shrink-0 text-center">
-                      <span className="block text-base font-bold leading-6 text-slate-800" dir="ltr">{a.start_time?.slice(0, 5)}</span>
-                      <span className="block text-[10px] text-slate-400" dir="ltr">{a.end_time?.slice(0, 5)}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 sm:px-5">
+                    <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center w-full sm:w-auto">
+                      <div className="w-14 shrink-0 text-center sm:w-14">
+                        <span className="block text-base font-bold leading-6 text-slate-800" dir="ltr">{a.start_time?.slice(0, 5)}</span>
+                        <span className="block text-[10px] text-slate-400" dir="ltr">{a.end_time?.slice(0, 5)}</span>
+                      </div>
+                      <Avatar name={a.patient?.full_name} className="h-9 w-9 text-xs mt-2 sm:mt-0 sm:ml-3" />
                     </div>
-                    <Avatar name={a.patient?.full_name} className="h-9 w-9 text-xs" />
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 mt-2 sm:mt-0">
                       <button
                         onClick={() => nav(`/reception/patients/${a.patient_id}`)}
                         className="block truncate text-sm font-bold text-slate-800 hover:text-primary-700"
@@ -153,13 +155,15 @@ export default function Appointments() {
                       </button>
                       <span className="text-[11px] text-slate-400" dir="ltr">{a.patient?.phone}</span>
                     </div>
-                    <Badge map={APPT_STATUS} value={a.status} />
-                    {['confirmed', 'new'].includes(a.status) && (
-                      <Button size="sm" variant="ghost" onClick={() => setMoving(a)} title="تعديل / نقل الموعد">
-                        <PencilLine size={14} />
-                      </Button>
-                    )}
-                    <AppointmentActions appt={a} onChanged={load} showOpen={false} />
+                    <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                      <Badge map={APPT_STATUS} value={a.status} />
+                      {['confirmed', 'new'].includes(a.status) && (
+                        <Button size="sm" variant="ghost" onClick={() => setMoving(a)} title="تعديل / نقل الموعد">
+                          <PencilLine size={14} />
+                        </Button>
+                      )}
+                      <AppointmentActions appt={a} onChanged={load} showOpen={false} />
+                    </div>
                   </div>
                 </li>
               )

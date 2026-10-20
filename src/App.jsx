@@ -33,6 +33,7 @@ import DoctorSettings from './pages/doctor/DoctorSettings'
 import RiamNewRecord from './pages/doctor/RiamNewRecord'
 import DentalDashboard from './pages/doctor/DentalDashboard'
 import SuperPanel from './pages/super/SuperPanel'
+import Treatments from './pages/doctor/Treatments'
 
 function FullSpinner() {
   return (
@@ -220,6 +221,8 @@ function AppRoutes() {
             <Route path="/doctor/prices" element={<RequireRole role="doctor"><DentalPrices /></RequireRole>} />
             <Route path="/doctor/today-log" element={<RequireRole role="doctor"><DentalTodayLog /></RequireRole>} />
             <Route path="/doctor/payments" element={<RequireRole role="doctor"><PaymentsGate /></RequireRole>} />
+            {/* علاجاتي — عيادة الدكتورة فاطمة فقط (إضافة علاجات مخصصة باسم وسعر ونوع) */}
+            <Route path="/doctor/treatments" element={<RequireRole role="doctor"><Treatments /></RequireRole>} />
             {/* واجهة المعاينة — عيادة د. نزار (صور المعاينات الورقية وطباعتها) */}
             <Route path="/doctor/exam" element={<RequireRole role="doctor"><NizarExamBoard /></RequireRole>} />
             {/* أوقات دوامي — عيادة د. نizar والعيادات المضافة لأسلوبه (دوام كل يوم + أيام العطلة) */}

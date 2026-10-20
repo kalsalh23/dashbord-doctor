@@ -8,7 +8,7 @@ import {
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
-import { isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts, clinicFatimaThemeClass, isFatimaClinic, FATIMA_DOCTOR_NAV_ORDER } from '../lib/clinicStyle'
+import { isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts, clinicFatimaThemeClass, isFatimaClinic, FATIMA_DOCTOR_NAV_ORDER, FATIMA_SHORT_CLINIC_NAME } from '../lib/clinicStyle'
 import { playAlert, unlockAudio } from '../lib/alert'
 import AccountSwitcher from './AccountSwitcher'
 import { DEVELOPER_NAME } from '../lib/config'
@@ -50,7 +50,7 @@ function useOutsideClose(ref, onClose) {
   }, [ref, onClose])
 }
 
-function NotificationsBell() {
+function NotificationsBell({ panelTop = 'top-11' }) {
   const { profile, effectiveRole } = useApp()
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState([])
@@ -156,7 +156,7 @@ function NotificationsBell() {
         )}
       </button>
       {open && (
-        <div className="absolute end-0 top-11 z-40 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+        <div className={`absolute end-0 ${panelTop} z-40 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg`}>
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
             <span className="text-sm font-bold text-slate-700">الإشعارات</span>
             {unread > 0 && (
@@ -253,7 +253,7 @@ function UserMenu({ inline }) {
   )
 }
 
-function Brand() {
+function Brand({ mobile = false }) {
   const { profile } = useApp()
   if (APP_SCOPE === 'owner') {
     return (
@@ -268,14 +268,22 @@ function Brand() {
       </div>
     )
   }
+  // عيادة الدكتورة فاطمة: الاسم الكامل طويل («عيادة الدكتورة فاطمة سالم الجاموس»)
+  // فيملأ الشريط العلوي على الجوال ويقصّ أزرار الإشعارات والحساب —
+  // فيُعرض مختصراً وبسطر واحد، والشريط أخصر.
+  const fatima = isFatimaClinic(profile)
+  const compact = mobile && fatima
+  const clinicName = compact ? FATIMA_SHORT_CLINIC_NAME : (profile?.clinic?.name || 'نظام إدارة العيادة')
   return (
-    <div className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-700 text-white shadow-sm">
-        <Activity size={19} />
+    <div className="flex min-w-0 items-center gap-2.5">
+      <span className={`flex shrink-0 items-center justify-center rounded-xl bg-primary-700 text-white shadow-sm ${compact ? 'h-8 w-8' : 'h-9 w-9'}`}>
+        <Activity size={compact ? 17 : 19} />
       </span>
       <div className="min-w-0">
-        <div className="truncate text-sm font-bold text-slate-800">{profile?.clinic?.name || 'نظام إدارة العيادة'}</div>
-        <div className="text-[10px] text-slate-400">{profile?.clinic?.specialty || 'إدارة العيادات الطبية'}</div>
+        <div className={`truncate font-bold text-slate-800 ${compact ? 'text-xs' : 'text-sm'}`}>{clinicName}</div>
+        <div className={`truncate text-[10px] text-slate-400 ${compact ? 'hidden sm:block' : ''}`}>
+          {profile?.clinic?.specialty || 'إدارة العيادات الطبية'}
+        </div>
       </div>
     </div>
   )
@@ -351,12 +359,24 @@ export default function Layout() {
   if (APP_SCOPE !== 'owner' && isSuper && loc.pathname.startsWith('/super')) {
     navItems = NAV.super
   }
+  // عيادة الدكتورة فاطمة: إزالة واجهة المرضى واستبدال «أدويتي الشائعة» بـ «علاجاتي»
+  if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isFatimaClinic(profile)) {
+    navItems = navItems.filter((i) => i.to !== '/doctor/patients')
+    const favIdx = navItems.findIndex((i) => i.to === '/doctor/favorites')
+    if (favIdx >= 0) {
+      navItems = [
+        ...navItems.slice(0, favIdx),
+        { to: '/doctor/treatments', label: 'علاجاتي', icon: Pill },
+        ...navItems.slice(favIdx + 1),
+      ]
+    }
+  }
   // عيادات لا تحتاج واجهة «المرضى» (عيادتا الدكتور عارف والدكتورة ريام)
   if (hidesPatientsPage(profile)) {
     navItems = navItems.filter((i) => i.to !== '/doctor/patients')
   }
   // عيادات لا تحتاج «أدويتي الشائعة» — تُستبدل بـ«أوقات دوامي»
-  if (hidesFavorites(profile)) {
+  if (hidesFavorites(profile) && !isFatimaClinic(profile)) {
     navItems = navItems.filter((i) => i.to !== '/doctor/favorites')
   }
   const mobileMain = navItems.slice(0, 4)
@@ -379,6 +399,12 @@ export default function Layout() {
   // لوحة ألوان العيادة — اللون فقط: الفيروزي لعيادة د. عارف، البرقوقي لبقية العيادات
   const themeClass = clinicThemeClass(profile)
   const fatimaThemeClass = clinicFatimaThemeClass(profile)
+  // عيادة الدكتورة فاطمة: شريط علوي أنحف على الجوال (الاسم الكامل طويل)
+  const fatimaCompact = isFatimaClinic(profile)
+  const headerH = fatimaCompact ? 'h-12 lg:h-14' : 'h-14'
+  const headerTop = fatimaCompact ? 'top-12 lg:top-14' : 'top-14'
+  const headerPad = fatimaCompact ? 'px-3 sm:px-6' : 'px-4 sm:px-6'
+  const mainPad = fatimaCompact ? 'px-3 pb-24 pt-4 sm:px-6 lg:pb-8' : 'px-4 pb-24 pt-5 sm:px-6 lg:pb-8'
 
   return (
     <div className={`flex min-h-screen ${themeClass} ${fatimaThemeClass}`}>
@@ -406,12 +432,12 @@ export default function Layout() {
       {/* -------- main column -------- */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* top bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:px-6">
-          <div className="flex items-center gap-3">
+        <header className={`sticky top-0 z-30 flex ${headerH} items-center justify-between gap-2 border-b border-slate-200 bg-white/95 backdrop-blur sm:gap-3 ${headerPad}`}>
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 lg:flex-none">
             {!isHomePage && (
               <button
                 onClick={() => nav(-1)}
-                className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-800"
+                className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-800"
                 aria-label="رجوع للصفحة السابقة"
                 title="رجوع"
               >
@@ -419,21 +445,21 @@ export default function Layout() {
                 <span className="hidden text-xs font-bold sm:block">رجوع</span>
               </button>
             )}
-            <div className="lg:hidden">
-              <Brand />
+            <div className="min-w-0 flex-1 lg:hidden">
+              <Brand mobile />
             </div>
             <p className="hidden text-xs font-medium text-slate-400 lg:block">{formatDateLong(todayStr())}</p>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1.5">
             {APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && !hidesAccountSwitcher(profile) && <AccountSwitcher compact />}
-            <NotificationsBell />
+            <NotificationsBell panelTop={fatimaCompact ? 'top-12' : 'top-11'} />
             <UserMenu />
           </div>
         </header>
 
         {/* شريط التنقل العلوي لعيادات الأسنان */}
         {isDentalNav && (
-          <nav className="sticky top-14 z-20 hidden border-b border-slate-200 bg-white/95 backdrop-blur lg:block">
+          <nav className={`sticky ${headerTop} z-20 hidden border-b border-slate-200 bg-white/95 backdrop-blur lg:block`}>
             <div className="flex items-stretch gap-1.5 overflow-x-auto px-4 py-2">
               {navItems.map((item) => (
                 <NavLink
@@ -456,7 +482,7 @@ export default function Layout() {
           </nav>
         )}
 
-        <main className="flex-1 px-4 pb-24 pt-5 sm:px-6 lg:pb-8">
+        <main className={`flex-1 ${mainPad}`}>
           <div className="mx-auto max-w-6xl">
             <Outlet />
           </div>

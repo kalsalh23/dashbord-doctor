@@ -89,7 +89,7 @@ export default function DoctorDashboard() {
               : 'لا يوجد مرضى نشطون الآن — ابدأ بحجز موعد'}
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-2 border-t border-slate-100 p-3 sm:flex sm:items-center sm:p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-slate-100 p-3 sm:flex sm:items-center sm:p-4">
           {/* حجز موعد — متاح للطبيبة مباشرة من لوحتها */}
           <Button onClick={() => setBookingOpen(true)} className="justify-center sm:!w-auto">
             <CalendarPlus size={16} />
@@ -136,15 +136,15 @@ export default function DoctorDashboard() {
           </h2>
           <div className="space-y-2.5">
             {current.map((a) => (
-              <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-primary-200 bg-primary-50/70 px-4 py-3.5">
-                <div className="flex min-w-0 items-center gap-3">
+              <div key={a.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border-2 border-primary-200 bg-primary-50/70 px-4 py-3.5">
+                <div className="flex min-w-0 items-center gap-3 w-full sm:w-auto">
                   <Avatar name={a.patient?.full_name} className="h-11 w-11 text-sm" />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-slate-800">{a.patient?.full_name}</p>
                     <p className="text-[11px] text-slate-500">موعد {a.start_time?.slice(0, 5)}</p>
                   </div>
                 </div>
-                <Button size="sm" onClick={() => nav(`/doctor/consultation/${a.id}`)}>
+                <Button size="sm" onClick={() => nav(`/doctor/consultation/${a.id}`)} className="mt-2 sm:mt-0">
                   متابعة الكشف
                 </Button>
               </div>

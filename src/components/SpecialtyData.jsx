@@ -5,6 +5,7 @@ import { fmtPrice } from '../lib/dental'
 export const SECTION_LABELS = {
   treatments: 'علاجات على مخطط الأسنان',
   findings: 'تشخيصات على المخطط',
+  face_points: 'نقاط علاج الوجه',
 }
 
 function priceSuffix(price) {
@@ -32,6 +33,23 @@ function renderFinding(f) {
   return String(f)
 }
 
+const FACE_TREATMENT_LABELS = {
+  botox: 'بوتوكس',
+  filler: 'فلير',
+  peeling: 'تقشير',
+  laser: 'ليزر',
+  meso: 'ميزوثيرابي',
+  thread: 'خيوط',
+  other: 'أخرى',
+}
+
+function renderFacePoint(p) {
+  const label = p && p.treatment ? (FACE_TREATMENT_LABELS[p.treatment] || p.treatment) : 'علاج'
+  const sub = p && p.subtype ? ` (${p.subtype})` : ''
+  const price = p && p.price > 0 ? ` · ${Number(p.price)} ر.س` : ''
+  return `${label}${sub}${price}`
+}
+
 function renderValue(value) {
   if (value === null || value === undefined) return '—'
   if (typeof value === 'object') {
@@ -52,6 +70,7 @@ function renderValue(value) {
 export function specialtyText(key, value) {
   if (key === 'treatments' && Array.isArray(value)) return value.map(renderTreatment).join(' · ')
   if (key === 'findings' && Array.isArray(value)) return value.map(renderFinding).join(' · ')
+  if (key === 'face_points' && Array.isArray(value)) return value.map(renderFacePoint).join(' · ')
   return renderValue(value)
 }
 
@@ -82,6 +101,12 @@ export default function SpecialtyData({ data }) {
               ? value.map((f, i) => (
                   <span key={i} className="block">
                     {renderFinding(f)}
+                  </span>
+                ))
+              : key === 'face_points' && Array.isArray(value)
+              ? value.map((p, i) => (
+                  <span key={i} className="block">
+                    {renderFacePoint(p)}
                   </span>
                 ))
               : renderValue(value)}

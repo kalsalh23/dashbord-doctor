@@ -231,17 +231,54 @@ export default function Schedule() {
           )}
         </>
       ) : (
-        /* ================= التصميم الأصلي لبقية العيادات (بلا تغيير) ================= */
+        /* ================= التصميم الأصلي لبقية العيادات ================= */
         <>
+        {/* شريط أيام للجوال — يظهر فقط على الشاشات الصغيرة */}
+        <div ref={stripRef} className="mb-3 flex gap-2 overflow-x-auto px-1 pb-1 lg:hidden">
+          {strip.map((d) => {
+            const selected = d === date
+            const count = dayCounts[d] || 0
+            const isToday = d === todayStr()
+            return (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setDate(d)}
+                data-selected={selected ? 'true' : 'false'}
+                className={`flex h-14 w-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl border transition-colors ${
+                  selected
+                    ? 'border-primary-700 bg-primary-700 text-white shadow-sm'
+                    : isToday
+                      ? 'border-primary-300 bg-primary-50 text-primary-800'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300'
+                }`}
+              >
+                <span className={`text-[9px] font-semibold ${selected ? 'text-primary-100' : 'text-slate-400'}`}>
+                  {weekdayName(getWeekday(d))}
+                </span>
+                <span className="text-sm font-bold leading-5">{Number(d.slice(8, 10))}</span>
+                <span
+                  className={`min-w-4 rounded-full px-1 text-[8px] font-bold ${
+                    count > 0
+                      ? selected ? 'bg-white text-primary-800' : 'bg-primary-100 text-primary-800'
+                      : 'bg-transparent text-slate-300'
+                  }`}
+                >
+                  {count > 0 ? count : '·'}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="lg:col-span-3">
       {/* precise date jump */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold text-slate-500">انتقال لتاريخ محدد:</span>
-        <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="input-base !w-auto" />
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <span className="text-xs font-semibold text-slate-500 sm:mb-0">انتقال لتاريخ محدد:</span>
+        <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="input-base !w-auto sm:max-w-[200px]" />
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 overflow-x-auto">
         <Tabs
           value={filter}
           onChange={setFilter}
@@ -266,21 +303,23 @@ export default function Schedule() {
               const isDone = ['completed', 'cancelled', 'no_show'].includes(a.status)
               return (
               <li key={a.id} className="px-4 py-3 sm:px-5">
-                <div className="flex flex-wrap items-center gap-3">
-                <div className="w-14 shrink-0 text-center">
-                  <span className="block text-base font-bold leading-6 text-slate-800" dir="ltr">{a.start_time?.slice(0, 5)}</span>
-                  <span className="block text-[10px] text-slate-400" dir="ltr">{a.end_time?.slice(0, 5)}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center w-full sm:w-auto">
+                  <div className="w-14 shrink-0 text-center sm:w-14">
+                    <span className="block text-base font-bold leading-6 text-slate-800" dir="ltr">{a.start_time?.slice(0, 5)}</span>
+                    <span className="block text-[10px] text-slate-400" dir="ltr">{a.end_time?.slice(0, 5)}</span>
+                  </div>
+                  <Avatar name={a.patient?.full_name} className="h-9 w-9 text-xs mt-2 sm:mt-0 sm:ml-3" />
                 </div>
-                <Avatar name={a.patient?.full_name} className="h-9 w-9 text-xs" />
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 mt-2 sm:mt-0">
                   <p className="truncate text-sm font-bold text-slate-800">{a.patient?.full_name}</p>
                 </div>
-                <Badge map={APPT_STATUS} value={a.status} />
+                <Badge map={APPT_STATUS} value={a.status} className="mt-2 sm:mt-0 shrink-0" />
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   onClick={() => setLastVisitFor(a.patient)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-100 px-3 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-200"
+                  className="flex w-full sm:w-auto items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-100 px-3 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-200"
                 >
                   <History size={13} />
                   آخر زيارة
@@ -288,7 +327,7 @@ export default function Schedule() {
                 {!isDone && (
                   <button
                     onClick={() => startConsult(a)}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white transition-colors hover:bg-emerald-700"
+                    className="flex w-full sm:w-auto items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white transition-colors hover:bg-emerald-700"
                   >
                     <Stethoscope size={13} />
                     بدء الكشف
@@ -298,7 +337,7 @@ export default function Schedule() {
                 {!isDone && reminderFor(a) && (
                   <a
                     href={reminderFor(a).href}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-3 text-xs font-bold text-primary-800 transition-colors hover:bg-primary-100"
+                    className="flex w-full sm:w-auto items-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-3 text-xs font-bold text-primary-800 transition-colors hover:bg-primary-100"
                     title="إرسال تذكير للمريض بموعده (SMS مجاني — يفتح تطبيق الرسائل)"
                   >
                     <BellRing size={13} />

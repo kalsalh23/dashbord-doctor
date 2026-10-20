@@ -41,74 +41,61 @@ function treatmentColor(key) {
   return t ? t.color : '#64748b'
 }
 
-const FACE_ZONES = [
-  { id: 'forehead', label: 'الجبهة', cx: 50, cy: 28, r: 22 },
-  { id: 'eye_l', label: 'العين اليمنى', cx: 35, cy: 42, r: 16 },
-  { id: 'eye_r', label: 'العين اليسرى', cx: 65, cy: 42, r: 16 },
-  { id: 'nose', label: 'الأنف', cx: 50, cy: 52, r: 14 },
-  { id: 'cheek_l', label: 'الخد الأيمن', cx: 30, cy: 62, r: 18 },
-  { id: 'cheek_r', label: 'الخد الأيسر', cx: 70, cy: 62, r: 18 },
-  { id: 'lip', label: 'الشفاه', cx: 50, cy: 72, r: 14 },
-  { id: 'chin', label: 'الذقن', cx: 50, cy: 82, r: 16 },
-  { id: 'jaw_l', label: 'الفك الأيمن', cx: 25, cy: 75, r: 16 },
-  { id: 'jaw_r', label: 'الفك الأيسر', cx: 75, cy: 75, r: 16 },
-  { id: 'neck', label: 'الرقبة', cx: 50, cy: 92, r: 18 },
-]
-
-function FaceImage({ points, onPointClick }) {
+function FaceImage({ points, onImageClick }) {
   return (
     <div
-      className="relative block mx-auto max-w-[260px] sm:max-w-[320px] aspect-square max-h-[55vh] drop-shadow-md"
+      className="relative block mx-auto max-w-[320px] sm:max-w-[360px] max-h-[60vh]"
       style={{
-        borderRadius: '50%',
+        borderRadius: '12px',
         overflow: 'hidden',
-        background: '#fdf2ec',
+        background: '#ffffff',
       }}
     >
       <img
         src="/image.jpg"
         alt="وجه فتاة حقيقية للكشف"
-        className="block w-full h-full object-cover"
-        style={{ borderRadius: '50%' }}
+        className="block w-full h-auto object-contain"
+        style={{ display: 'block' }}
       />
-      {/* مناطق الضغط القابلة للنقر — مبنية على النسبة المئوية من أبعاد الصورة */}
-      {FACE_ZONES.map((zone) => (
-        <button
-          key={zone.id}
-          type="button"
-          onClick={() => onPointClick(zone.id)}
-          className="absolute rounded-full border-2 border-white shadow-sm transition-transform active:scale-90"
-          style={{
-            left: `${zone.cx - zone.r / 2}%`,
-            top: `${zone.cy - zone.r / 2}%`,
-            width: `${zone.r}%`,
-            height: `${zone.r}%`,
+      <div className="absolute inset-0 pointer-events-none">
+        {points.map((p, i) => {
+          const color = treatmentColor(p.treatment || 'other')
+          return (
+            <div
+              key={i}
+              className="absolute"
+              style={{
+                left: `${p.x}%`,
+                top: `${p.y}%`,
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <div
+                className="flex h-4 w-4 items-center justify-center rounded-full shadow-sm border border-white"
+                style={{
+                  backgroundColor: color,
+                  boxShadow: `0 0 0 2px ${color}`,
+                }}
+              >
+                <span className="text-[7px] font-bold text-white leading-none">
+                  {String.fromCharCode(65 + i)}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      {onImageClick && (
+        <div
+          className="absolute inset-0 z-10"
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            const x = ((e.clientX - rect.left) / rect.width) * 100
+            const y = ((e.clientY - rect.top) / rect.height) * 100
+            onImageClick({ x, y })
           }}
-          aria-label={zone.label}
         />
-      ))}
-      {/* نقاط العلاج المسجلة */}
-      {points.map((p, i) => {
-        const zone = FACE_ZONES.find((z) => z.id === p.zone)
-        const t = TREATMENTS.find((t) => t.key === p.treatment)
-        return (
-          <button
-            key={i}
-            type="button"
-            onClick={() => onPointClick(i)}
-            className="absolute rounded-full border-2 border-white shadow-sm transition-transform active:scale-90"
-            style={{
-              left: `${(zone ? zone.cx : (p.cx ?? 50)) - 3}%`,
-              top: `${(zone ? zone.cy : (p.cy ?? 50)) - 3}%`,
-              width: '6%',
-              height: '6%',
-              backgroundColor: t ? t.color : '#64748b',
-            }}
-            title={t?.label || 'أخرى'}
-            aria-label={`نقطة علاج: ${t?.label || 'أخرى'} — ${zone?.label || 'غير محدد'}`}
-          />
-        )
-      })}
+      )}
     </div>
   )
 }
@@ -163,36 +150,35 @@ export default function FaceChart({ patientId, onChange }) {
     }, 0)
   }, [points])
 
-  const handleZoneClick = (zoneId) => {
+  const handleImageClick = ({ x, y }) => {
     if (!selectedTreatment) {
       toast('error', 'يرجى اختيار نوع العلاج أولاً')
       return
     }
     const t = TREATMENTS.find((t) => t.key === selectedTreatment)
-    const point = {
-      zone: zoneId,
+    const subtype = t?.types?.[0]
+    setPoints((prev) => [...prev, {
+      x,
+      y,
       treatment: selectedTreatment,
-      subtype: null,
-      price: 0,
+      subtype: subtype?.key || null,
+      price: subtype?.price || 0,
       created_at: new Date().toISOString(),
-    }
-    setPoints((prev) => [...prev, point])
+    }])
   }
 
   const handleTypeSelect = (subtypeKey) => {
     const t = TREATMENTS.find((t) => t.key === selectedTreatment)
     const subtype = t?.types?.find((x) => x.key === subtypeKey)
-    const lastZone = points.length > 0 ? points[points.length - 1].zone : 'forehead'
-    setPoints((prev) => [
-      ...prev,
-      {
-        zone: lastZone,
-        treatment: selectedTreatment,
-        subtype: subtypeKey,
-        price: subtype ? subtype.price : 0,
-        created_at: new Date().toISOString(),
-      },
-    ])
+    // add at center of face as default when using type selection
+    setPoints((prev) => [...prev, {
+      x: 50,
+      y: 50,
+      treatment: selectedTreatment,
+      subtype: subtypeKey,
+      price: subtype ? subtype.price : 0,
+      created_at: new Date().toISOString(),
+    }])
     setShowTypes(null)
   }
 
@@ -209,17 +195,17 @@ export default function FaceChart({ patientId, onChange }) {
         </span>
       </div>
 
-      {/* صورة الوجه الحقيقية (رسم واقعي) - متجاوبة مع الجوال */}
-      <div className="mx-auto mb-4 relative w-full max-w-[260px] sm:max-w-[320px] aspect-[0.75] max-h-[55vh]">
+      {/* صورة الوجه الحقيقية كاملة - متجاوبة مع الجوال */}
+      <div className="mx-auto mb-4 relative w-full max-w-[320px] sm:max-w-[360px] max-h-[60vh]">
         {loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 rounded-full animate-pulse text-slate-400 text-[10px] sm:text-xs p-2">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 rounded-xl text-slate-400 text-[10px] sm:text-xs p-4">
             <span>تحميل الوجه...</span>
           </div>
         ) : (
           <>
-            <FaceImage points={points} onPointClick={handleZoneClick} />
+            <FaceImage points={points} onImageClick={handleImageClick} />
             <p className="absolute -bottom-6 left-0 right-0 text-center text-[10px] sm:text-xs text-slate-400 leading-tight px-2">
-              انقر على منطقة في الوجه لإضافة نقطة علاج
+              انقر على أي مكان في الوجه لإضافة نقطة علاج
             </p>
           </>
         )}
@@ -283,7 +269,7 @@ export default function FaceChart({ patientId, onChange }) {
         </button>
       )}
 
-      {/* قائمة النقاط المسجلة */}
+      {/* قائمة النقاط المسجلة (بدون نقاط على الصورة) */}
       {points.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3">
           <p className="text-[10px] sm:text-xs font-bold text-slate-500 mb-2 whitespace-normal">نقاط العلاج المسجلة:</p>
@@ -291,14 +277,11 @@ export default function FaceChart({ patientId, onChange }) {
             {points.map((p, i) => {
               const t = TREATMENTS.find((x) => x.key === p.treatment)
               const subtype = t?.types?.find((x) => x.key === p.subtype)
-              const zone = FACE_ZONES.find((z) => z.id === p.zone)
               return (
                 <li key={i} className="flex items-center justify-between rounded bg-white px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs border border-slate-100">
                   <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                    <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full shrink-0" style={{ backgroundColor: t?.color }} />
                     <span className="text-xs sm:text-sm text-slate-600 truncate">{t?.label}</span>
                     {subtype && <span className="ml-1 text-[9px] sm:text-xs text-slate-400 truncate">({subtype.label})</span>}
-                    <span className="ml-1 text-[9px] sm:text-xs font-bold text-slate-400 truncate">{zone?.label}</span>
                   </div>
                   <span className="text-[10px] sm:text-xs font-bold text-emerald-600 whitespace-nowrap">{subtype?.price ?? 0} ر.س</span>
                   <button
