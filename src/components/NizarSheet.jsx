@@ -1,237 +1,100 @@
 ﻿import { ageFrom, formatDateShort } from '../lib/format'
 
 /**
- * قالب الوصفة الطبية — د.نزار عبدالستار الشيخ
- * ورقة المعاينة الأصلية كخلفية + حقول تفاعلية: الاسم/العمر يُعبآن تلقائياً، التشخيص يكتب من الطبيب، واختيار الدواء من القائمة
+ * ورقة المعاينة — عيادة د. نزار عبدالستار الشقرة
+ * الصورة por.jpg هي التصميم الكامل للورقة. نضع فوقها فقط الحقول المطلوبة:
+ * الاسم (يتم تعبئته تلقائياً)، العمر (يتم تعبئته تلقائياً)، التشخيص (يكتبه الطبيب)، التاريخ، وحقل اختيار الدواء.
  */
-export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', logo = '/nizar-logo.png', topValues = null, onTopEdit = null, dateValue = null, onDateEdit = null, medEntrySlot = null, onDeleteMed = null, paperImage = '/por.jpg' }) {
+export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null, dateValue = null, onDateEdit = null, medEntrySlot = null, onDeleteMed = null, paperImage = '/por.jpg' }) {
   const age = patient?.date_of_birth ? ageFrom(patient.date_of_birth) : ''
-  const entries = Object.entries(visit?.specialty_data || {})
 
-  // سطور المنطقة المكتوبة: الأدوية ثم خطة العلاج والملاحظات (الاسم والعمر والتشخيص في الأعلى)
-  const written = []
-  meds.forEach((m) => {
-    written.push([m.name, m.dosage, m.duration, m.instructions].filter(Boolean).join(' — '))
-  })
-  if (visit?.treatment_plan?.trim()) written.push('العلاج: ' + visit.treatment_plan.trim())
-  if (visit?.medical_notes?.trim()) written.push('ملاحظات: ' + visit.medical_notes.trim())
-
-  const totalLines = 14
-  const lineRows = Array.from({ length: totalLines }, (_, i) => written[i] || '')
-  // الورقة ثابتة الحجم: سطور الأدوية لا تتجاوز أسطر الورقة الأصلية مهما أُضيف —
-  // الباقي يُحفظ في أرشيف المريض ويظهر كاملاً في المعاينة والأرشفة
-  const maxMedLines = totalLines - (medEntrySlot ? 1 : 0)
-  const shownMeds = meds.slice(0, maxMedLines)
+  const shownMeds = meds.slice(0, 20)
 
   return (
-    // عمود مرن: المحتوى يتمدد بمقداره والتذييل يبقى ملتصقاً بأسفل الورقة
-    // خلفية الورقة (por.jpg) تغطي كل الورقة من/Header إلى التذييل
     <div
       className="prescription-sheet relative flex flex-col overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${paperImage})`, fontFamily: '"IBM Plex Sans Arabic", serif' }}
     >
-      {/* ---------- header: logo centered, name below ---------- */}
-      <div className="relative shrink-0 px-4 pt-2 text-center">
-        <img src={logo} alt="شعار العيادة" className="mx-auto h-[74px] w-auto" />
-        <p className="mt-1 text-[27px] font-bold leading-tight" style={{ color: '#1e3a5f' }}>
-          د.نزار عبدالستار الشيخ
-        </p>
-        <p className="mt-1 text-[15px] font-bold" style={{ color: '#a8811f' }}>
-          اختصاصي الجراحة العصبية وجراحة العمود الفقري
-        </p>
-        <p className="mt-0.5 text-[12px] text-slate-600">خبرة جراحية متقدمة مدعومة بأحدث التقنيات المغورية</p>
-
-        {/* services row */}
-        <div className="mx-auto mt-3 flex w-fit items-center justify-center gap-3 text-[9.5px] font-semibold text-slate-600">
-          <span className="flex items-center gap-1.5">
-            <span className="text-[13px]" style={{ color: '#a8811f' }}>🧠</span>
-            <span className="text-start leading-[1.3]">
-              معالجة أورام الدماغ
-              <br />
-              وأورام الحبل الشوكي
+      {/* الحقول التفاعلية فقط - فوق الصورة بدون تكرار للتصميم */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-12 pt-32 pb-28">
+        {/* صف الاسم والعمر والتشخيص والتاريخ */}
+        <div className="mt-6 flex flex-wrap items-end gap-x-2 gap-y-1 text-[12px] text-slate-900">
+          <div className="flex items-end gap-1">
+            <b>اسم المريض:</b>
+            <span className="inline-block min-w-[180px] border-b border-dotted border-slate-600 px-1">
+              {onTopEdit ? (
+                <input
+                  value={(patient?.full_name || '').trim()}
+                  onChange={(e) => onTopEdit('name', e.target.value)}
+                  className="w-full bg-transparent text-center outline-none placeholder:text-slate-400"
+                  placeholder="اسم المريض"
+                />
+              ) : (
+                patient?.full_name || ''
+              )}
             </span>
-          </span>
-          <span className="h-7 w-px bg-slate-200" />
-          <span className="flex items-center gap-1.5">
-            <span className="text-[13px]" style={{ color: '#a8811f' }}>🦴</span>
-            <span className="text-start leading-[1.3]">
-              ثقب الفقرات واستئصال
-              <br />
-              الديسك مجهريا
+          </div>
+          <div className="flex items-end gap-1">
+            <b>العمر:</b>
+            <span className="inline-block w-16 border-b border-dotted border-slate-600 px-1 text-center">
+              {age || '...'}
             </span>
-          </span>
-          <span className="h-7 w-px bg-slate-200" />
-          <span className="flex items-center gap-1.5">
-            <span className="text-[13px]" style={{ color: '#a8811f' }}>🧠</span>
-            <span className="text-start leading-[1.3]">
-              جراحة الأعصاب
-              <br />
-              المحيطية
+          </div>
+          <div className="flex items-end gap-1 flex-1 min-w-[200px]">
+            <b>التشخيص:</b>
+            <span className="inline-block flex-1 border-b border-dotted border-slate-600 px-1">
+              <input
+                value={visit?.diagnosis || ''}
+                onChange={(e) => onTopEdit?.('diagnosis', e.target.value)}
+                className="w-full bg-transparent outline-none placeholder:text-slate-400"
+                placeholder="اكتب التشخيص هنا"
+              />
             </span>
-          </span>
-        </div>
-      </div>
-
-      {/* ---------- sheet frame -------- */}
-      <div className="relative mx-4 mt-3 flex min-h-0 flex-1 flex-col rounded-[16px] border border-slate-300 px-5 pb-3 pt-4 bg-transparent">
-        {/* وصفة طبية badge — attached top-right */}
-        <span
-          className="absolute -top-3.5 right-4 inline-flex items-center gap-2 rounded-l-xl rounded-br-xl px-7 py-1.5 text-[14px] font-bold text-white shadow-sm"
-          style={{ background: '#1e3a5f' }}
-        >
-          وصفة طبية
-          <span className="text-[13px]" style={{ color: '#e8b64c' }}>📝</span>
-        </span>
-
-        {/* patient rows — الاسم والعمر والتشخيص على خط واحد (قابل للكتابة المباشرة في الوضع الحي) */}
-        <div className="mt-4 space-y-3 text-[13.5px] text-slate-800">
-          <div className="rounded-lg bg-white/75 px-2 py-1 backdrop-blur-[1px]">
-            <p className="flex items-end gap-2">
-              <b>اسم المريض :</b>
-              <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center font-semibold">
-                {onTopEdit ? (
-                  <input
-                    value={topValues?.name ?? patient?.full_name ?? ''}
-                    onChange={(e) => onTopEdit('name', e.target.value)}
-                    className="w-full bg-transparent text-center font-semibold outline-none placeholder:text-slate-300"
-                    placeholder="اسم المريض"
-                  />
-                ) : (
-                  patient?.full_name || ''
-                )}
-              </span>
-              <b className="ms-1">العمر:</b>
-              <span className="inline-block w-14 border-b border-dotted border-slate-400 text-center">
-                {onTopEdit ? (
-                  <input
-                    dir="ltr"
-                    value={topValues?.age ?? ''}
-                    onChange={(e) => onTopEdit('age', e.target.value)}
-                    className="w-full bg-transparent text-center outline-none placeholder:text-slate-300"
-                    placeholder="...."
-                  />
-                ) : (
-                  age || '....'
-                )}
-              </span>
-              <b className="ms-1">التشخيص:</b>
-              <span className="min-w-0 flex-1 border-b border-dotted border-slate-400 text-center">
-                {onTopEdit ? (
-                  <input
-                    value={topValues?.diagnosis ?? ''}
-                    onChange={(e) => onTopEdit('diagnosis', e.target.value)}
-                    className="w-full bg-transparent text-center outline-none placeholder:text-slate-300"
-                    placeholder="اكتب التشخيص هنا"
-                  />
-                ) : (
-                  visit?.diagnosis || ''
-                )}
-              </span>
-            </p>
-
-            {/* سطر التاريخ — تلقائي حسب اليوم وقابل للتعديل اليدوي */}
-            <p className="flex items-end gap-2 mt-2">
-              <b>التاريخ:</b>
-              <span className="inline-block w-44 border-b border-dotted border-slate-400 text-center">
-                {onDateEdit ? (
-                  <input
-                    dir="ltr"
-                    value={dateValue ?? ''}
-                    onChange={(e) => onDateEdit(e.target.value)}
-                    className="w-full bg-transparent text-center outline-none"
-                  />
-                ) : (
-                  visit?.visit_date ? formatDateShort(visit.visit_date) : ''
-                )}
-              </span>
-            </p>
+          </div>
+          <div className="flex items-end gap-1">
+            <b>التاريخ:</b>
+            <span className="inline-block w-32 border-b border-dotted border-slate-600 px-1 text-center">
+              {onDateEdit ? (
+                <input
+                  dir="ltr"
+                  value={dateValue ?? (visit?.visit_date ? formatDateShort(visit.visit_date) : '')}
+                  onChange={(e) => onDateEdit(e.target.value)}
+                  className="w-full bg-transparent text-center outline-none"
+                />
+              ) : (
+                visit?.visit_date ? formatDateShort(visit.visit_date) : ''
+              )}
+            </span>
           </div>
         </div>
 
-        {/* lined writing area — أسطر تتوزّع داخل ما يتبقى من الورقة (صفحة واحدة دائماً) */}
-        <div className="relative mt-3 flex min-h-0 flex-1 flex-col">
-          <div className="nizar-lines relative flex min-h-0 flex-1 flex-col overflow-hidden py-3">
-            {/* أسطر الأدوية المضافة — بسطور الورقة نفسها (حجم ثابت) مع منع التمدد */}
+        {/* منطقة الأدوية */}
+        <div className="relative mt-8 flex min-h-0 flex-1 flex-col text-[13px] text-slate-900">
+          <div className="flex min-h-0 flex-1 flex-col">
             {shownMeds.map((m, i) => {
               const line = [m.name, m.dosage, m.duration, m.instructions].filter(Boolean).join(' — ')
               return (
-                <p key={i} className="nizar-line flex min-h-[18px] flex-1 flex-col justify-end overflow-hidden border-b border-dotted border-slate-300 pb-1 text-[13px] leading-5 text-slate-800" title={line}>
-                  {onDeleteMed ? (
-                    <span className="flex items-center justify-between gap-2 rounded bg-white/70 px-1">
-                      <span className="truncate">{line}</span>
-                      <button
-                        type="button"
-                        onClick={() => onDeleteMed(meds.indexOf(m))}
-                        className="inline-flex shrink-0 items-center gap-1 text-[10px] font-bold text-rose-400 hover:text-rose-600 print:hidden"
-                        aria-label="حذف الدواء"
-                      >
-                        حذف ✕
-                      </button>
-                    </span>
-                  ) : (
-                    <span className="rounded bg-white/70 px-1">{line}</span>
+                <div key={i} className="flex items-center justify-between border-b border-dotted border-slate-300 py-1.5 px-1">
+                  <span className="truncate pr-2">{line}</span>
+                  {onDeleteMed && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteMed(meds.indexOf(m))}
+                      className="shrink-0 rounded bg-white/80 px-1.5 py-0.5 text-[10px] font-bold text-rose-600 hover:bg-white print:hidden"
+                    >
+                      حذف
+                    </button>
                   )}
-                </p>
+                </div>
               )
             })}
-            {/* سطر اختيار الدواء من القائمة */}
             {medEntrySlot && (
-              <p className="nizar-line flex min-h-[18px] flex-1 flex-col justify-end border-b border-dotted border-slate-300 pb-1 text-[13px] leading-5 text-slate-800">
-                <span className="rounded bg-white/70 px-1">{medEntrySlot}</span>
-              </p>
+              <div className="border-b border-dotted border-slate-300 py-1.5 px-1">{medEntrySlot}</div>
             )}
-            {/* باقي الأسطر الفارغة */}
-            {lineRows.slice(shownMeds.length + (medEntrySlot ? 1 : 0)).map((line, i) => (
-              <p key={'e' + i} className="nizar-line flex min-h-[18px] flex-1 flex-col justify-end border-b border-dotted border-slate-300 pb-1 text-[13px] leading-5 text-slate-800">
-                <span className="rounded bg-white/50 px-1">{line}</span>
-              </p>
-            ))}
+            {shownMeds.length === 0 && !medEntrySlot && (
+              <div className="py-2 px-1 text-slate-400">—</div>
+            )}
           </div>
-        </div>
-
-        {/* QR بحجمه الطبيعي الثابت (126×147 بلا تحجيم أو تمديد) + التوقيع يميناً */}
-        <div className="nizar-qr-row relative mt-2 flex shrink-0 items-end justify-between px-2 pb-2">
-          <img src={qr} alt="QR" width={126} height={147} className="nizar-qr block max-w-none" />
-          <div className="text-end rounded-lg bg-white/70 px-3 py-1">
-            <p className="text-[14px] font-bold text-slate-700">توقيع الطبيب وختم العيادة</p>
-            <span className="mt-2 inline-block w-48 border-b border-slate-500" />
-            {doctorName && <p className="mt-0.5 text-[11px] font-semibold text-slate-500">{doctorName}</p>}
-          </div>
-        </div>
-      </div>
-
-      {/* ---------- footer navy band ---------- */}
-      <div className="relative mx-1 mt-2 shrink-0 overflow-hidden rounded-t-[16px] border-t-2 px-4 py-3" style={{ background: '#1e3a5f', borderTopColor: '#e8b64c' }}>
-        <div className="flex items-center justify-between gap-3 text-[11px] font-semibold text-white">
-          {/* right: booking */}
-          <span className="flex items-center gap-2">
-            <span className="text-[17px]" style={{ color: '#e8b64c' }}>📞</span>
-            للحجز والاستفسار
-          </span>
-          {/* center: phones */}
-          <span className="flex items-center gap-1.5 text-center leading-tight">
-            <span style={{ color: '#e8b64c' }}>📞</span>
-            <span>
-              دمشق
-              <br />
-              <b dir="ltr" className="text-[13px]">0969168667</b>
-            </span>
-            <span className="mx-1 h-6 w-px bg-white/30" />
-            <span>
-              حماه
-              <br />
-              <b dir="ltr" className="text-[13px]">0988934861</b>
-            </span>
-          </span>
-          {/* left: address */}
-          <span className="flex items-center gap-2 text-start leading-tight">
-            <span className="text-[17px]" style={{ color: '#e8b64c' }}>📍</span>
-            <span>
-              دمشق - مقابل مشفى الشام العسكري
-              <br />
-              حماه - مشفى الحوراني
-            </span>
-          </span>
         </div>
       </div>
     </div>
