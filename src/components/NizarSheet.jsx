@@ -4,7 +4,7 @@
  * قالب الوصفة الطبية — د.نزار عبدالستار الشيخ
  * نسخة مطابقة تماماً للورقة الأصلية (A5) — ديناميكي: اسم المريض، العمر، التاريخ، المحتوى المكتوب.
  */
-export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', logo = '/nizar-logo.png', topValues = null, onTopEdit = null, dateValue = null, onDateEdit = null, medEntrySlot = null, onDeleteMed = null }) {
+export default function NizarSheet({ patient, visit, meds = [], doctorName, qr = '/nizar-qr.png', logo = '/nizar-logo.png', topValues = null, onTopEdit = null, dateValue = null, onDateEdit = null, medEntrySlot = null, onDeleteMed = null, paperImage = '/por.jpg' }) {
   const age = patient?.date_of_birth ? ageFrom(patient.date_of_birth) : ''
   const entries = Object.entries(visit?.specialty_data || {})
 
@@ -68,8 +68,11 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
         </div>
       </div>
 
-      {/* ---------- sheet frame ---------- */}
-      <div className="relative mx-4 mt-3 flex min-h-0 flex-1 flex-col rounded-[16px] border border-slate-300 px-5 pb-3 pt-4">
+      {/* ---------- sheet frame: ورقة المعاينة الأصلية (H5) كخلفية -------- */}
+      <div
+        className="relative mx-4 mt-3 flex min-h-0 flex-1 flex-col rounded-[16px] border border-slate-300 px-5 pb-3 pt-4 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${paperImage})` }}
+      >
         {/* وصفة طبية badge — attached top-right */}
         <span
           className="absolute -top-3.5 right-4 inline-flex items-center gap-2 rounded-l-xl rounded-br-xl px-7 py-1.5 text-[14px] font-bold text-white shadow-sm"

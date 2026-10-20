@@ -150,17 +150,25 @@ html {
     overflow: hidden !important;
   }
 
-  /* الورقة: حجم التصميم (745px) مصغّراً 0.53 ليملأ عرض A6 (105mm) وارتفاعه (148mm) */
-  html.printing #print-clone .prescription-paper {
-    zoom: 0.53 !important;
-    width: 745px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    background: #fff !important;
-  }
+/* الورقة: حجم التصميم (745px) مصغّراً 0.53 ليملأ عرض A6 (105mm) وارتفاعه (148mm) */
+   html.printing #print-clone .prescription-paper {
+     zoom: 0.53 !important;
+     width: 745px !important;
+     margin: 0 !important;
+     padding: 0 !important;
+     border: none !important;
+     border-radius: 0 !important;
+     box-shadow: none !important;
+     background: #fff !important;
+   }
+
+   /* الحفاظ على خلفية ورقة المعاينة (H5) عند الطباعة */
+   html.printing #print-clone .prescription-sheet > div[style*="background-image"] {
+     background-image: inherit !important;
+     background-size: cover !important;
+     background-position: center !important;
+     background-repeat: no-repeat !important;
+   }
 
   /* الورقة بارتفاع ثابت يملأ A6 (148mm ÷ 0.53 = 1054px بهامش أمان) — لا تتمدد ولا تنقسم
      ملاحظة: كسر الصفحة بعد الورقة يُدار من print.js عبر inline لأنه لو بقي هنا
