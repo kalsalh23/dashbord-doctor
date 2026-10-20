@@ -55,121 +55,61 @@ const FACE_ZONES = [
   { id: 'neck', label: 'الرقبة', cx: 50, cy: 92, r: 18 },
 ]
 
-function FaceSVG({ points, onPointClick }) {
+function FaceImage({ points, onPointClick }) {
   return (
-    <svg
-      width="100%"
-      height="100%"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="xMidYMid meet"
-      className="block mx-auto drop-shadow-md"
+    <div
+      className="relative block mx-auto max-w-[260px] sm:max-w-[320px] aspect-square max-h-[55vh] drop-shadow-md"
       style={{
-        background:
-          'radial-gradient(circle at 40% 40%, #ffe8dd 0%, #fce7e3 35%, #e8c3b8 100%)',
         borderRadius: '50%',
         overflow: 'hidden',
-        display: 'block',
+        background: '#fdf2ec',
       }}
     >
-      <defs>
-        <filter id="faceShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="4" stdDeviation="5" flood-opacity="0.2" />
-        </filter>
-        <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="1.5" />
-        </filter>
-        <radialGradient id="skinGrad" cx="50%" cy="35%" r="55%">
-          <stop offset="0%" stopColor="#ffe8dd" />
-          <stop offset="40%" stopColor="#fce7e3" />
-          <stop offset="100%" stopColor="#e8c3b8" />
-        </radialGradient>
-        <radialGradient id="lipGrad" cx="50%" cy="55%" r="50%">
-          <stop offset="0%" stopColor="#e98a99" />
-          <stop offset="100%" stopColor="#a83a4a" />
-        </radialGradient>
-        <radialGradient id="cheekGrad" cx="40%" cy="65%" r="40%">
-          <stop offset="0%" stopColor="#ffb7b7" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
-        <linearGradient id="hairGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#2d1b10" />
-          <stop offset="100%" stopColor="#4a2d1a" />
-        </linearGradient>
-      </defs>
-
-      {/* شعر حول الوجه */}
-      <path
-        d="M 15 30 Q 25 15 45 12 Q 55 10 65 15 Q 75 10 85 18 Q 90 25 95 38 Q 95 52 90 68 Q 85 82 70 90 Q 55 92 40 90 Q 25 82 15 68 Q 10 52 15 38 Q 15 30 15 30"
-        fill="url(#hairGrad)"
-        filter="url(#softBlur)"
+      <img
+        src="/image.jpg"
+        alt="وجه فتاة حقيقية للكشف"
+        className="block w-full h-full object-cover"
+        style={{ borderRadius: '50%' }}
       />
-      {/* خصلات شعر على الجوانب */}
-      <path d="M 15 35 Q 5 45 12 60 Q 15 70 18 80" fill="none" stroke="#2d1b10" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
-      <path d="M 85 35 Q 95 45 88 60 Q 85 70 82 80" fill="none" stroke="#2d1b10" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
-
-      {/* رقبة */}
-      <ellipse cx="50" cy="94" rx="24" ry="15" fill="url(#skinGrad)" filter="url(#faceShadow)" />
-      <path d="M 28 70 Q 30 82 40 92 Q 60 92 70 82 Q 72 70 72 70 Z" fill="url(#skinGrad)" filter="url(#faceShadow)" />
-
-      {/* وجه بيضاوي واقعي */}
-      <ellipse cx="50" cy="50" rx="40" ry="50" fill="url(#skinGrad)" filter="url(#faceShadow)" />
-
-      {/* خدود وردية */}
-      <ellipse cx="30" cy="64" rx="10" ry="7" fill="url(#cheekGrad)" filter="url(#softBlur)" />
-      <ellipse cx="70" cy="64" rx="10" ry="7" fill="url(#cheekGrad)" filter="url(#softBlur)" />
-
-      {/* عيون مع رموش */}
-      <g filter="url(#faceShadow)">
-        {/* العين اليمنى */}
-        <ellipse cx="34" cy="41" rx="6.5" ry="4" fill="#fff" />
-        <ellipse cx="34" cy="41" rx="3.5" ry="2.5" fill="#3b2a2a" />
-        <circle cx="34.5" cy="40.5" r="1" fill="#fff" />
-        <path d="M 29 39 Q 34 35 39 39" fill="none" stroke="#222" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
-        <path d="M 30 42 Q 34 44 38 42" fill="none" stroke="#222" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-        {/* العين اليسرى */}
-        <ellipse cx="66" cy="41" rx="6.5" ry="4" fill="#fff" />
-        <ellipse cx="66" cy="41" rx="3.5" ry="2.5" fill="#3b2a2a" />
-        <circle cx="66.5" cy="40.5" r="1" fill="#fff" />
-        <path d="M 61 39 Q 66 35 71 39" fill="none" stroke="#222" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
-        <path d="M 62 42 Q 66 44 70 42" fill="none" stroke="#222" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-      </g>
-
-      {/* حواجب دقيقة */}
-      <path d="M 28 35 Q 35 31 42 35" fill="none" stroke="#4a2d1a" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
-      <path d="M 58 35 Q 65 31 72 35" fill="none" stroke="#4a2d1a" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
-
-      {/* أنف أنثوي دقيق */}
-      <path d="M 48 49 Q 50 45 52 49 Q 52 55 48 55 Z" fill="#e8c3b8" stroke="#d1a594" strokeWidth="1" opacity="0.9" />
-      <circle cx="50" cy="52" r="1.8" fill="#c9a89d" />
-      <path d="M 48 55 Q 50 57 52 55" fill="none" stroke="#d1a594" strokeWidth="1" opacity="0.6" />
-
-      {/* شفاه ممتلئة */}
-      <path d="M 38 68 Q 50 64 62 68 Q 58 76 42 76 Q 32 76 38 68 Z" fill="url(#lipGrad)" filter="url(#faceShadow)" />
-      <path d="M 38 68 Q 50 73 62 68" fill="none" stroke="#7a2b36" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M 45 66 Q 50 70 55 66" fill="none" stroke="#c95a66" strokeWidth="1" opacity="0.7" />
-
-      {/* ذقن مدبب أنثوي */}
-      <path d="M 42 82 Q 50 90 58 82" fill="none" stroke="#d8b3a8" strokeWidth="1.5" opacity="0.7" />
-
+      {/* مناطق الضغط القابلة للنقر — مبنية على النسبة المئوية من أبعاد الصورة */}
+      {FACE_ZONES.map((zone) => (
+        <button
+          key={zone.id}
+          type="button"
+          onClick={() => onPointClick(zone.id)}
+          className="absolute rounded-full border-2 border-white shadow-sm transition-transform active:scale-90"
+          style={{
+            left: `${zone.cx - zone.r / 2}%`,
+            top: `${zone.cy - zone.r / 2}%`,
+            width: `${zone.r}%`,
+            height: `${zone.r}%`,
+          }}
+          aria-label={zone.label}
+        />
+      ))}
       {/* نقاط العلاج المسجلة */}
       {points.map((p, i) => {
         const zone = FACE_ZONES.find((z) => z.id === p.zone)
         const t = TREATMENTS.find((t) => t.key === p.treatment)
         return (
-          <g key={i} style={{ cursor: 'pointer' }} onClick={() => onPointClick(i)}>
-            <circle
-              cx={zone ? zone.cx : (p.cx ?? 50)}
-              cy={zone ? zone.cy : (p.cy ?? 50)}
-              r={5}
-              fill={t ? t.color : '#64748b'}
-              stroke="#fff"
-              strokeWidth="2.5"
-            />
-            <title>{t?.label || 'أخرى'} — {zone?.label || 'غير محدد'}</title>
-          </g>
+          <button
+            key={i}
+            type="button"
+            onClick={() => onPointClick(i)}
+            className="absolute rounded-full border-2 border-white shadow-sm transition-transform active:scale-90"
+            style={{
+              left: `${(zone ? zone.cx : (p.cx ?? 50)) - 3}%`,
+              top: `${(zone ? zone.cy : (p.cy ?? 50)) - 3}%`,
+              width: '6%',
+              height: '6%',
+              backgroundColor: t ? t.color : '#64748b',
+            }}
+            title={t?.label || 'أخرى'}
+            aria-label={`نقطة علاج: ${t?.label || 'أخرى'} — ${zone?.label || 'غير محدد'}`}
+          />
         )
       })}
-    </svg>
+    </div>
   )
 }
 
@@ -277,7 +217,7 @@ export default function FaceChart({ patientId, onChange }) {
           </div>
         ) : (
           <>
-            <FaceSVG points={points} onPointClick={handleZoneClick} />
+            <FaceImage points={points} onPointClick={handleZoneClick} />
             <p className="absolute -bottom-6 left-0 right-0 text-center text-[10px] sm:text-xs text-slate-400 leading-tight px-2">
               انقر على منطقة في الوجه لإضافة نقطة علاج
             </p>
