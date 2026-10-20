@@ -104,12 +104,12 @@ html {
 
 
 /* ============================================================
- * طباعة ورقة الوصفة — ورقة A5 واحدة تماماً بحجم الورق
+ * طباعة ورقة المعاينة — ورقة A5 واحدة تماماً بحجم الورق
  * ورقة التصميم 745px عرضاً؛ عند الطباعة تُصغّر 0.75 فتصبح 559px = 148mm
  * وارتفاعها 1058px × 0.75 = 794px = 210mm — فتملأ الورقة حافةً لحافة
  * (بلا هوامش بيضاء على الجانبين وبلا انقسام لورقتين)
  * ============================================================ */
-@page { size: 105mm 148mm; margin: 0; }
+@page { size: 148mm 210mm; margin: 0; }
 
 /* معاينة الورقة على الشاشة: بنفس عرض الطباعة (745px) مع مظهر ورقة حقيقية،
    وتُصغّر تلقائياً بـ zoom لتناسب الشاشة — دون التأثير على الطباعة.
@@ -142,7 +142,7 @@ html {
   html.printing #print-clone {
     display: block !important;
     position: static !important;
-    width: 105mm !important;
+    width: 148mm !important;
     margin: 0 !important;
     padding: 0 !important;
     zoom: 1 !important;
@@ -152,7 +152,7 @@ html {
 
 /* الورقة: حجم التصميم (745px) مصغّراً 0.53 ليملأ عرض A6 (105mm) وارتفاعه (148mm) */
    html.printing #print-clone .prescription-paper {
-     zoom: 0.53 !important;
+     zoom: 0.75 !important;
      width: 745px !important;
      margin: 0 !important;
      padding: 0 !important;
@@ -175,9 +175,9 @@ html {
      بأولوية !important لتغلّب على :last-of-type فأخرج صفحة بيضاء ثانية بعد كل ورقة */
   html.printing #print-clone .prescription-sheet {
     width: 745px !important;
-    height: 1054px !important;
-    max-height: 1054px !important;
-    min-height: 1054px !important;
+    height: 794px !important;
+    max-height: 794px !important;
+    min-height: 794px !important;
     overflow: hidden !important;
   }
 
@@ -212,9 +212,9 @@ html {
 html.printing #print-clone .prescription-sheet {
   display: flex !important;
   flex-direction: column !important;
-  height: 1054px !important;
-  min-height: 1054px !important;
-  max-height: 1054px !important;
+  height: 794px !important;
+  min-height: 794px !important;
+  max-height: 794px !important;
   width: 745px !important;
   overflow: hidden !important;
 }
