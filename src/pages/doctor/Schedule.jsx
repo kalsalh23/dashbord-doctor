@@ -6,15 +6,55 @@ import { supabase } from '../../lib/supabase'
 import { Card, Badge, APPT_STATUS, Button, EmptyState, SkeletonRows, Avatar, Tabs } from '../../components/ui'
 import LastVisitModal from '../../components/LastVisitModal'
 import { useSchedules } from '../../lib/hooks'
-import { usesWideSchedule } from '../../lib/clinicStyle'
+import { usesWideSchedule, isFatimaClinic } from '../../lib/clinicStyle'
 import { todayStr, addDays, formatDateLong, dayLabel, timeToMin, getWeekday, weekdayName } from '../../lib/format'
 import { slotsForDay } from '../../lib/slots'
 import { reminderSmsHref } from '../../lib/reminders'
+
+/* ============================================================
+ * أزرار الموعد — عيادة د. فاطمة:
+ * ترتيب واضح (الإجراء الأساسي «بدء الكشف» أولاً ثم الثانويات)
+ * ومقاس موحّد (h-9) وسطر كامل للإجراء الأساسي على الجوال.
+ * ============================================================ */
+function ApptActions({ isDone, reminder, onStart, onLastVisit }) {
+  return (
+    <div className="mt-2.5 flex flex-wrap gap-2">
+      {!isDone && (
+        <button
+          onClick={onStart}
+          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white transition-colors hover:bg-emerald-700 sm:w-auto"
+        >
+          <Stethoscope size={14} />
+          بدء الكشف
+        </button>
+      )}
+      <button
+        onClick={onLastVisit}
+        className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-100 sm:flex-none"
+      >
+        <History size={13} />
+        آخر زيارة
+      </button>
+      {reminder && (
+        <a
+          href={reminder.href}
+          className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-3 text-xs font-bold text-primary-800 transition-colors hover:bg-primary-100 sm:flex-none"
+          title="إرسال تذكير للمريض بموعده (SMS مجاني — يفتح تطبيق الرسائل)"
+        >
+          <BellRing size={13} />
+          تذكير
+        </a>
+      )}
+    </div>
+  )
+}
 
 export default function Schedule() {
   const { profile, toast, settings } = useApp()
   // أسلوب العرض: القائمة كاملة وشبكة الأيام تحتها — عيادة د. ريام و(clinics other) — بقية العيادات نصفان
   const wide = usesWideSchedule(profile, settings)
+  // عيادة الدكتورة فاطمة: واجهة «مواعيدي» بأزرار مرتبة ومقاس موحّد
+  const fatima = isFatimaClinic(profile)
   const [schedules] = useSchedules()
   const [date, setDate] = useState(todayStr())
   const [appts, setAppts] = useState(null)
@@ -120,7 +160,12 @@ export default function Schedule() {
           <Button variant="secondary" size="icon" onClick={() => setDate((d) => addDays(d, -1))} aria-label="اليوم السابق">
             <ChevronRight size={16} />
           </Button>
-          <Button variant={date === todayStr() ? 'primary' : 'secondary'} size="sm" onClick={() => setDate(todayStr())}>
+          <Button
+            variant={date === todayStr() ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => setDate(todayStr())}
+            className={fatima ? 'h-9 px-4' : ''}
+          >
             اليوم
           </Button>
           <Button variant="secondary" size="icon" onClick={() => setDate((d) => addDays(d, 1))} aria-label="اليوم التالي">
@@ -245,7 +290,9 @@ export default function Schedule() {
                 type="button"
                 onClick={() => setDate(d)}
                 data-selected={selected ? 'true' : 'false'}
-                className={`flex h-14 w-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl border transition-colors ${
+                className={`flex shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl border transition-colors ${
+                  fatima ? 'h-16 w-14' : 'h-14 w-12'
+                } ${
                   selected
                     ? 'border-primary-700 bg-primary-700 text-white shadow-sm'
                     : isToday
@@ -253,12 +300,14 @@ export default function Schedule() {
                       : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300'
                 }`}
               >
-                <span className={`text-[9px] font-semibold ${selected ? 'text-primary-100' : 'text-slate-400'}`}>
+                <span className={`font-semibold ${selected ? 'text-primary-100' : 'text-slate-400'} ${fatima ? 'text-[10px]' : 'text-[9px]'}`}>
                   {weekdayName(getWeekday(d))}
                 </span>
-                <span className="text-sm font-bold leading-5">{Number(d.slice(8, 10))}</span>
+                <span className={`font-bold leading-5 ${fatima ? 'text-base' : 'text-sm'}`}>{Number(d.slice(8, 10))}</span>
                 <span
-                  className={`min-w-4 rounded-full px-1 text-[8px] font-bold ${
+                  className={`min-w-4 rounded-full px-1 font-bold ${
+                    fatima ? 'text-[9px]' : 'text-[8px]'
+                  } ${
                     count > 0
                       ? selected ? 'bg-white text-primary-800' : 'bg-primary-100 text-primary-800'
                       : 'bg-transparent text-slate-300'
@@ -272,8 +321,8 @@ export default function Schedule() {
         </div>
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="lg:col-span-3">
-      {/* precise date jump */}
-      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      {/* precise date jump — سطر واحد مضغوط على الجوال لعيادة د. فاطمة */}
+      <div className={fatima ? 'mb-3 flex items-center justify-between gap-2' : 'mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'}>
         <span className="text-xs font-semibold text-slate-500 sm:mb-0">انتقال لتاريخ محدد:</span>
         <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="input-base !w-auto sm:max-w-[200px]" />
       </div>
@@ -301,8 +350,32 @@ export default function Schedule() {
           <ul className="divide-y divide-slate-100">
             {shown.map((a) => {
               const isDone = ['completed', 'cancelled', 'no_show'].includes(a.status)
+              const reminder = !isDone ? reminderFor(a) : null
               return (
-              <li key={a.id} className="px-4 py-3 sm:px-5">
+              <li key={a.id} className={fatima ? 'px-4 py-3.5 sm:px-5' : 'px-4 py-3 sm:px-5'}>
+                {fatima ? (
+                  /* عيادة د. فاطمة: ترتيب واضح — الوقت والحالة ثم المريض ثم الأزرار */
+                  <>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex h-10 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-slate-50" dir="ltr">
+                        <span className="text-sm font-black leading-4 text-slate-800">{a.start_time?.slice(0, 5)}</span>
+                        <span className="text-[9px] text-slate-400">{a.end_time?.slice(0, 5)}</span>
+                      </span>
+                      <Badge map={APPT_STATUS} value={a.status} className="shrink-0" />
+                    </div>
+                    <div className="mt-2 flex items-center gap-2.5">
+                      <Avatar name={a.patient?.full_name} className="h-9 w-9 text-xs" />
+                      <p className="min-w-0 flex-1 truncate text-sm font-bold text-slate-800">{a.patient?.full_name}</p>
+                    </div>
+                    <ApptActions
+                      isDone={isDone}
+                      reminder={reminder}
+                      onStart={() => startConsult(a)}
+                      onLastVisit={() => setLastVisitFor(a.patient)}
+                    />
+                  </>
+                ) : (
+                  <>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center w-full sm:w-auto">
                   <div className="w-14 shrink-0 text-center sm:w-14">
@@ -345,6 +418,8 @@ export default function Schedule() {
                   </a>
                 )}
                 </div>
+                  </>
+                )}
               </li>
               )
             })}
@@ -353,8 +428,9 @@ export default function Schedule() {
         </Card>
         </div>
 
-        {/* أيام الأسبوع مربعات — العمود الجانبي */}
-        <div className="lg:col-span-2">
+        {/* أيام الأسبوع مربعات — العمود الجانبي
+            (لعيادة د. فاطمة لا يظهر على الجوال: شريط الأيام فوق القائمة يكفي) */}
+        <div className={fatima ? 'hidden lg:col-span-2 lg:block' : 'lg:col-span-2'}>
           <div className="lg:sticky lg:top-36">
             <p className="mb-2 text-xs font-bold text-slate-500">الأيام — اضغط لعرض مواعيده</p>
             <div className="grid grid-cols-3 gap-2">
