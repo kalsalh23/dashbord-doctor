@@ -119,11 +119,16 @@ export default function Schedule() {
 
   const shown = useMemo(() => {
     let list = appts || []
-    if (filter === 'all') list = list.filter((a) => !['cancelled', 'no_show', 'completed', 'in_consultation'].includes(a.status))
-    if (filter === 'consulting') list = list.filter((a) => a.status === 'in_consultation')
-    if (filter === 'done') list = list.filter((a) => ['completed', 'cancelled', 'no_show'].includes(a.status))
+    // عيادة د. فاطمة: واجهة «مواعيدي» تعرض المواعيد الجارية فقط (لا تبويب قيد الكشف ولا المنتهية)
+    if (fatima) {
+      list = list.filter((a) => !['cancelled', 'no_show', 'completed', 'in_consultation'].includes(a.status))
+    } else {
+      if (filter === 'all') list = list.filter((a) => !['cancelled', 'no_show', 'completed', 'in_consultation'].includes(a.status))
+      if (filter === 'consulting') list = list.filter((a) => a.status === 'in_consultation')
+      if (filter === 'done') list = list.filter((a) => ['completed', 'cancelled', 'no_show'].includes(a.status))
+    }
     return [...list].sort((a, b) => timeToMin(a.start_time) - timeToMin(b.start_time))
-  }, [appts, filter])
+  }, [appts, filter, fatima])
 
   const startConsult = (a) => nav(`/doctor/consultation/${a.id}`)
 
@@ -331,11 +336,13 @@ export default function Schedule() {
         <Tabs
           value={filter}
           onChange={setFilter}
-          tabs={[
-            { value: 'all', label: 'الكل', count: counts.all },
-            { value: 'consulting', label: 'قيد الكشف', count: counts.consulting },
-            { value: 'done', label: 'المنتهية', count: counts.done },
-          ]}
+          tabs={fatima
+            ? [{ value: 'all', label: 'الكل', count: counts.all }]
+            : [
+              { value: 'all', label: 'الكل', count: counts.all },
+              { value: 'consulting', label: 'قيد الكشف', count: counts.consulting },
+              { value: 'done', label: 'المنتهية', count: counts.done },
+            ]}
         />
       </div>
 

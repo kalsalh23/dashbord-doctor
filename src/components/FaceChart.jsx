@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../lib/store'
-import { Button } from '../components/ui'
 import { isFatimaClinic } from '../lib/clinicStyle'
 
 const TREATMENTS = [
@@ -211,62 +211,63 @@ export default function FaceChart({ patientId, onChange }) {
         )}
       </div>
 
-      {/* بطاقات العلاجات أسفل الوجه */}
+      {/* بطاقات العلاجات أسفل الوجه — بطاقات مربعة، والنقر على النوع يفتح قائمة أنواعه */}
       <div className="mb-3">
-        <p className="text-[10px] sm:text-xs font-bold text-slate-500 mb-2 whitespace-nowrap">اختر العلاج:</p>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
+        <p className="mb-2 text-[10px] font-bold text-slate-500 sm:text-xs">اختر العلاج:</p>
+        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-7 sm:gap-2">
           {TREATMENTS.map((t) => {
             const active = selectedTreatment === t.key
             return (
               <button
                 key={t.key}
-                onClick={() => setSelectedTreatment(active ? null : t.key)}
-                className={`flex items-center gap-1 rounded-lg border border-slate-200 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold transition-colors ${
-                  active
-                    ? `border-${t.key === 'botox' ? 'rose' : t.key === 'filler' ? 'amber' : t.key === 'peeling' ? 'emerald' : t.key === 'laser' ? 'violet' : t.key === 'meso' ? 'cyan' : t.key === 'thread' ? 'pink' : 'slate'}-500 bg-${t.key === 'botox' ? 'rose' : t.key === 'filler' ? 'amber' : t.key === 'peeling' ? 'emerald' : t.key === 'laser' ? 'violet' : t.key === 'meso' ? 'cyan' : t.key === 'thread' ? 'pink' : 'slate'}-500/10 text-${t.key === 'botox' ? 'rose' : t.key === 'filler' ? 'amber' : t.key === 'peeling' ? 'emerald' : t.key === 'laser' ? 'violet' : t.key === 'meso' ? 'cyan' : t.key === 'thread' ? 'pink' : 'slate'}-700`
-                    : 'text-slate-500 hover:border-slate-400 hover:text-slate-700 hover:bg-slate-50'
+                type="button"
+                onClick={() => {
+                  setSelectedTreatment(t.key)
+                  setShowTypes(t.key)
+                }}
+                className={`flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border-2 p-1 transition-colors ${
+                  active ? 'shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                 }`}
+                style={active ? { borderColor: t.color, backgroundColor: t.color + '14' } : undefined}
               >
-                <span className="flex h-2.5 sm:h-3 w-2.5 sm:w-3 rounded-full shrink-0" style={{ backgroundColor: treatmentColor(t.key) }} />
-                <span className="whitespace-nowrap">{t.label}</span>
+                <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
+                <span className="px-0.5 text-center text-[10px] font-bold leading-tight text-slate-700 sm:text-xs">{t.label}</span>
               </button>
             )
           })}
         </div>
       </div>
 
-      {/* أنواع العلاج المختار وأسعارها */}
+      {/* قائمة أنواع العلاج المختار وأسعارها */}
       {showTypes && activeTreatment && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3 mb-3">
-          <p className="text-[10px] sm:text-xs font-bold text-slate-600 mb-2 whitespace-normal">أنواع {activeTreatment.label}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
-            {activeTreatment.types.map((type) => (
-              <button
-                key={type.key}
-                onClick={() => handleTypeSelect(type.key)}
-                className={`flex items-center justify-between rounded-lg border border-slate-200 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900`}
-              >
-                <span className="whitespace-normal">{type.label}</span>
-                <span className="font-bold text-slate-500 whitespace-nowrap">{type.price} ر.س</span>
-              </button>
-            ))}
+        <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-[10px] font-bold leading-tight text-slate-600 sm:text-xs">
+              اختر العلاج المناسب من {activeTreatment.label}
+            </p>
+            <button
+              onClick={() => setShowTypes(null)}
+              className="shrink-0 rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
+              aria-label="إغلاق قائمة الأنواع"
+            >
+              <X size={15} />
+            </button>
           </div>
-          <button
-            onClick={() => setShowTypes(null)}
-            className="mt-2 text-[10px] sm:text-xs text-slate-400 underline hover:text-slate-600"
-          >
-            إغلاق
-          </button>
+          <ul className="space-y-1.5">
+            {activeTreatment.types.map((type) => (
+              <li key={type.key}>
+                <button
+                  type="button"
+                  onClick={() => handleTypeSelect(type.key)}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 sm:text-sm"
+                >
+                  <span className="text-start">{type.label}</span>
+                  <span className="shrink-0 font-bold text-slate-500">{type.price} ر.س</span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
-      )}
-
-      {activeTreatment && selectedTreatment && showTypes === null && (
-        <button
-          onClick={() => setShowTypes(selectedTreatment)}
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-800 whitespace-normal"
-        >
-          عرض أنواع وأسعار {activeTreatment.label}
-        </button>
       )}
 
       {/* قائمة النقاط المسجلة (بدون نقاط على الصورة) */}
@@ -302,8 +303,4 @@ export default function FaceChart({ patientId, onChange }) {
       )}
     </div>
   )
-}
-
-function btnColor(key) {
-  return key === 'botox' ? 'rose' : key === 'filler' ? 'amber' : key === 'peeling' ? 'emerald' : key === 'laser' ? 'violet' : key === 'meso' ? 'cyan' : key === 'thread' ? 'pink' : 'slate'
 }
