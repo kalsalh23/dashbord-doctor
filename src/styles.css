@@ -253,11 +253,13 @@ html.printing #print-clone img.nizar-qr {
   break-inside: avoid !important;
 }
 
-/* الشعار والتذييل ثابتان أسفل الورقة */
-html.printing #print-clone .prescription-sheet > div:first-child {
+/* الشعار والتذييل ثابتان أسفل الورقة — لورقة rose ذات عدة عناصر.
+   (ورقة نزار لها عنصر واحد فقط — غلاف المحتوى — فلا يُثبَّت وإلا انهارت
+    أطوال الحقول النسبة top:% إلى قيمتها على غلاف صغير فتظهر في أعلى الورقة) */
+html.printing #print-clone .prescription-sheet > div:first-child:not(:last-child) {
   flex: 0 0 auto !important;
 }
-html.printing #print-clone .prescription-sheet > div:last-child {
+html.printing #print-clone .prescription-sheet > div:last-child:not(:first-child) {
   flex: 0 0 auto !important;
 }
 
