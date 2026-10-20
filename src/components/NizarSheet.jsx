@@ -18,7 +18,7 @@ export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null
       {/* الحقول التفاعلية فقط - فوق الصورة بدون تكرار للتصميم */}
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-12 pb-28">
         {/* صف الاسم والعمر والتشخيص والتاريخ - في منتصف الورقة */}
-        <div className="absolute left-12 right-12 flex flex-wrap items-end gap-x-2 gap-y-1 text-[14px] font-bold text-slate-900" style={{ top: 'calc(33% - 0px)', transform: 'translateY(-50%)' }}>
+        <div className="absolute left-12 right-12 flex flex-wrap items-end gap-x-4 gap-y-3 text-[14px] font-bold text-slate-900" style={{ top: 'calc(33% - 0px)', transform: 'translateY(-50%)' }}>
           <div className="flex items-end gap-1">
             <b>اسم المريض:</b>
             <span className="inline-block min-w-[180px] border-b border-dotted border-slate-600 px-1">
@@ -74,7 +74,7 @@ export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null
             {shownMeds.map((m, i) => {
               const line = [m.name, m.dosage, m.duration, m.instructions].filter(Boolean).join(' — ')
               return (
-                <div key={i} className="flex items-center justify-between border-b border-dotted border-slate-300 py-1.5 px-1">
+                <div key={i} className="flex items-center justify-between border-b border-dotted border-slate-300 py-2.5 px-1">
                   <span className="truncate pr-2">{line}</span>
                   {onDeleteMed && (
                     <button
@@ -89,7 +89,7 @@ export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null
               )
             })}
             {medEntrySlot && (
-              <div className="border-b border-dotted border-slate-300 py-1.5 px-1">{medEntrySlot}</div>
+              <div className="border-b border-dotted border-slate-300 py-2.5 px-1">{medEntrySlot}</div>
             )}
             {shownMeds.length === 0 && !medEntrySlot && (
               <div className="py-2 px-1 text-slate-400">—</div>
