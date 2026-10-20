@@ -170,14 +170,13 @@ html {
      background-repeat: no-repeat !important;
    }
 
-  /* الورقة بارتفاع ثابت يملأ A6 (148mm ÷ 0.53 = 1054px بهامش أمان) — لا تتمدد ولا تنقسم
-     ملاحظة: كسر الصفحة بعد الورقة يُدار من print.js عبر inline لأنه لو بقي هنا
-     بأولوية !important لتغلّب على :last-of-type فأخرج صفحة بيضاء ثانية بعد كل ورقة */
+   /* الورقة بارتفاعها الأصلي (1058px) — التحويل إلى 0.75 في zoom يجعلها 794px = 210mm
+      بالضبط (مقاس A5)، فتملأ الورقة كاملة بلا قصّ. */
   html.printing #print-clone .prescription-sheet {
     width: 745px !important;
-    height: 794px !important;
-    max-height: 794px !important;
-    min-height: 794px !important;
+    height: 1058px !important;
+    max-height: 1058px !important;
+    min-height: 1058px !important;
     overflow: hidden !important;
   }
 
@@ -212,9 +211,9 @@ html {
 html.printing #print-clone .prescription-sheet {
   display: flex !important;
   flex-direction: column !important;
-  height: 794px !important;
-  min-height: 794px !important;
-  max-height: 794px !important;
+  height: 1058px !important;
+  min-height: 1058px !important;
+  max-height: 1058px !important;
   width: 745px !important;
   overflow: hidden !important;
 }

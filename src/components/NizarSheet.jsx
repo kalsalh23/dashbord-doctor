@@ -43,12 +43,16 @@ export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null
           <div className="flex items-end gap-1 flex-1 min-w-[200px]">
             <b>التشخيص:</b>
             <span className="inline-block flex-1 border-b border-dotted border-slate-600 px-1">
-              <input
-                value={visit?.diagnosis || ''}
-                onChange={(e) => onTopEdit?.('diagnosis', e.target.value)}
-                className="w-full bg-transparent outline-none placeholder:text-slate-400"
-                placeholder="اكتب التشخيص هنا"
-              />
+              {onTopEdit ? (
+                <input
+                  value={visit?.diagnosis || ''}
+                  onChange={(e) => onTopEdit('diagnosis', e.target.value)}
+                  className="w-full bg-transparent outline-none placeholder:text-slate-400"
+                  placeholder="اكتب التشخيص هنا"
+                />
+              ) : (
+                <span className="block w-full">{visit?.diagnosis || ''}</span>
+              )}
             </span>
           </div>
           <div className="flex items-end gap-1">

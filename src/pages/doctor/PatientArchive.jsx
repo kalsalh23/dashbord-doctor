@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Archive, Pill, ChevronDown, Printer, FolderOpen, Stethoscope, FileText, RefreshCw, Users, FileSearch, CalendarDays, Trash2 } from 'lucide-react'
 import { useApp } from '../../lib/store'
@@ -8,6 +8,7 @@ import PrescriptionSheet from '../../components/PrescriptionSheet'
 import { specialtyText } from '../../components/SpecialtyData'
 import { formatDateShort } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
+import { usePrintIsolation } from '../../lib/print'
 import { usesCardArchive } from '../../lib/clinicStyle'
 
 /**
@@ -45,7 +46,32 @@ export default function PatientArchive() {
   const [viewingVisit, setViewingVisit] = useState(null) // { patientId, visit } — عرض ورقة بحجمها الكامل
   const [confirmDelete, setConfirmDelete] = useState(null) // مراجعة awaiting تأكيد الحذف
   const [deleting, setDeleting] = useState(false)
+  // عند طباعة الورقة المعروضة من الأرشيف تُطبع وحدها بمقاس A5
+  usePrintIsolation()
+  // الورقة A5: عرض التصميم 745px — نُصغّرها لتتناسب مع عرض الشاشة
+  const paperRef = useRef(null)
+  const [fullZoom, setFullZoom] = useState(0.92)
+  const [thumbZoom, setThumbZoom] = useState(0.2)
   const nav = useNavigate()
+
+  // احسب تحجيم الورقة: الكامل لعرض الشاشة، والمصغّرة لبطاقة الأرشيف
+  useEffect(() => {
+    const fit = () => {
+      const el = paperRef.current
+      if (el) {
+        const avail = el.clientWidth || 0
+        if (avail > 0) setFullZoom(Math.min(1, avail / 745))
+      }
+      setThumbZoom(0.2)
+    }
+    fit()
+    const t = setTimeout(fit, 300)
+    window.addEventListener('resize', fit)
+    return () => {
+      window.removeEventListener('resize', fit)
+      clearTimeout(t)
+    }
+  }, [viewingVisit, openPatient])
 
   // حذف كشف/مراجعة نهائياً (سجلات الدفع تبقى في صفحة الدفعات)
   const deleteVisit = async () => {
@@ -359,19 +385,28 @@ export default function PatientArchive() {
                       ) : viewingVisit && viewingVisit.patientId === g.patient.id ? (
                         /* عرض ورقة معاينة واحدة بحجمها الكامل + زر رجوع */
                         <div>
-                          <Button size="sm" variant="secondary" onClick={() => setViewingVisit(null)} className="mb-3">
+                          <Button size="sm" variant="secondary" onClick={() => setViewingVisit(null)} className="mb-3 print:hidden">
                             <Archive size={13} />
                             رجوع للمعاينات
                           </Button>
-                          <div className="prescription-paper !m-0" style={{ zoom: 0.92 }}>
-                            <PrescriptionSheet
-                              clinic={profile?.clinic}
-                              settings={settings}
-                              patient={g.patient}
-                              visit={viewingVisit.visit}
-                              meds={viewingVisit.visit.medications || []}
-                              doctorName={viewingVisit.visit.doctor?.full_name || profile?.full_name}
-                            />
+                          <Button size="sm" onClick={() => window.print()} className="mb-3 print:hidden">
+                            <Printer size={13} />
+                            طباعة الورقة
+                          </Button>
+                          {/* الورقة كاملة داخل إطار قابل للتمرير — لا تُقصّ */}
+                          <div ref={paperRef} className="overflow-x-auto overflow-y-hidden pb-2">
+                            <div className="print-area mx-auto w-fit">
+                              <div className="prescription-paper !m-0" style={{ zoom: fullZoom }}>
+                                <PrescriptionSheet
+                                  clinic={profile?.clinic}
+                                  settings={settings}
+                                  patient={g.patient}
+                                  visit={viewingVisit.visit}
+                                  meds={viewingVisit.visit.medications || []}
+                                  doctorName={viewingVisit.visit.doctor?.full_name || profile?.full_name}
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ) : (
@@ -386,9 +421,9 @@ export default function PatientArchive() {
                               onKeyDown={(e) => e.key === 'Enter' && setViewingVisit({ patientId: g.patient.id, visit: v })}
                               className="group cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card transition-colors hover:border-primary-300"
                             >
-                              {/* مصغّرة الورقة — الجزء العلوي من الورقة الفعلية */}
-                              <span className="block h-64 overflow-hidden">
-                                <span className="pointer-events-none block origin-top" style={{ zoom: 0.42 }}>
+                              {/* مصغّرة الورقة — الورقة كاملة (A5) مصغّرة بالكامل */}
+                              <span className="flex h-72 items-start justify-center overflow-hidden bg-slate-100/60 py-2">
+                                <span className="pointer-events-none block origin-top" style={{ zoom: thumbZoom }}>
                                   <span className="prescription-paper !m-0 block !shadow-none">
                                     <PrescriptionSheet
                                       clinic={profile?.clinic}
