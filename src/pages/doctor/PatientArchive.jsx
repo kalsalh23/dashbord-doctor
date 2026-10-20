@@ -518,11 +518,13 @@ export default function PatientArchive() {
                                         <FileText size={13} />
                                         فتح الكشف
                                       </Button>
-                                      {/* قالب نزار فقط: ورقة الوصفة القابلة للطباعة */}
-                                      <Button size="sm" onClick={() => nav(`/print/prescription/${v.id}`)}>
-                                        <Printer size={13} />
-                                        الوصفة الطبية
-                                      </Button>
+                                      {/* قالب نزار: بلا زر «الوصفة الطبية» في الأرشيف — الورقة تُعرض داخل الكشف */}
+                                      {settings?.prescription_template !== 'nizar' && (
+                                        <Button size="sm" onClick={() => nav(`/print/prescription/${v.id}`)}>
+                                          <Printer size={13} />
+                                          الوصفة الطبية
+                                        </Button>
+                                      )}
                                       <Button size="sm" variant="dangerGhost" onClick={() => setConfirmDelete(v)}>
                                         <Trash2 size={13} />
                                         حذف الكشف
