@@ -40,8 +40,18 @@ const NAV = {
   ],
 }
 
-function useOutsideClose(ref, onClose) {
-  useEffect(() => {
+/**
+ * وسم الإشعار — مشتق من نصّه (عنوان + نص) ليعمل بالطريقة نفسها في المتصفح
+ * وفي عامل الخدمة (public/sw.js). النتيجة: نفس الحدث لا يتكدّس مرّتين على الشاشة.
+ */
+export function notificationTag(title, body) {
+  const key = String(title || '') + '|' + String(body || '')
+  let hash = 0
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) | 0
+  return 'clinic-' + Math.abs(hash)
+}
+
+function useOutsideClose(ref, onClose) {  useEffect(() => {
     const fn = (e) => {
       if (ref.current && !ref.current.contains(e.target)) onClose()
     }
@@ -55,6 +65,7 @@ function NotificationsBell({ panelTop = 'top-11' }) {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState([])
   const seenRef = useRef(null) // معرّفات الإشعارات المعروضة — لتمييز الجديد وتشغيل الصوت
+  const swAlertRef = useRef(0) // وقت آخر إشعار وصل عبر web push — يمنع تكرار الصوت
   const ref = useRef(null)
   const nav = useNavigate()
   useOutsideClose(ref, () => setOpen(false))
@@ -76,16 +87,28 @@ function NotificationsBell({ panelTop = 'top-11' }) {
       const fresh = list.filter((n) => !seenRef.current.includes(n.id))
       if (fresh.length > 0) {
         const isEmergency = fresh.some((n) => n.type === 'cancellation' || (n.title || '').includes('إسعاف'))
-        playAlert(isEmergency ? 'emergency' : 'new', { loud })
+        // منع التكرار: نفس الإشعار قد يصل من قناتين (قاعدة البيانات + web push)
+        // نُبقي نسخة واحدة فقط لكل نص إشعار
+        const uniqueFresh = []
+        const seenText = new Set()
+        for (const n of fresh) {
+          const key = `${n.type || ''}|${(n.title || '').trim()}|${(n.body || '').trim()}`
+          if (seenText.has(key)) continue
+          seenText.add(key)
+          uniqueFresh.push(n)
+        }
+        // إن سبق أن وصل الإشعار عبر web push (عامل الخدمة) فلا نعيد الصوت ولا نكرر إشعار النظام
+        const pushJustNow = Date.now() - swAlertRef.current < 20000
+        if (!pushJustNow) playAlert(isEmergency ? 'emergency' : 'new', { loud })
         // إشعار مجاني من داخل المتصفح — يظهر أعلى الشاشة مع نغمة النظام
         try {
-          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            const n = fresh[0]
+          if (!pushJustNow && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            const n = uniqueFresh[0]
             const bn = new Notification(n.title || 'إشعار جديد', {
               body: n.body || '',
               dir: 'rtl',
               lang: 'ar',
-              tag: 'clinic-' + n.id,
+              tag: notificationTag(n.title, n.body),
               icon: '/favicon.svg',
             })
             bn.onclick = () => {
@@ -111,7 +134,10 @@ function NotificationsBell({ panelTop = 'top-11' }) {
     window.addEventListener('pointerdown', unlock, { once: true })
     // إشعار خارجي وصل والتطبيق مفتوح → شغّل النغمة الداخلية أيضاً
     const onSwMessage = (e) => {
-      if (e.data?.type === 'clinic-alert') playAlert(e.data.kind === 'emergency' ? 'emergency' : 'new', { loud })
+      if (e.data?.type === 'clinic-alert') {
+        swAlertRef.current = Date.now()
+        playAlert(e.data.kind === 'emergency' ? 'emergency' : 'new', { loud })
+      }
     }
     navigator.serviceWorker?.addEventListener('message', onSwMessage)
     return () => {

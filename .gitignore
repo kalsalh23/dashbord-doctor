@@ -37,3 +37,5 @@ persist-log.txt
 data/
 
 .vercel
+
+supabase/.temp/

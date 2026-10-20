@@ -14,13 +14,18 @@ self.addEventListener('push', (event) => {
     data = { title: 'نظام إدارة العيادة', body: event.data ? event.data.text() : '' }
   }
   const title = data.title || 'نظام إدارة العيادة'
+  // وسم مشتق من المحتوى: نفس الإشعار (web push + إشعار المتصفح) يستبدل بعضه
+  // بدل أن يتكدّس على الشاشة — فيرى المستخدم إشعاراً واحداً فقط لكل حدث
+  const eventKey = String(data.title || '') + '|' + String(data.body || '')
+  let hash = 0
+  for (let i = 0; i < eventKey.length; i++) hash = (hash * 31 + eventKey.charCodeAt(i)) | 0
   const options = {
     body: data.body || '',
     icon: '/favicon.svg',
     badge: '/favicon.svg',
     dir: 'rtl',
     lang: 'ar',
-    tag: data.tag || undefined,
+    tag: data.tag || 'clinic-' + Math.abs(hash),
     // صوت نظام خارجي: الإشعار غير صامت + أولوية عالية
     silent: false,
     requireInteraction: true,

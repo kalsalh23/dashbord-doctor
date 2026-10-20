@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const { clinicId, targetRole, userId, title, body } = await req.json();
+    const { clinicId, targetRole, userId, title, body, tag } = await req.json();
     if (!clinicId) {
       return new Response(JSON.stringify({ error: "missing clinicId" }), {
         status: 400,
@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("VAPID_PUBLIC_KEY") ?? "",
       Deno.env.get("VAPID_PRIVATE_KEY") ?? ""
     );
-    const payload = JSON.stringify({ title: title ?? "إشعار جديد", body: body ?? "" });
+    const payload = JSON.stringify({ title: title ?? "إشعار جديد", body: body ?? "", tag: tag ?? undefined });
 
     let sent = 0;
     const dead: string[] = [];

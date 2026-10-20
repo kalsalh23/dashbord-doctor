@@ -95,37 +95,8 @@ export default async (req, res) => {
   }
   if (data?.duplicate) return json(res, 200, { ok: true, duplicate: true })
 
-  // الإشعار الخارجي: لكل موظف فعّل الإشعارات في هذه العيادة
-  let notified = 0
-  const clinicId = data?.clinic_id
-  if (clinicId) {
-    const t = await sb.rpc('bridge_staff_targets', { p_secret: BRIDGE_SECRET, p_clinic_id: clinicId })
-    const targets = t.data?.targets || []
-    if (targets.length && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-      const payload = JSON.stringify({
-        title: 'طلب موعد جديد من دليل طيبة الإمام',
-        body: `${patient_name} — ${day_label || ''} ${preferred_time || ''}`.trim(),
-        url: '/reception/appointments',
-      })
-      const dead = []
-      for (const tg of targets) {
-        try {
-          await webpush.sendNotification(
-            { endpoint: tg.endpoint, keys: tg.keys },
-            payload,
-            { vapidDetails: { subject: 'mailto:support@dalil-altaybeh.com', publicKey: process.env.VAPID_PUBLIC_KEY, privateKey: process.env.VAPID_PRIVATE_KEY } },
-          )
-          notified++
-        } catch (e) {
-          if (e.statusCode === 404 || e.statusCode === 410 || e.statusCode === 400) dead.push(tg.endpoint)
-        }
-      }
-      // تنظيف اشتراكات الموظفين الميتة
-      for (const ep of dead) {
-        await sb.rpc('staff_push_unregister', { p_endpoint: ep })
-      }
-    }
-  }
+  // الإشعار الخارجي: مشغّل الإشعارات في قاعدة البيانات يتكفّل به
+  // (إشعار واحد لكل دور — بلا تكرار). فلا نرسل web push من هنا.
 
-  return json(res, 200, { ok: true, inbox: true, notified })
+  return json(res, 200, { ok: true, inbox: true, notified: 0 })
 }
