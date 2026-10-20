@@ -23,9 +23,13 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
   const maxMedLines = totalLines - (medEntrySlot ? 1 : 0)
   const shownMeds = meds.slice(0, maxMedLines)
 
-  return (
+return (
     // عمود مرن: المحتوى يتمدد بمقداره والتذييل يبقى ملتصقاً بأسفل الورقة
-    <div className="prescription-sheet relative flex flex-col overflow-hidden bg-white" style={{ fontFamily: '"IBM Plex Sans Arabic", serif' }}>
+    // خلفية الورقة (por.jpg) تغطي كل الورقة من Header إلى التذييل — لا يظهر أبيض underneath
+    <div
+      className="prescription-sheet relative flex flex-col overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${paperImage})`, fontFamily: '"IBM Plex Sans Arabic", serif' }}
+    >
       {/* ---------- header: logo centered, name below ---------- */}
       <div className="relative shrink-0 px-4 pt-2 text-center">
         <img src={logo} alt="شعار العيادة" className="mx-auto h-[74px] w-auto" />
@@ -68,10 +72,9 @@ export default function NizarSheet({ patient, visit, meds = [], doctorName, qr =
         </div>
       </div>
 
-      {/* ---------- sheet frame: ورقة المعاينة الأصلية (H5) كخلفية -------- */}
+      {/* ---------- sheet frame: ورقة المعاينة الأصلية (H5) -------- */}
       <div
-        className="relative mx-4 mt-3 flex min-h-0 flex-1 flex-col rounded-[16px] border border-slate-300 px-5 pb-3 pt-4 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${paperImage})` }}
+        className="relative mx-4 mt-3 flex min-h-0 flex-1 flex-col rounded-[16px] border border-slate-300 px-5 pb-3 pt-4 bg-transparent"
       >
         {/* وصفة طبية badge — attached top-right */}
         <span
