@@ -8,7 +8,7 @@ import {
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
-import { isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts, clinicFatimaThemeClass, isFatimaClinic, FATIMA_DOCTOR_NAV_ORDER, FATIMA_SHORT_CLINIC_NAME, clinicFadwaThemeClass } from '../lib/clinicStyle'
+import { isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts, clinicFatimaThemeClass, isFatimaClinic, FATIMA_DOCTOR_NAV_ORDER, FATIMA_SHORT_CLINIC_NAME, clinicFadwaThemeClass, isFadwaClinic } from '../lib/clinicStyle'
 import { playAlert, unlockAudio } from '../lib/alert'
 import AccountSwitcher from './AccountSwitcher'
 import { DEVELOPER_NAME } from '../lib/config'
@@ -372,6 +372,12 @@ export default function Layout() {
     ]
   } else if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isNizarStyle(profile, settings)) {
     // عيادات أسلوب نizar مع قالب مختلف (مثل عيادة د. ريام): تُضاف «أوقات دوامي» بعد جدول المواعيد
+    const hoursItem = { to: '/doctor/hours', label: 'أوقات دوامي', icon: Clock }
+    const at = navItems.findIndex((i) => i.to === '/doctor/schedule')
+    navItems = at >= 0 ? [...navItems.slice(0, at + 1), hoursItem, ...navItems.slice(at + 1)] : [hoursItem, ...navItems]
+  }
+  // عيادة د. فدوى: واجهة «أوقات دوامي» بعد جدول المواعيد — تحدّد أيام الدوام وأوقاتها (تُبنى منها الحجوزات)
+  if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isFadwaClinic(profile)) {
     const hoursItem = { to: '/doctor/hours', label: 'أوقات دوامي', icon: Clock }
     const at = navItems.findIndex((i) => i.to === '/doctor/schedule')
     navItems = at >= 0 ? [...navItems.slice(0, at + 1), hoursItem, ...navItems.slice(at + 1)] : [hoursItem, ...navItems]

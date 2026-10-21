@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { Card, Badge, APPT_STATUS, Button, EmptyState, SkeletonRows, Avatar, Tabs } from '../../components/ui'
 import LastVisitModal from '../../components/LastVisitModal'
 import { useSchedules } from '../../lib/hooks'
-import { usesWideSchedule, isFatimaClinic, usesSimpleAppointments } from '../../lib/clinicStyle'
+import { usesWideSchedule, usesSimpleAppointments } from '../../lib/clinicStyle'
 import { todayStr, addDays, formatDateLong, dayLabel, timeToMin, getWeekday, weekdayName } from '../../lib/format'
 import { slotsForDay } from '../../lib/slots'
 import { reminderSmsHref } from '../../lib/reminders'
@@ -53,9 +53,7 @@ export default function Schedule() {
   const { profile, toast, settings } = useApp()
   // أسلوب العرض: القائمة كاملة وشبكة الأيام تحتها — عيادة د. ريام و(clinics other) — بقية العيادات نصفان
   const wide = usesWideSchedule(profile, settings)
-  // عيادة الدكتورة فاطمة: واجهة «مواعيدي» بأزرار مرتبة ومقاس موحّد
-  const fatima = isFatimaClinic(profile)
-  // عيادة د. فدوى: نفس أسلوب عرض «مواعيدي» لعيادة د. فاطمة
+  // عيادة د. فاطمة وعيادة د. فدوى: واجهة «مواعيدي» بأزرار مرتبة ومقاس موحّد
   const listStyle = usesSimpleAppointments(profile)
   const [schedules] = useSchedules()
   const [date, setDate] = useState(todayStr())
@@ -356,12 +354,12 @@ export default function Schedule() {
             icon={CalendarDays}
             title="العيادة مغلقة في هذا اليوم"
             message={
-              fatima
+              listStyle
                 ? 'هذا اليوم ليس من أيام العمل المحددة في «أوقات دوامي»'
                 : 'هذا اليوم ليس من أيام العمل المحددة في إعدادات العيادة'
             }
             action={
-              fatima ? (
+              listStyle ? (
                 <Button size="sm" onClick={() => nav('/doctor/hours')}>
                   <Clock size={15} />
                   تعديل أوقات دوامي

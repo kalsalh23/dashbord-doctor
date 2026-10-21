@@ -129,14 +129,47 @@ export default function DentalDashboard() {
 
   const current = (appts || []).filter((a) => a.status === 'in_consultation')
   const todayCount = (appts || []).filter((a) => !['cancelled', 'no_show'].includes(a.status)).length
-  // عيادة د. فدوى: أزرار الإجراءات الثلاثة فوق بعضها على الجوال (عرض كامل وسهل الضغط)
+  // عيادة د. فدوى: أزرار الإجراءات الثلاثة تحت العنوان وفوق بعضها (عرض كامل وسهل الضغط)
   const fadwa = isFadwaClinic(profile)
-  const actionRow = fadwa
-    ? 'flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center'
-    : 'flex w-full gap-2 sm:w-auto'
+  const actionRow = fadwa ? 'flex w-full flex-col gap-2' : 'flex w-full gap-2 sm:w-auto'
   const actionBtn = fadwa
-    ? 'w-full flex-none justify-center !h-12 !px-3 sm:w-auto sm:!h-10 sm:!px-4'
+    ? 'w-full flex-none justify-center !h-12 !px-3'
     : 'min-w-0 flex-1 justify-center !px-2 sm:flex-none sm:!px-4'
+
+  const emergencyBtn = (
+    <Button
+      variant="dangerGhost"
+      onClick={() => setEmergencyOpen(true)}
+      disabled={todayCount === 0}
+      title={todayCount === 0 ? 'لا توجد مواعيد اليوم' : 'إشعار جماعي لمرضى اليوم'}
+      className={actionBtn}
+    >
+      <Siren size={15} className="shrink-0" />
+      <span className="truncate sm:hidden">إسعافية</span>
+      <span className="hidden truncate sm:inline">حالة إسعافية</span>
+    </Button>
+  )
+  // الطبيب الشامل: يحجز بنفسه — لا يوجد موظف استقبال في عيادته
+  const bookingBtn = profile?.self_service ? (
+    <Button
+      variant="secondary"
+      onClick={() => setBookingOpen(true)}
+      className={actionBtn}
+    >
+      <CalendarPlus size={15} className="shrink-0" />
+      <span className="truncate">حجز موعد</span>
+    </Button>
+  ) : null
+  const consultBtn = (
+    <Button
+      onClick={() => nav('/doctor/consultation')}
+      className={actionBtn}
+    >
+      <Stethoscope size={15} className="shrink-0" />
+      <span className="truncate sm:hidden">كشف جديد</span>
+      <span className="hidden truncate sm:inline">كشف أسنان جديد</span>
+    </Button>
+  )
 
   return (
     // عمود مركزي محدود — لا يمتدّ إلى حافة الشاشة على الشاشات الكبيرة
@@ -144,40 +177,24 @@ export default function DentalDashboard() {
 
       <PageHeader
         title={`لوحة طبيب الأسنان`}
-        subtitle={`${profile?.full_name} — ${profile?.clinic?.name || ''}`}
+        subtitle={fadwa ? `${profile?.full_name || ''}` : `${profile?.full_name} — ${profile?.clinic?.name || ''}`}
         actions={
-          /* الأزرار: على الجوال تتساوى في العرض مع نصوص مختصرة — على الحاسوب بأحجامها الطبيعية */
+          /* الأزرار: على الجوال تتساوى في العرض مع نصوص مختصرة — على الحاسوب بأحجامها الطبيعية
+             عيادة د. فدوى: تحت العنوان — 1) الكشف 2) الحجز 3) حالة إسعافية */
           <div className={actionRow}>
-            <Button
-              variant="dangerGhost"
-              onClick={() => setEmergencyOpen(true)}
-              disabled={todayCount === 0}
-              title={todayCount === 0 ? 'لا توجد مواعيد اليوم' : 'إشعار جماعي لمرضى اليوم'}
-              className={actionBtn}
-            >
-              <Siren size={15} className="shrink-0" />
-              <span className="truncate sm:hidden">إسعافية</span>
-              <span className="hidden truncate sm:inline">حالة إسعافية</span>
-            </Button>
-            {/* الطبيب الشامل: يحجز بنفسه — لا يوجد موظف استقبال في عيادته */}
-            {profile?.self_service && (
-              <Button
-                variant="secondary"
-                onClick={() => setBookingOpen(true)}
-                className={actionBtn}
-              >
-                <CalendarPlus size={15} className="shrink-0" />
-                <span className="truncate">حجز موعد</span>
-              </Button>
+            {fadwa ? (
+              <>
+                {consultBtn}
+                {bookingBtn}
+                {emergencyBtn}
+              </>
+            ) : (
+              <>
+                {emergencyBtn}
+                {bookingBtn}
+                {consultBtn}
+              </>
             )}
-            <Button
-              onClick={() => nav('/doctor/consultation')}
-              className={actionBtn}
-            >
-              <Stethoscope size={15} className="shrink-0" />
-              <span className="truncate sm:hidden">كشف جديد</span>
-              <span className="hidden truncate sm:inline">كشف أسنان جديد</span>
-            </Button>
           </div>
         }
       />

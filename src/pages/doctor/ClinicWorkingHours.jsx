@@ -7,10 +7,10 @@ import { Button, Card, Modal, PageHeader, Spinner, Toggle } from '../../componen
 import { useSchedules } from '../../lib/hooks'
 import { timeToMin, getWeekday, todayStr, formatDateShort } from '../../lib/format'
 import { buildSlots } from '../../lib/slots'
-import { isFatimaClinic } from '../../lib/clinicStyle'
+import { isFatimaClinic, isFadwaClinic } from '../../lib/clinicStyle'
 
 /**
- * أوقات دوامي — عيادة الدكتورة فاطمة سالم الجاموس
+ * أوقات دوامي — عيادة الدكتورة فاطمة سالم الجاموس وعيادة الدكتورة فدوى الرحال
  * تحدّد أيام الدوام وأوقاتها، وهي نفس الأوقات التي تُبنى منها مواعيد
  * الحجز (شاشة الاستقبال + جدول الطبيب + منصة دليلك الطبي).
  * يوم العطلة يختفي من الحجز تماماً.
@@ -22,10 +22,11 @@ const DEFAULT_START = '17:00'
 const DEFAULT_END = '21:00'
 const hhmm = (t) => (t || '').slice(0, 5)
 
-export default function FatimaWorkingHours() {
+export default function ClinicWorkingHours() {
   const { profile, settings, toast } = useApp()
   const nav = useNavigate()
   const isFatima = isFatimaClinic(profile)
+  const isFadwa = isFadwaClinic(profile)
   const [schedules, reload] = useSchedules()
   const [edits, setEdits] = useState({}) // { [weekday]: { active?, start?, end? } } — فوق القيم المحفوظة
   const [appts, setAppts] = useState([])
@@ -190,7 +191,7 @@ export default function FatimaWorkingHours() {
     }
   }
 
-  if (!isFatima) {
+  if (!isFatima && !isFadwa) {
     nav('/doctor')
     return null
   }
