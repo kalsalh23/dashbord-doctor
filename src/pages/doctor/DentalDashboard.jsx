@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
-import { hidesPatientsPage, hidesFavorites, usesLoudAlerts } from '../../lib/clinicStyle'
+import { hidesPatientsPage, hidesFavorites, usesLoudAlerts, isFadwaClinic } from '../../lib/clinicStyle'
 import { playAlert } from '../../lib/alert'
 import { Button, Avatar, PageHeader, StatCard, Modal, Field, Textarea, Toggle, ConfirmDialog, Input } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
@@ -129,6 +129,14 @@ export default function DentalDashboard() {
 
   const current = (appts || []).filter((a) => a.status === 'in_consultation')
   const todayCount = (appts || []).filter((a) => !['cancelled', 'no_show'].includes(a.status)).length
+  // عيادة د. فدوى: أزرار الإجراءات الثلاثة فوق بعضها على الجوال (عرض كامل وسهل الضغط)
+  const fadwa = isFadwaClinic(profile)
+  const actionRow = fadwa
+    ? 'flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center'
+    : 'flex w-full gap-2 sm:w-auto'
+  const actionBtn = fadwa
+    ? 'w-full flex-none justify-center !h-12 !px-3 sm:w-auto sm:!h-10 sm:!px-4'
+    : 'min-w-0 flex-1 justify-center !px-2 sm:flex-none sm:!px-4'
 
   return (
     // عمود مركزي محدود — لا يمتدّ إلى حافة الشاشة على الشاشات الكبيرة
@@ -139,13 +147,13 @@ export default function DentalDashboard() {
         subtitle={`${profile?.full_name} — ${profile?.clinic?.name || ''}`}
         actions={
           /* الأزرار: على الجوال تتساوى في العرض مع نصوص مختصرة — على الحاسوب بأحجامها الطبيعية */
-          <div className="flex w-full gap-2 sm:w-auto">
+          <div className={actionRow}>
             <Button
               variant="dangerGhost"
               onClick={() => setEmergencyOpen(true)}
               disabled={todayCount === 0}
               title={todayCount === 0 ? 'لا توجد مواعيد اليوم' : 'إشعار جماعي لمرضى اليوم'}
-              className="min-w-0 flex-1 justify-center !px-2 sm:flex-none sm:!px-4"
+              className={actionBtn}
             >
               <Siren size={15} className="shrink-0" />
               <span className="truncate sm:hidden">إسعافية</span>
@@ -156,7 +164,7 @@ export default function DentalDashboard() {
               <Button
                 variant="secondary"
                 onClick={() => setBookingOpen(true)}
-                className="min-w-0 flex-1 justify-center !px-2 sm:flex-none sm:!px-4"
+                className={actionBtn}
               >
                 <CalendarPlus size={15} className="shrink-0" />
                 <span className="truncate">حجز موعد</span>
@@ -164,7 +172,7 @@ export default function DentalDashboard() {
             )}
             <Button
               onClick={() => nav('/doctor/consultation')}
-              className="min-w-0 flex-1 justify-center !px-2 sm:flex-none sm:!px-4"
+              className={actionBtn}
             >
               <Stethoscope size={15} className="shrink-0" />
               <span className="truncate sm:hidden">كشف جديد</span>
