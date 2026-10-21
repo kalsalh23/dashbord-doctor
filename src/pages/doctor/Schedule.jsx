@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, ChevronLeft, CalendarDays, Stethoscope, FolderOpen, History, BellRing } from 'lucide-react'
+import { ChevronRight, ChevronLeft, CalendarDays, Stethoscope, FolderOpen, History, BellRing, Clock } from 'lucide-react'
 import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Badge, APPT_STATUS, Button, EmptyState, SkeletonRows, Avatar, Tabs } from '../../components/ui'
@@ -350,7 +350,23 @@ export default function Schedule() {
         {appts === null ? (
           <div className="p-4"><SkeletonRows rows={5} /></div>
         ) : closed && shown.length === 0 ? (
-          <EmptyState icon={CalendarDays} title="العيادة مغلقة في هذا اليوم" message="هذا اليوم ليس من أيام العمل المحددة في إعدادات العيادة" />
+          <EmptyState
+            icon={CalendarDays}
+            title="العيادة مغلقة في هذا اليوم"
+            message={
+              fatima
+                ? 'هذا اليوم ليس من أيام العمل المحددة في «أوقات دوامي»'
+                : 'هذا اليوم ليس من أيام العمل المحددة في إعدادات العيادة'
+            }
+            action={
+              fatima ? (
+                <Button size="sm" onClick={() => nav('/doctor/hours')}>
+                  <Clock size={15} />
+                  تعديل أوقات دوامي
+                </Button>
+              ) : null
+            }
+          />
         ) : shown.length === 0 ? (
           <EmptyState icon={CalendarDays} title="لا توجد مواعيد" message={`${dayLabel(date)} لا يحتوي مواعيد في هذه القائمة`} />
         ) : (

@@ -290,6 +290,37 @@ export async function runRpc(client, authInternal, fn, args) {
       return null
     }
 
+    case 'set_clinic_working_hours': {
+      const prof = await myProfile()
+      if (!['doctor', 'admin', 'super_admin'].includes(prof.role)) throw new Error('FORBIDDEN')
+      const rows = await loadTable('doctor_schedules')
+      const days = Array.isArray(args.p_days) ? args.p_days : []
+      for (const d of days) {
+        if (d?.weekday == null || d.weekday < 0 || d.weekday > 6) continue
+        const row = rows.find((r) => r.clinic_id === prof.clinic_id && r.weekday === d.weekday)
+        if (row) {
+          await putRows('doctor_schedules', [
+            { ...row, start_time: d.start, end_time: d.end, is_active: !!d.active, updated_at: now() },
+          ])
+        } else {
+          await putRows('doctor_schedules', [
+            {
+              id: uuid(),
+              clinic_id: prof.clinic_id,
+              doctor_id: null,
+              weekday: d.weekday,
+              start_time: d.start,
+              end_time: d.end,
+              is_active: !!d.active,
+              created_at: now(),
+              updated_at: now(),
+            },
+          ])
+        }
+      }
+      return true
+    }
+
     default:
       throw new Error(`RPC ${fn} is not available in offline mode`)
   }

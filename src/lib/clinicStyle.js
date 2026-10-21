@@ -24,7 +24,7 @@ export const clinicThemeClass = (profile) =>
 /* ============================================================
  * لوحة ألوان عيادة الدكتورة فاطمة سالم الجاموس — ألوان فريدة لها وحدها
  * ============================================================ */
-const FATIMA_CLINIC_ID = 'f17b6085-7a49-453a-b4b7-49feb5c6a601'
+export const FATIMA_CLINIC_ID = 'f17b6085-7a49-453a-b4b7-49feb5c6a601'
 
 const FATIMA_THEME_CLINICS = {
   [FATIMA_CLINIC_ID]: 'عيادة الدكتورة فاطمة سالم الجاموس',
@@ -53,6 +53,7 @@ export const FATIMA_SHORT_CLINIC_NAME = 'د. فاطمة الجاموس'
 export const FATIMA_DOCTOR_NAV_ORDER = [
   '/doctor',
   '/doctor/schedule',
+  '/doctor/hours',
   '/doctor/patients',
   '/doctor/archive',
   '/doctor/expenses',

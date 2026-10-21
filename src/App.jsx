@@ -2,7 +2,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { AppProvider, useApp } from './lib/store'
 import { APP_SCOPE } from './lib/scope'
-import { isNizarStyle } from './lib/clinicStyle'
+import { isNizarStyle, isFatimaClinic } from './lib/clinicStyle'
 import Layout from './components/Layout'
 import { Toasts, Spinner } from './components/ui'
 import Login from './pages/Login'
@@ -26,6 +26,7 @@ import Schedule from './pages/doctor/Schedule'
 import PatientArchive from './pages/doctor/PatientArchive'
 import NizarExamBoard from './pages/doctor/NizarExamBoard'
 import NizarWorkingHours from './pages/doctor/NizarWorkingHours'
+import FatimaWorkingHours from './pages/doctor/FatimaWorkingHours'
 import VisitReadPage from './pages/doctor/VisitReadPage'
 import PrescriptionPage from './pages/doctor/PrescriptionPage'
 import Favorites from './pages/doctor/Favorites'
@@ -70,10 +71,12 @@ function PaymentsGate() {
   return <DentalPayments />
 }
 
-// أوقات الدوام: عيادة د. نزار (قالب nizar) والعيادات المضافة لأسلوبه — لغيرها يعود للوحة اليوم
+// أوقات الدوام: عيادة د. نزار (قالب nizar) والعيادات المضافة لأسلوبه + عيادة الدكتورة فاطمة — لغيرها يعود للوحة اليوم
 function WorkingHoursGate() {
   const { settings, settingsReady, profile } = useApp()
   if (!settingsReady) return <Spinner />
+  // عيادة الدكتورة فاطمة: واجهة «أوقات دوامي» الخاصة بها — تتحكم بأوقات الحجز في عيادتها
+  if (isFatimaClinic(profile)) return <FatimaWorkingHours />
   if (!isNizarStyle(profile, settings)) return <Navigate to="/doctor" replace />
   return <NizarWorkingHours />
 }
@@ -225,7 +228,7 @@ function AppRoutes() {
             <Route path="/doctor/treatments" element={<RequireRole role="doctor"><Treatments /></RequireRole>} />
             {/* واجهة المعاينة — عيادة د. نزار (صور المعاينات الورقية وطباعتها) */}
             <Route path="/doctor/exam" element={<RequireRole role="doctor"><NizarExamBoard /></RequireRole>} />
-            {/* أوقات دوامي — عيادة د. نizar والعيادات المضافة لأسلوبه (دوام كل يوم + أيام العطلة) */}
+            {/* أوقات دوامي — عيادة د. نزار والعيادات المضافة لأسلوبه + عيادة د. فاطمة (دوام كل يوم + أيام العطلة) */}
             <Route path="/doctor/hours" element={<RequireRole role="doctor"><WorkingHoursGate /></RequireRole>} />
             {/* لوحة إدارة النظام — لحساب مدير النظام فقط */}
             <Route path="/super" element={<RequireSuper><SuperPanel /></RequireSuper>} />

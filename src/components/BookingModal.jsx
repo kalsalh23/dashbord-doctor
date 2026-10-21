@@ -358,7 +358,11 @@ export default function BookingModal({ open, onClose, onBooked, presetPatient, p
             <EmptyState
               icon={CalendarCheck}
               title="العيادة مغلقة في هذا اليوم"
-              message="يمكن تعديل أيام العمل من صفحة الإعدادات"
+              message={
+                isFatima
+                  ? 'يمكن تعديل أيام العمل من صفحة «أوقات دوامي»'
+                  : 'يمكن تعديل أيام العمل من صفحة الإعدادات'
+              }
             />
           ) : (
             <Spinner label="جارٍ تحميل أوقات العمل..." />
