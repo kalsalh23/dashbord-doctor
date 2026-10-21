@@ -6,6 +6,7 @@ import { useApp } from '../../lib/store'
 import { Button, Spinner, EmptyState } from '../../components/ui'
 import PrescriptionSheet from '../../components/PrescriptionSheet'
 import { usePrintIsolation } from '../../lib/print'
+import { clinicFadwaThemeClass } from '../../lib/clinicStyle'
 
 /**
  * واجهة المعاينة — قالب الوصفة الطبية معبأ تلقائياً من الكشف المحفوظ.
@@ -43,7 +44,7 @@ export default function PrescriptionPage() {
     )
 
   return (
-    <div className="min-h-screen bg-slate-200 py-4 print:bg-white print:p-0">
+    <div className={`min-h-screen bg-slate-200 py-4 print:bg-white print:p-0 ${clinicFadwaThemeClass(profile)}`}>
       {/* toolbar (hidden when printing) */}
       <div className="mx-auto mb-3 flex max-w-[820px] flex-wrap items-center justify-between gap-2 print:hidden">
         <Button variant="secondary" size="sm" onClick={() => nav(-1)}>

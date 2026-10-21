@@ -47,6 +47,25 @@ export function isFatimaClinic(profile) {
 export const FATIMA_SHORT_CLINIC_NAME = 'د. فاطمة الجاموس'
 
 /* ============================================================
+ * لوحة ألوان عيادة الدكتورة فدوى الرحال — لافندر بنفسجي فاتح أنثوي
+ * لوحة خاصة بعيادتها وحدها (لا تؤثر على أي عيادة أخرى)
+ * ============================================================ */
+export const FADWA_CLINIC_ID = 'e0dc2fa8-9fc7-475c-b2e1-2d569f32b2b0'
+
+const FADWA_THEME_CLINICS = {
+  [FADWA_CLINIC_ID]: 'عيادة الدكتورة فدوى الرحال',
+}
+
+/** صنف CSS للوحة عيادة الدكتورة فدوى */
+export const clinicFadwaThemeClass = (profile) =>
+  profile?.clinic_id && FADWA_THEME_CLINICS[profile.clinic_id] ? 'clinic-theme-fadwa' : ''
+
+/** هل هذه العيادة هي عيادة الدكتورة فدوى؟ */
+export function isFadwaClinic(profile) {
+  return !!profile?.clinic_id && !!FADWA_THEME_CLINICS[profile.clinic_id]
+}
+
+/* ============================================================
  * ترتيب واجهات عيادة الدكتورة فاطمة — ترتيب فريد لها وحدها
  * (يُطبّق في Layout.jsx مباشرة لأهمية الأيقونات)
  * ============================================================ */

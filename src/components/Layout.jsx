@@ -8,7 +8,7 @@ import {
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
-import { isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts, clinicFatimaThemeClass, isFatimaClinic, FATIMA_DOCTOR_NAV_ORDER, FATIMA_SHORT_CLINIC_NAME } from '../lib/clinicStyle'
+import { isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts, clinicFatimaThemeClass, isFatimaClinic, FATIMA_DOCTOR_NAV_ORDER, FATIMA_SHORT_CLINIC_NAME, clinicFadwaThemeClass } from '../lib/clinicStyle'
 import { playAlert, unlockAudio } from '../lib/alert'
 import AccountSwitcher from './AccountSwitcher'
 import { DEVELOPER_NAME } from '../lib/config'
@@ -302,7 +302,7 @@ function Brand({ mobile = false }) {
   const clinicName = compact ? FATIMA_SHORT_CLINIC_NAME : (profile?.clinic?.name || 'نظام إدارة العيادة')
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      <span className={`flex shrink-0 items-center justify-center rounded-xl bg-primary-700 text-white shadow-sm ${compact ? 'h-8 w-8' : 'h-9 w-9'}`}>
+      <span className={`clinic-brand flex shrink-0 items-center justify-center rounded-xl bg-primary-700 text-white shadow-sm ${compact ? 'h-8 w-8' : 'h-9 w-9'}`}>
         <Activity size={compact ? 17 : 19} />
       </span>
       <div className="min-w-0">
@@ -427,6 +427,8 @@ export default function Layout() {
   // لوحة ألوان العيادة — اللون فقط: الفيروزي لعيادة د. عارف، البرقوقي لبقية العيادات
   const themeClass = clinicThemeClass(profile)
   const fatimaThemeClass = clinicFatimaThemeClass(profile)
+  // عيادة الدكتورة فدوى: لوحة لافندر بنفسجي فاتح أنثوية — لعيادتها وحدها
+  const fadwaThemeClass = clinicFadwaThemeClass(profile)
   // عيادة الدكتورة فاطمة: شريط علوي أنحف على الجوال (الاسم الكامل طويل)
   const fatimaCompact = isFatimaClinic(profile)
   const headerH = fatimaCompact ? 'h-12 lg:h-14' : 'h-14'
@@ -435,7 +437,7 @@ export default function Layout() {
   const mainPad = fatimaCompact ? 'px-3 pb-24 pt-4 sm:px-6 lg:pb-8' : 'px-4 pb-24 pt-5 sm:px-6 lg:pb-8'
 
   return (
-    <div className={`flex min-h-screen ${themeClass} ${fatimaThemeClass}`}>
+    <div className={`flex min-h-screen ${themeClass} ${fatimaThemeClass} ${fadwaThemeClass}`}>
       {/* -------- desktop sidebar (right in RTL) -------- */}
       {!isDentalNav && (
         <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-s border-slate-200 bg-white lg:flex">
@@ -460,7 +462,7 @@ export default function Layout() {
       {/* -------- main column -------- */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* top bar */}
-        <header className={`sticky top-0 z-30 flex ${headerH} items-center justify-between gap-2 border-b border-slate-200 bg-white/95 backdrop-blur sm:gap-3 ${headerPad}`}>
+        <header className={`clinic-topbar sticky top-0 z-30 flex ${headerH} items-center justify-between gap-2 border-b border-slate-200 bg-white/95 backdrop-blur sm:gap-3 ${headerPad}`}>
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 lg:flex-none">
             {!isHomePage && (
               <button
@@ -487,7 +489,7 @@ export default function Layout() {
 
         {/* شريط التنقل العلوي لعيادات الأسنان */}
         {isDentalNav && (
-          <nav className={`sticky ${headerTop} z-20 hidden border-b border-slate-200 bg-white/95 backdrop-blur lg:block`}>
+          <nav className={`clinic-nav sticky ${headerTop} z-20 hidden border-b border-slate-200 bg-white/95 backdrop-blur lg:block`}>
             <div className="flex items-stretch gap-1.5 overflow-x-auto px-4 py-2">
               {navItems.map((item) => (
                 <NavLink

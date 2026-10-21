@@ -49,6 +49,32 @@
   --bg: 255 247 245;
 }
 
+/* عيادة الدكتورة فدوى الرحال: لوحة ألوان فريدة — لافندر بنفسجي فاتح أنثوي */
+.clinic-theme-fadwa {
+  --p50: 249 246 255;
+  --p100: 242 237 255;
+  --p200: 228 220 254;
+  --p300: 208 195 252;
+  --p400: 180 160 248;
+  --p500: 152 125 238;
+  --p600: 128 100 216;
+  --p700: 105 80 178;
+  --p800: 86 65 147;
+  --p900: 71 54 123;
+  --bg: 250 248 255;
+}
+
+/* لمسات أنثوية خفيفة — لعيادة د. فدوى وحدها:
+   شريط علوي بتدرّج لافندر ناعم وشعار العيادة بتدرّج بنفسجي */
+.clinic-theme-fadwa .clinic-topbar,
+.clinic-theme-fadwa .clinic-nav {
+  background-image: linear-gradient(to right, rgb(255 255 255 / 0.95), rgb(var(--p50) / 0.95));
+}
+.clinic-theme-fadwa .clinic-brand {
+  background-image: linear-gradient(135deg, rgb(var(--p400)), rgb(var(--p700)));
+  box-shadow: 0 4px 12px -4px rgb(var(--p500) / 0.55);
+}
+
 html {
     @apply text-slate-800;
   }
