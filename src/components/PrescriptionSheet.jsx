@@ -165,9 +165,9 @@ export function RosePrescriptionSheet({ settings, patient, visit, meds = [], onM
                 }}
                 onFocus={() => setCatOpen(true)}
                 placeholder="اكتب اسم الدواء لإضافته للوصفة..."
-                /* أسماء الأدوية أجنبية — الكتابة تبدأ من اليسار */
+                /* أسماء الأدوية أجنبية: ترتيب الحروف LTR — والنص يبقى على اليمين */
                 dir="ltr"
-                className="input-base pr-9 text-left"
+                className="input-base pr-9 text-right"
               />
             </div>
             {catOpen && catQuery.trim() && (

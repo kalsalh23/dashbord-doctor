@@ -584,8 +584,8 @@ export default function Consultation() {
                   <li key={i} className="grid grid-cols-2 gap-2.5 rounded-xl border border-slate-200 p-3 sm:grid-cols-5">
                     <div className="col-span-2 sm:col-span-1">
                       <Field label="اسم الدواء">
-                        {/* أسماء الأدوية أجنبية — الحقل يتّجه من اليسار */}
-                        <Input dir="ltr" value={m.name} onChange={setMed(i, 'name')} placeholder="Paracetamol" className="text-left" />
+                        {/* أسماء الأدوية أجنبية: ترتيب الحروف LTR — والقيمة على يمين الحقل */}
+                        <Input dir="ltr" value={m.name} onChange={setMed(i, 'name')} placeholder="Paracetamol" className="text-right" />
                       </Field>
                     </div>
                     <Field label="الجرعة">

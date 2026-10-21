@@ -148,9 +148,10 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
         onFocus={() => setMedOpen(true)}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom() } }}
         placeholder="— اكتب اسم الدواء أو اختر من القائمة"
-        /* أسماء الأدوية أجنبية — فالحقل يتّجه من اليسار ليُكتب من جهته */
+        /* أسماء الأدوية أجنبية: ترتيب الحروف LTR — مع بقاء النص على يمين الورقة
+           (محاذاته اليسرى كانت تُظهره في الجهة اليسرى بعيداً عن سطور الأدوية) */
         dir="ltr"
-        className="w-full bg-transparent text-left text-[14px] leading-7 outline-none placeholder:text-slate-300"
+        className="w-full bg-transparent text-right text-[14px] leading-7 outline-none placeholder:text-slate-300"
       />
       {medOpen && medQuery.trim() && (
         <div className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white text-start shadow-lg print:hidden">
