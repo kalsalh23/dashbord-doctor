@@ -129,11 +129,10 @@ export default function DentalDashboard() {
 
   const current = (appts || []).filter((a) => a.status === 'in_consultation')
   const todayCount = (appts || []).filter((a) => !['cancelled', 'no_show'].includes(a.status)).length
-  // عيادة د. فدوى: أزرار الإجراءات الثلاثة تحت العنوان وفوق بعضها (عرض كامل وسهل الضغط)
+  // عيادة د. فدوى: أزرار الإجراءات الثلاثة تحت العنوان (1) الكشف 2) الحجز 3) حالة إسعافية
   const fadwa = isFadwaClinic(profile)
-  const actionRow = fadwa ? 'flex w-full flex-col gap-2' : 'flex w-full gap-2 sm:w-auto'
   const actionBtn = fadwa
-    ? 'w-full flex-none justify-center !h-12 !px-3'
+    ? 'w-full flex-none justify-center !h-12 !px-3 sm:w-auto sm:!h-10 sm:!px-4'
     : 'min-w-0 flex-1 justify-center !px-2 sm:flex-none sm:!px-4'
 
   const emergencyBtn = (
@@ -179,25 +178,26 @@ export default function DentalDashboard() {
         title={`لوحة طبيب الأسنان`}
         subtitle={fadwa ? `${profile?.full_name || ''}` : `${profile?.full_name} — ${profile?.clinic?.name || ''}`}
         actions={
-          /* الأزرار: على الجوال تتساوى في العرض مع نصوص مختصرة — على الحاسوب بأحجامها الطبيعية
-             عيادة د. فدوى: تحت العنوان — 1) الكشف 2) الحجز 3) حالة إسعافية */
-          <div className={actionRow}>
-            {fadwa ? (
-              <>
-                {consultBtn}
-                {bookingBtn}
-                {emergencyBtn}
-              </>
-            ) : (
-              <>
-                {emergencyBtn}
-                {bookingBtn}
-                {consultBtn}
-              </>
-            )}
-          </div>
+          /* بقية العيادات: الأزرار بجانب العنوان — على الجوال تتساوى في العرض
+             مع نصوص مختصرة، وعلى الحاسوب بأحجامها الطبيعية */
+          !fadwa ? (
+            <div className="flex w-full gap-2 sm:w-auto">
+              {emergencyBtn}
+              {bookingBtn}
+              {consultBtn}
+            </div>
+          ) : null
         }
       />
+
+      {/* عيادة د. فدوى: الأزرار الثلاثة تحت العنوان — 1) الكشف 2) الحجز 3) حالة إسعافية */}
+      {fadwa && (
+        <div className="-mt-2 mb-6 flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+          {consultBtn}
+          {bookingBtn}
+          {emergencyBtn}
+        </div>
+      )}
 
       {/* بطاقات الوصول السريع — الواجهة الرئيسية للعيادات السنية */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
