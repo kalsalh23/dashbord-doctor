@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { Card, Badge, APPT_STATUS, Button, EmptyState, SkeletonRows, Avatar, Tabs } from '../../components/ui'
 import LastVisitModal from '../../components/LastVisitModal'
 import { useSchedules } from '../../lib/hooks'
-import { usesWideSchedule, isFatimaClinic } from '../../lib/clinicStyle'
+import { usesWideSchedule, isFatimaClinic, usesSimpleAppointments } from '../../lib/clinicStyle'
 import { todayStr, addDays, formatDateLong, dayLabel, timeToMin, getWeekday, weekdayName } from '../../lib/format'
 import { slotsForDay } from '../../lib/slots'
 import { reminderSmsHref } from '../../lib/reminders'
@@ -55,6 +55,8 @@ export default function Schedule() {
   const wide = usesWideSchedule(profile, settings)
   // عيادة الدكتورة فاطمة: واجهة «مواعيدي» بأزرار مرتبة ومقاس موحّد
   const fatima = isFatimaClinic(profile)
+  // عيادة د. فدوى: نفس أسلوب عرض «مواعيدي» لعيادة د. فاطمة
+  const listStyle = usesSimpleAppointments(profile)
   const [schedules] = useSchedules()
   const [date, setDate] = useState(todayStr())
   const [appts, setAppts] = useState(null)
@@ -119,8 +121,8 @@ export default function Schedule() {
 
   const shown = useMemo(() => {
     let list = appts || []
-    // عيادة د. فاطمة: واجهة «مواعيدي» تعرض المواعيد الجارية فقط (لا تبويب قيد الكشف ولا المنتهية)
-    if (fatima) {
+    // عيادة د. فاطمة ود. فدوى: واجهة «مواعيدي» تعرض المواعيد الجارية فقط (لا تبويب قيد الكشف ولا المنتهية)
+    if (listStyle) {
       list = list.filter((a) => !['cancelled', 'no_show', 'completed', 'in_consultation'].includes(a.status))
     } else {
       if (filter === 'all') list = list.filter((a) => !['cancelled', 'no_show', 'completed', 'in_consultation'].includes(a.status))
@@ -128,7 +130,7 @@ export default function Schedule() {
       if (filter === 'done') list = list.filter((a) => ['completed', 'cancelled', 'no_show'].includes(a.status))
     }
     return [...list].sort((a, b) => timeToMin(a.start_time) - timeToMin(b.start_time))
-  }, [appts, filter, fatima])
+  }, [appts, filter, listStyle])
 
   const startConsult = (a) => nav(`/doctor/consultation/${a.id}`)
 
@@ -169,7 +171,7 @@ export default function Schedule() {
             variant={date === todayStr() ? 'primary' : 'secondary'}
             size="sm"
             onClick={() => setDate(todayStr())}
-            className={fatima ? 'h-9 px-4' : ''}
+            className={listStyle ? 'h-9 px-4' : ''}
           >
             اليوم
           </Button>
@@ -296,7 +298,7 @@ export default function Schedule() {
                 onClick={() => setDate(d)}
                 data-selected={selected ? 'true' : 'false'}
                 className={`flex shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl border transition-colors ${
-                  fatima ? 'h-16 w-14' : 'h-14 w-12'
+                  listStyle ? 'h-16 w-14' : 'h-14 w-12'
                 } ${
                   selected
                     ? 'border-primary-700 bg-primary-700 text-white shadow-sm'
@@ -305,13 +307,13 @@ export default function Schedule() {
                       : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300'
                 }`}
               >
-                <span className={`font-semibold ${selected ? 'text-primary-100' : 'text-slate-400'} ${fatima ? 'text-[10px]' : 'text-[9px]'}`}>
+                <span className={`font-semibold ${selected ? 'text-primary-100' : 'text-slate-400'} ${listStyle ? 'text-[10px]' : 'text-[9px]'}`}>
                   {weekdayName(getWeekday(d))}
                 </span>
-                <span className={`font-bold leading-5 ${fatima ? 'text-base' : 'text-sm'}`}>{Number(d.slice(8, 10))}</span>
+                <span className={`font-bold leading-5 ${listStyle ? 'text-base' : 'text-sm'}`}>{Number(d.slice(8, 10))}</span>
                 <span
                   className={`min-w-4 rounded-full px-1 font-bold ${
-                    fatima ? 'text-[9px]' : 'text-[8px]'
+                    listStyle ? 'text-[9px]' : 'text-[8px]'
                   } ${
                     count > 0
                       ? selected ? 'bg-white text-primary-800' : 'bg-primary-100 text-primary-800'
@@ -327,7 +329,7 @@ export default function Schedule() {
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="lg:col-span-3">
       {/* precise date jump — سطر واحد مضغوط على الجوال لعيادة د. فاطمة */}
-      <div className={fatima ? 'mb-3 flex items-center justify-between gap-2' : 'mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'}>
+      <div className={listStyle ? 'mb-3 flex items-center justify-between gap-2' : 'mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'}>
         <span className="text-xs font-semibold text-slate-500 sm:mb-0">انتقال لتاريخ محدد:</span>
         <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="input-base !w-auto sm:max-w-[200px]" />
       </div>
@@ -336,7 +338,7 @@ export default function Schedule() {
         <Tabs
           value={filter}
           onChange={setFilter}
-          tabs={fatima
+          tabs={listStyle
             ? [{ value: 'all', label: 'الكل', count: counts.all }]
             : [
               { value: 'all', label: 'الكل', count: counts.all },
@@ -375,9 +377,9 @@ export default function Schedule() {
               const isDone = ['completed', 'cancelled', 'no_show'].includes(a.status)
               const reminder = !isDone ? reminderFor(a) : null
               return (
-              <li key={a.id} className={fatima ? 'px-4 py-3.5 sm:px-5' : 'px-4 py-3 sm:px-5'}>
-                {fatima ? (
-                  /* عيادة د. فاطمة: ترتيب واضح — الوقت والحالة ثم المريض ثم الأزرار */
+              <li key={a.id} className={listStyle ? 'px-4 py-3.5 sm:px-5' : 'px-4 py-3 sm:px-5'}>
+                {listStyle ? (
+                  /* عيادة د. فاطمة ود. فدوى: ترتيب واضح — الوقت والحالة ثم المريض ثم الأزرار */
                   <>
                     <div className="flex items-center justify-between gap-2">
                       <span className="flex h-10 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-slate-50" dir="ltr">
@@ -452,8 +454,8 @@ export default function Schedule() {
         </div>
 
         {/* أيام الأسبوع مربعات — العمود الجانبي
-            (لعيادة د. فاطمة لا يظهر على الجوال: شريط الأيام فوق القائمة يكفي) */}
-        <div className={fatima ? 'hidden lg:col-span-2 lg:block' : 'lg:col-span-2'}>
+            (لعيادتي د. فاطمة ود. فدوى لا يظهر على الجوال: شريط الأيام فوق القائمة يكفي) */}
+        <div className={listStyle ? 'hidden lg:col-span-2 lg:block' : 'lg:col-span-2'}>
           <div className="lg:sticky lg:top-36">
             <p className="mb-2 text-xs font-bold text-slate-500">الأيام — اضغط لعرض مواعيده</p>
             <div className="grid grid-cols-3 gap-2">

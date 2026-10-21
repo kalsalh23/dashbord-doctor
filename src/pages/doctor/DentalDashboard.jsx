@@ -226,14 +226,17 @@ export default function DentalDashboard() {
         )}
       </div>
 
-      {/* dental stats */}
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <StatCard label="مواعيد اليوم" value={todayCount} icon={CalendarDays} tone="blue" to="/doctor/schedule" />
-        <StatCard label="قيد الكشف" value={current.length} icon={Stethoscope} tone="teal" />
-        <StatCard label="إجراءات آخر 7 أيام" value={weekCount ?? '—'} icon={SmilePlus} tone="violet" />
-      </div>
+      {/* dental stats — عيادة د. فدوى: بلا خانات الأرقام (مواعيد اليوم/قيد الكشف/إجراءات آخر 7 أيام) */}
+      {!fadwa && (
+        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <StatCard label="مواعيد اليوم" value={todayCount} icon={CalendarDays} tone="blue" to="/doctor/schedule" />
+          <StatCard label="قيد الكشف" value={current.length} icon={Stethoscope} tone="teal" />
+          <StatCard label="إجراءات آخر 7 أيام" value={weekCount ?? '—'} icon={SmilePlus} tone="violet" />
+        </div>
+      )}
 
-      {/* إضافة مريض سريعة — في جسم الواجهة بمكان ظاهر */}
+      {/* إضافة مريض سريعة — في جسم الواجهة بمكان ظاهر
+          (لعيادة د. فدوى مخفية ضمن «إزالة واجهة المرضى») */}
       {!hidesPatientsPage(profile) && (
         <div className="mb-5">
           <button
