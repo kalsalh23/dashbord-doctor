@@ -8,6 +8,7 @@ import PrescriptionSheet from '../../components/PrescriptionSheet'
 import { usePrintIsolation } from '../../lib/print'
 import { ageFrom, todayStr, formatDateShort } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
+import { NizarSurgicalInstructions } from '../../components/NizarSheet'
 
 const EMPTY_MED = { name: '', dosage: '', duration: '', instructions: '' }
 
@@ -320,6 +321,7 @@ export default function NizarLiveConsultation({ appointmentId, patientId }) {
               onDeleteMed={removeMed}
               medEntrySlot={medEntrySlot}
             />
+            <NizarSurgicalInstructions />
           </div>
         </div>
         <p className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400 print:hidden">

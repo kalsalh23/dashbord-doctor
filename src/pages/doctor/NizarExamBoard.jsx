@@ -4,6 +4,7 @@ import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Card, Button, EmptyState, SkeletonRows, PageHeader, SearchInput, Tag, Avatar } from '../../components/ui'
 import PrescriptionSheet from '../../components/PrescriptionSheet'
+import { NizarSurgicalInstructions } from '../../components/NizarSheet'
 import { usePrintIsolation } from '../../lib/print'
 
 /**
@@ -195,14 +196,15 @@ export default function NizarExamBoard() {
             <div className="print-area space-y-5" ref={frameRef}>
               {selected.visits.map((v) => (
                 <div key={v.id} className="prescription-paper" style={{ zoom }}>
-                  <PrescriptionSheet
-                    clinic={profile?.clinic}
-                    settings={settings}
-                    patient={selected.patient}
-                    visit={v}
-                    meds={v.medications || []}
-                    doctorName={v.doctor?.full_name || profile?.full_name}
-                  />
+                   <PrescriptionSheet
+                     clinic={profile?.clinic}
+                     settings={settings}
+                     patient={selected.patient}
+                     visit={v}
+                     meds={v.medications || []}
+                     doctorName={v.doctor?.full_name || profile?.full_name}
+                   />
+                   <NizarSurgicalInstructions />
                 </div>
               ))}
             </div>
