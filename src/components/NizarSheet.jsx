@@ -108,22 +108,23 @@ export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null
 export function NizarSurgicalInstructions() {
   return (
     <div className="prescription-sheet relative flex flex-col overflow-hidden bg-white" style={{ fontFamily: '"IBM Plex Sans Arabic", serif' }}>
+      <div className="h-3 w-full bg-blue-600" />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-12 py-8">
         <h2 className="mb-6 text-center text-lg font-bold">تعليمات العمل الجراحي</h2>
         <div className="space-y-4">
           {['تمارين تقوية عضلات الرقبة', 'تمارين تقوية عضلات الظهر', 'تمارين لعلاج التهاب الكتف'].map((label) => (
             <div key={label} className="flex items-center justify-between border-b border-dotted border-slate-300 py-3">
               <span className="font-bold text-slate-800">{label}</span>
-              <input type="file" accept="image/*" className="text-xs" />
             </div>
           ))}
           <div className="pt-4 text-center font-bold text-slate-800">تمارين اضافية</div>
           <div className="flex items-start gap-4">
             <textarea className="flex-1 rounded border border-slate-300 p-2 text-sm" rows={4} placeholder="ملاحظات" />
-            <input type="file" accept="image/*" className="text-xs" />
           </div>
+          <img src="/par.png" alt="par" className="mx-auto mt-4 max-h-60 object-contain" />
         </div>
       </div>
+      <div className="h-3 w-full bg-blue-600" />
     </div>
   )
 }
