@@ -115,13 +115,13 @@ export function NizarSurgicalInstructions() {
           {['تمارين تقوية عضلات الرقبة', 'تمارين تقوية عضلات الظهر', 'تمارين لعلاج التهاب الكتف'].map((label) => (
             <div key={label} className="flex items-center justify-between border-b border-dotted border-slate-300 py-3">
               <span className="font-bold text-slate-800">{label}</span>
+              <img src="/par.png" alt="par" className="h-16 object-contain" />
             </div>
           ))}
           <div className="pt-4 text-center font-bold text-slate-800">تمارين اضافية</div>
           <div className="flex items-start gap-4">
             <textarea className="flex-1 rounded border border-slate-300 p-2 text-sm" rows={4} placeholder="ملاحظات" />
           </div>
-          <img src="/par.png" alt="par" className="mx-auto mt-4 max-h-60 object-contain" />
         </div>
       </div>
       <div className="h-6 w-full bg-blue-600" />
