@@ -130,10 +130,10 @@ export function NizarSurgicalInstructions() {
           <div className="flex items-start gap-4">
             <textarea className="flex-1 rounded border border-slate-300 p-2 text-sm" style={{ height: '120px' }} placeholder="ملاحظات" />
           </div>
-          <div className="mt-2">
+          <div className="mt-2 flex justify-center print:hidden">
             <input type="file" accept="image/*" onChange={onFile} />
-            {img && <img src={img} alt="preview" className="mt-2 max-h-40 object-contain" />}
           </div>
+          {img && <img src={img} alt="preview" className="mx-auto mt-2 max-h-40 object-contain" />}
         </div>
       </div>
       <div className="h-6 w-full bg-blue-600" />
