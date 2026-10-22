@@ -105,7 +105,15 @@ export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null
   )
 }
 
+import { useState } from 'react'
+
 export function NizarSurgicalInstructions() {
+  const [img, setImg] = useState(null)
+  const onFile = (e) => {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setImg(URL.createObjectURL(f))
+  }
   return (
     <div className="prescription-sheet relative flex flex-col overflow-hidden bg-white" style={{ fontFamily: '"IBM Plex Sans Arabic", serif' }}>
       <div className="h-6 w-full bg-blue-600" />
@@ -120,7 +128,11 @@ export function NizarSurgicalInstructions() {
           ))}
           <div className="pt-4 text-center font-bold text-slate-800">تمارين اضافية</div>
           <div className="flex items-start gap-4">
-            <textarea className="flex-1 rounded border border-slate-300 p-2 text-sm" rows={4} placeholder="ملاحظات" />
+            <textarea className="flex-1 rounded border border-slate-300 p-2 text-sm" style={{ height: '120px' }} placeholder="ملاحظات" />
+          </div>
+          <div className="mt-2">
+            <input type="file" accept="image/*" onChange={onFile} />
+            {img && <img src={img} alt="preview" className="mt-2 max-h-40 object-contain" />}
           </div>
         </div>
       </div>
