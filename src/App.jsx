@@ -105,9 +105,12 @@ function WorkingHoursGate() {
   const { settings, settingsReady, profile } = useApp()
   if (!settingsReady || !profile) return <Spinner />
   // عيادتا د. فاطمة ود. فدوى: واجهة «أوقات دوامي» الخاصة بها — تتحكم بأوقات الحجز في عيادتها
-  if (usesClinicWorkingHours(profile)) return <ClinicWorkingHours />
-  if (!isNizarStyle(profile, settings)) return <Navigate to="/doctor" replace />
-  return <NizarWorkingHours />
+  const ranim = isRanimClinic(profile)
+  const simple = usesClinicWorkingHours(profile)
+  if (!simple) {
+    return <div style={{ padding: 20, color: 'red' }}>DEBUG: ranim={String(ranim)} simple={String(simple)} clinic_id={String(profile?.clinic_id)} specialty={String(profile?.specialty_key)} clinicSpec={String(profile?.clinic?.specialty_key)} full={String(profile?.full_name)}</div>
+  }
+  return <ClinicWorkingHours />
 }
 
 function homeFor(role) {
