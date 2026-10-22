@@ -396,6 +396,8 @@ export default function Layout() {
   // عيادة الدكتورة رنيم النبهان: ترتيب واجهات فريد لها وحدها
   if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isRanimClinic(profile)) {
     const byPath = Object.fromEntries(navItems.map((i) => [i.to, i]))
+    // واجهة «أوقات دوامي» — تحدّد أيام الدوام وأوقاتها التي تُبنى منها مواعيد الحجز
+    byPath['/doctor/hours'] = { to: '/doctor/hours', label: 'أوقات دوامي', icon: Clock }
     navItems = RANIM_DOCTOR_NAV_ORDER.map((path) => byPath[path]).filter(Boolean)
   }
   // عيادة الدكتورة فاطمة: ترتيب واجهات فريد لها وحدها
