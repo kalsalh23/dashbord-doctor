@@ -95,7 +95,7 @@ function PatientProfileGate() {
 // واجهة المدفوعات محذوفة من عيادة د. نزار (قالب nizar) — أي دخول للرابط يعود للوحة اليوم
 function PaymentsGate() {
   const { settings, settingsReady } = useApp()
-  if (!settingsReady) return <Spinner />
+  if (!settingsReady || !profile) return <Spinner />
   if (settings?.prescription_template === 'nizar') return <Navigate to="/doctor" replace />
   return <DentalPayments />
 }
@@ -103,7 +103,7 @@ function PaymentsGate() {
 // أوقات الدوام: عيادة د. نزار (قالب nizar) والعيادات المضافة لأسلوبه + عيادتا د. فاطمة ود. فدوى — لغيرها يعود للوحة اليوم
 function WorkingHoursGate() {
   const { settings, settingsReady, profile } = useApp()
-  if (!settingsReady) return <Spinner />
+  if (!settingsReady || !profile) return <Spinner />
   // عيادتا د. فاطمة ود. فدوى: واجهة «أوقات دوامي» الخاصة بها — تتحكم بأوقات الحجز في عيادتها
   if (usesClinicWorkingHours(profile)) return <ClinicWorkingHours />
   if (!isNizarStyle(profile, settings)) return <Navigate to="/doctor" replace />
