@@ -8,7 +8,12 @@ import {
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { APP_SCOPE } from '../lib/scope'
-import { isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts, clinicFatimaThemeClass, isFatimaClinic, FATIMA_DOCTOR_NAV_ORDER, FATIMA_SHORT_CLINIC_NAME, clinicFadwaThemeClass, isFadwaClinic } from '../lib/clinicStyle'
+import {
+  isNizarStyle, hidesPatientsPage, hidesFavorites, clinicThemeClass, hidesAccountSwitcher, usesLoudAlerts,
+  clinicFatimaThemeClass, isFatimaClinic, FATIMA_DOCTOR_NAV_ORDER, FATIMA_SHORT_CLINIC_NAME,
+  clinicFadwaThemeClass, isFadwaClinic, clinicRanimThemeClass, isRanimClinic,
+  RANIM_DOCTOR_NAV_ORDER, RANIM_SHORT_CLINIC_NAME,
+} from '../lib/clinicStyle'
 import { playAlert, unlockAudio } from '../lib/alert'
 import AccountSwitcher from './AccountSwitcher'
 import { DEVELOPER_NAME } from '../lib/config'
@@ -298,8 +303,14 @@ function Brand({ mobile = false }) {
   // فيملأ الشريط العلوي على الجوال ويقصّ أزرار الإشعارات والحساب —
   // فيُعرض مختصراً وبسطر واحد، والشريط أخصر.
   const fatima = isFatimaClinic(profile)
-  const compact = mobile && fatima
-  const clinicName = compact ? FATIMA_SHORT_CLINIC_NAME : (profile?.clinic?.name || 'نظام إدارة العيادة')
+  // عيادة الدكتورة رنيم: نفس الفكرة — الاسم مختصر على الجوال
+  const ranim = isRanimClinic(profile)
+  const compact = mobile && (fatima || ranim)
+  const clinicName = compact
+    ? fatima
+      ? FATIMA_SHORT_CLINIC_NAME
+      : RANIM_SHORT_CLINIC_NAME
+    : (profile?.clinic?.name || 'نظام إدارة العيادة')
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       <span className={`clinic-brand flex shrink-0 items-center justify-center rounded-xl bg-primary-700 text-white shadow-sm ${compact ? 'h-8 w-8' : 'h-9 w-9'}`}>
@@ -382,6 +393,11 @@ export default function Layout() {
     const at = navItems.findIndex((i) => i.to === '/doctor/schedule')
     navItems = at >= 0 ? [...navItems.slice(0, at + 1), hoursItem, ...navItems.slice(at + 1)] : [hoursItem, ...navItems]
   }
+  // عيادة الدكتورة رنيم النبهان: ترتيب واجهات فريد لها وحدها
+  if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isRanimClinic(profile)) {
+    const byPath = Object.fromEntries(navItems.map((i) => [i.to, i]))
+    navItems = RANIM_DOCTOR_NAV_ORDER.map((path) => byPath[path]).filter(Boolean)
+  }
   // عيادة الدكتورة فاطمة: ترتيب واجهات فريد لها وحدها
   if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isFatimaClinic(profile)) {
     const byPath = Object.fromEntries(navItems.map((i) => [i.to, i]))
@@ -430,11 +446,15 @@ export default function Layout() {
 
   // عيادات الأسنان: شريط تنقل علوي أفقي بدل الجانبي — كما في برامج الأسنان
   const isDentalNav = APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isDental
+  // عيادة النساء والتوليد: شريط حبّات عائم (زجاجي) بدل الشريط الجانبي — تصميم خاص بها
+  const isObgynNav = APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isRanimClinic(profile)
   // لوحة ألوان العيادة — اللون فقط: الفيروزي لعيادة د. عارف، البرقوقي لبقية العيادات
   const themeClass = clinicThemeClass(profile)
   const fatimaThemeClass = clinicFatimaThemeClass(profile)
   // عيادة الدكتورة فدوى: لوحة لافندر بنفسجي فاتح أنثوية — لعيادتها وحدها
   const fadwaThemeClass = clinicFadwaThemeClass(profile)
+  // عيادة الدكتورة رنيم: لوحة بترولية عميقة — لعيادتها وحدها
+  const ranimThemeClass = clinicRanimThemeClass(profile)
   // عيادة الدكتورة فاطمة: شريط علوي أنحف على الجوال (الاسم الكامل طويل)
   const fatimaCompact = isFatimaClinic(profile)
   const headerH = fatimaCompact ? 'h-12 lg:h-14' : 'h-14'
@@ -443,9 +463,9 @@ export default function Layout() {
   const mainPad = fatimaCompact ? 'px-3 pb-24 pt-4 sm:px-6 lg:pb-8' : 'px-4 pb-24 pt-5 sm:px-6 lg:pb-8'
 
   return (
-    <div className={`flex min-h-screen ${themeClass} ${fatimaThemeClass} ${fadwaThemeClass}`}>
+    <div className={`flex min-h-screen ${themeClass} ${fatimaThemeClass} ${fadwaThemeClass} ${ranimThemeClass}`}>
       {/* -------- desktop sidebar (right in RTL) -------- */}
-      {!isDentalNav && (
+      {!isDentalNav && !isObgynNav && (
         <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-s border-slate-200 bg-white lg:flex">
           <div className="px-4 py-4">
             <Brand />
@@ -511,6 +531,25 @@ export default function Layout() {
                   }
                 >
                   <item.icon size={17} />
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          </nav>
+        )}
+
+        {/* شريط الحبّات العائم — عيادة النساء والتوليد (تصميم خاص بها) */}
+        {isObgynNav && (
+          <nav className={`clinic-nav sticky ${headerTop} z-20 border-b border-primary-100 bg-white/90 backdrop-blur`}>
+            <div className="ob-pill-nav">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) => `ob-pill ${isActive ? 'is-active' : ''}`}
+                >
+                  <item.icon size={15} />
                   {item.label}
                 </NavLink>
               ))}

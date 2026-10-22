@@ -64,6 +64,209 @@
   --bg: 250 248 255;
 }
 
+/* ============================================================
+   عيادة الدكتورة رنيم النبهان — اختصاص النساء والتوليد
+   لوحة مستقلة تماماً: بترولي عميق (طmedical) + وردي هادئ
+   ============================================================ */
+.clinic-theme-ranim {
+  --p50: 238 248 250;
+  --p100: 216 241 245;
+  --p200: 184 227 235;
+  --p300: 126 200 214;
+  --p400: 61 165 187;
+  --p500: 20 133 157;
+  --p600: 14 108 133;
+  --p700: 14 88 109;
+  --p800: 15 72 91;
+  --p900: 16 61 77;
+  --bg: 244 250 251;
+  /* ألوان مساعدة خاصة بالواجهة النسائية */
+  --ob-rose: 219 39 119;
+  --ob-rose-soft: 253 242 248;
+  --ob-gold: 190 132 32;
+  --ob-line: 214 235 240;
+}
+
+/* ---------- لمسات عيادة النساء والتوليد ---------- */
+
+/* الترويسة: فاتحة بتدرّج بترولي خفيف وحدّ سفلي سميك */
+.clinic-theme-ranim .clinic-topbar {
+  background-image: linear-gradient(to left, rgb(var(--p50) / 0.9), rgb(255 255 255 / 0.95));
+  border-bottom: 2px solid rgb(var(--p200));
+}
+.clinic-theme-ranim .clinic-topbar .clinic-brand {
+  color: #fff;
+}
+
+/* الشعار: بتدرّج بترولي وذهبي */
+.clinic-theme-ranim .clinic-brand {
+  background-image: linear-gradient(135deg, rgb(var(--p500)), rgb(var(--p800)));
+  box-shadow: 0 6px 16px -6px rgb(var(--p800) / 0.7);
+}
+
+/* شريط التنقل: حبّات عائمة زجاجية بدل المربعات */
+.ob-pill-nav {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.6rem 1rem;
+  scrollbar-width: none;
+}
+.ob-pill-nav::-webkit-scrollbar {
+  display: none;
+}
+.ob-pill {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--p200));
+  background: rgb(255 255 255 / 0.85);
+  padding: 0.45rem 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: rgb(var(--p700));
+  transition: all 0.15s ease;
+}
+.ob-pill:hover {
+  border-color: rgb(var(--p400));
+  background: rgb(var(--p50));
+}
+.ob-pill.is-active {
+  background-image: linear-gradient(135deg, rgb(var(--p600)), rgb(var(--p800)));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 16px -8px rgb(var(--p800) / 0.9);
+}
+
+/* بطاقةFem rounded—زوايا أنعم وظل أوسع */
+.ob-card {
+  border-radius: 1.5rem;
+  border: 1px solid rgb(var(--p100));
+  background: #fff;
+  box-shadow: 0 2px 4px rgb(var(--p900) / 0.04), 0 14px 34px -18px rgb(var(--p900) / 0.28);
+}
+.ob-card-head {
+  border-radius: 1.5rem 1.5rem 0 0;
+  background-image: linear-gradient(to left, rgb(var(--p700)), rgb(var(--p500)));
+  color: #fff;
+}
+
+/* ترويسة البطاقة الخاصة (شبكة زرقاء) */
+.ob-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.75rem;
+  background-image: linear-gradient(135deg, rgb(var(--p800)), rgb(var(--p600)) 55%, rgb(var(--p500)));
+  color: #fff;
+}
+.ob-hero::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: -60px;
+  top: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 30% 30%, rgb(255 255 255 / 0.28), transparent 65%);
+  pointer-events: none;
+}
+
+/* شريط الحالة (بطاقات الحوامل) */
+.ob-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--p200));
+  background: #fff;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: rgb(var(--p700));
+  white-space: nowrap;
+}
+.ob-chip .ob-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background: rgb(var(--p500));
+}
+
+/* حقول الكشف النسائية */
+.ob-field {
+  border-radius: 0.9rem;
+  border: 1px solid rgb(var(--p200));
+  background: rgb(var(--p50) / 0.55);
+  padding: 0.6rem 0.75rem;
+}
+.ob-field:focus-within {
+  border-color: rgb(var(--p400));
+  box-shadow: 0 0 0 3px rgb(var(--p200) / 0.55);
+}
+.ob-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: rgb(var(--p700));
+}
+
+/* خطوات الكشف (stepper) */
+.ob-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgb(var(--p100));
+  background: #fff;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgb(var(--p600));
+  transition: all 0.15s ease;
+}
+.ob-step.is-active {
+  border-color: rgb(var(--p500));
+  background: rgb(var(--p50));
+  color: rgb(var(--p800));
+  box-shadow: 0 8px 20px -14px rgb(var(--p700) / 0.9);
+}
+.ob-step .ob-step-num {
+  display: flex;
+  height: 1.4rem;
+  width: 1.4rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgb(var(--p100));
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: rgb(var(--p700));
+}
+.ob-step.is-active .ob-step-num,
+.ob-step.is-done .ob-step-num {
+  background: rgb(var(--p600));
+  color: #fff;
+}
+
+/* رسم التوضيح */
+.ob-sketch-wrap {
+  border-radius: 1.25rem;
+  border: 1px dashed rgb(var(--p300));
+  background: rgb(var(--p50) / 0.6);
+}
+
+/* شريط الإجراءات الثابت أسفل الكشف */
+.ob-actionbar {
+  border-top: 1px solid rgb(var(--p100));
+  background: rgb(255 255 255 / 0.92);
+  backdrop-filter: blur(8px);
+}
+
+
 /* لمسات أنثوية خفيفة — لعيادة د. فدوى وحدها:
    شريط علوي بتدرّج لافندر ناعم وشعار العيادة بتدرّج بنفسجي */
 .clinic-theme-fadwa .clinic-topbar,

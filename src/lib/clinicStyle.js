@@ -47,6 +47,73 @@ export function isFatimaClinic(profile) {
 export const FATIMA_SHORT_CLINIC_NAME = 'د. فاطمة الجاموس'
 
 /* ============================================================
+ * عيادة الدكتورة رنيم النبهان — اختصاص النساء والتوليد
+ *   واجهة مستقلة تماماً عن بقية العيادات:
+ *   - لوحة ألوان بترولية عميقة مع لمسات وردية هادئة
+ *   - شريط تنقل علوي زجاجي على شكل حبّات (بلا الشريط الجانبي)
+ *   - لوحة يوم مصممة للنساء الحوامل (أسبوع الحمل + تاريخ متوقع)
+ *   - واجهة كشف برسم تشريحي للuterus والصدر مع رسوم يدوية أثناء الكشف
+ *   - عرض المريضات ببطاقات حمل/دورة بدل الجدول العام
+ * ============================================================ */
+export const RANIM_CLINIC_ID = 'b7d41c26-9e58-4a3f-8c17-2d6e95f0a741'
+
+/**
+ * معرّفات عيادة د. رنيم النبهان:
+ *  - الأول: النسخة المحلية (بذور البيانات بلا اتصال)
+ *  - الثاني: النسخة السحابية (تسجيل الطبيبة الفعلي في Supabase)
+ */
+export const RANIM_CLINIC_IDS = [
+  RANIM_CLINIC_ID,
+  '8b2dcc6e-5143-4960-93b5-94dab7258e9c',
+]
+
+const RANIM_THEME_CLINICS = {
+  [RANIM_CLINIC_ID]: 'عيادة الدكتورة رنيم النبهان',
+  '8b2dcc6e-5143-4960-93b5-94dab7258e9c': 'عيادة الدكتورة رنيم النبهان',
+}
+
+/** صنف CSS للوحة عيادة الدكتورة رنيم */
+export const clinicRanimThemeClass = (profile) =>
+  profile?.clinic_id && RANIM_THEME_CLINICS[profile.clinic_id] ? 'clinic-theme-ranim' : ''
+
+/** هل هذه العيادة هي عيادة الدكتورة رنيم النبهان؟ */
+export function isRanimClinic(profile) {
+  if (!profile?.clinic_id) return false
+  if (RANIM_THEME_CLINICS[profile.clinic_id]) return true
+  return (
+    profile.specialty_key === 'obgyn' &&
+    /رنيم|النبهان/.test(`${profile.full_name || ''} ${profile.clinic?.name || ''}`)
+  )
+}
+
+/**
+ * الاسم المختصر — يظهر في الشريط العلوي على الجوال
+ * («عيادة الدكتورة رنيم النبهان» طويل فيقصّ أزرار الإشعارات والحساب)
+ */
+export const RANIM_SHORT_CLINIC_NAME = 'د. رنيم النبهان'
+
+/**
+ * ترتيب واجهات عيادةefnixa رنيم — ترتيب فريد لها وحدها
+ * (يُطبّق في Layout.jsx مباشرة)
+ */
+export const RANIM_DOCTOR_NAV_ORDER = [
+  '/doctor',
+  '/doctor/schedule',
+  '/doctor/patients',
+  '/doctor/archive',
+  '/doctor/expenses',
+  '/doctor/today-log',
+  '/doctor/payments',
+  '/doctor/favorites',
+  '/doctor/settings',
+]
+
+/** هل تُستخدم واجهة النساء والتوليد (الكشف + العرض) في هذه العيادة؟ */
+export function usesObgynFlow(profile) {
+  return isRanimClinic(profile)
+}
+
+/* ============================================================
  * لوحة ألوان عيادة الدكتورة فدوى الرحال — لافندر بنفسجي فاتح أنثوي
  * لوحة خاصة بعيادتها وحدها (لا تؤثر على أي عيادة أخرى)
  * ============================================================ */
@@ -90,6 +157,8 @@ const NO_ACCOUNT_SWITCH_CLINICS = {
   '7f521b29-25f7-45c0-a3db-1f5146698062': 'عيادة د. نزار عبد الستار الشيخ',
   [FATIMA_CLINIC_ID]: 'عيادة الدكتورة فاطمة سالم الجاموس',
   [FADWA_CLINIC_ID]: 'عيادة الدكتورة فدوى الرحال',
+  [RANIM_CLINIC_ID]: 'عيادة الدكتورة رنيم النبهان',
+  '8b2dcc6e-5143-4960-93b5-94dab7258e9c': 'عيادة الدكتورة رنيم النبهان',
 }
 
 /** هل يُخفى زر تبديل الحساب في هذه العيادة؟ */

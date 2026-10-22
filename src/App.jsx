@@ -2,7 +2,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { AppProvider, useApp } from './lib/store'
 import { APP_SCOPE } from './lib/scope'
-import { isNizarStyle, usesClinicWorkingHours } from './lib/clinicStyle'
+import { isNizarStyle, usesClinicWorkingHours, isRanimClinic } from './lib/clinicStyle'
 import Layout from './components/Layout'
 import { Toasts, Spinner } from './components/ui'
 import Login from './pages/Login'
@@ -19,6 +19,10 @@ import Consultation from './pages/doctor/Consultation'
 import DentalConsultation from './pages/doctor/DentalConsultation'
 import EntConsultation from './pages/doctor/EntConsultation'
 import NizarLiveConsultation from './pages/doctor/NizarLiveConsultation'
+import ObgynConsultation from './pages/doctor/ObgynConsultation'
+import ObgynDashboard from './pages/doctor/ObgynDashboard'
+import ObgynPatients from './pages/doctor/ObgynPatients'
+import ObgynPatientProfile from './pages/doctor/ObgynPatientProfile'
 import DentalPrices from './pages/doctor/DentalPrices'
 import DentalTodayLog from './pages/doctor/DentalTodayLog'
 import DentalPayments from './pages/doctor/DentalPayments'
@@ -50,6 +54,10 @@ function ConsultationSwitch() {
   const { appointmentId, patientId } = useParams()
   const { profile, settings } = useApp()
   const specialtyKey = profile?.specialty_key || profile?.clinic?.specialty_key || 'general'
+  // عيادة النساء والتوليد — واجهة كشف خاصة (رسم تشريحي + رسوم يدوية + تاريخ حمل)
+  if (isRanimClinic(profile)) {
+    return <ObgynConsultation appointmentId={appointmentId} patientId={patientId} />
+  }
   if (specialtyKey === 'dentistry') {
     return <DentalConsultation appointmentId={appointmentId} patientId={patientId} />
   }
@@ -61,6 +69,27 @@ function ConsultationSwitch() {
     return <NizarLiveConsultation appointmentId={appointmentId} patientId={patientId} />
   }
   return <Consultation />
+}
+
+// عرض المريضات — بطاقة بطاقة حمل/دورة في عيادة النساء والتوليد
+function PatientsGate() {
+  const { profile } = useApp()
+  if (isRanimClinic(profile)) return <ObgynPatients />
+  return <Patients doctorMode />
+}
+
+// عرض المريضات في الاستقبال — نفس بطاقات عيادة النساء والتوليد بلا زر الكشف
+function ReceptionPatientsGate() {
+  const { profile } = useApp()
+  if (isRanimClinic(profile)) return <ObgynPatients receptionMode />
+  return <Patients />
+}
+
+// ملف المريضة — تصميم خاص بعيادة النساء والتوليد
+function PatientProfileGate() {
+  const { profile } = useApp()
+  if (isRanimClinic(profile)) return <ObgynPatientProfile />
+  return <PatientProfile />
 }
 
 // واجهة المدفوعات محذوفة من عيادة د. نزار (قالب nizar) — أي دخول للرابط يعود للوحة اليوم
@@ -176,6 +205,8 @@ function HomeRedirect() {
 function DoctorHome() {
   const { profile } = useApp()
   const specialtyKey = profile?.specialty_key || profile?.clinic?.specialty_key || 'general'
+  // عيادة النساء والتوليد — لوحة يوم مصممة للحوامل والمتابعات
+  if (isRanimClinic(profile)) return <ObgynDashboard />
   if (specialtyKey === 'dentistry') return <DentalDashboard />
   return <DoctorDashboard />
 }
@@ -202,15 +233,15 @@ function AppRoutes() {
           <Route element={<RequireAuth />}>
             <Route path="/reception" element={<RequireRole role="reception"><ReceptionDashboard /></RequireRole>} />
             <Route path="/reception/appointments" element={<RequireRole role="reception"><Appointments /></RequireRole>} />
-            <Route path="/reception/patients" element={<RequireRole role="reception"><Patients /></RequireRole>} />
-            <Route path="/reception/patients/:id" element={<RequireRole role="reception"><PatientProfile /></RequireRole>} />
+            <Route path="/reception/patients" element={<RequireRole role="reception"><ReceptionPatientsGate /></RequireRole>} />
+            <Route path="/reception/patients/:id" element={<RequireRole role="reception"><PatientProfileGate /></RequireRole>} />
             <Route path="/reception/payments" element={<RequireRole role="reception"><Payments /></RequireRole>} />
             <Route path="/reception/follow-ups" element={<RequireRole role="reception"><FollowUps /></RequireRole>} />
             <Route path="/reception/settings" element={<RequireRole role="reception"><Settings /></RequireRole>} />
             <Route path="/doctor" element={<RequireRole role="doctor"><DoctorHome /></RequireRole>} />
             <Route path="/doctor/schedule" element={<RequireRole role="doctor"><Schedule /></RequireRole>} />
-            <Route path="/doctor/patients" element={<RequireRole role="doctor"><Patients doctorMode /></RequireRole>} />
-            <Route path="/doctor/patients/:id" element={<RequireRole role="doctor"><PatientProfile /></RequireRole>} />
+            <Route path="/doctor/patients" element={<RequireRole role="doctor"><PatientsGate /></RequireRole>} />
+            <Route path="/doctor/patients/:id" element={<RequireRole role="doctor"><PatientProfileGate /></RequireRole>} />
             <Route path="/doctor/archive" element={<RequireRole role="doctor"><PatientArchive /></RequireRole>} />
             <Route path="/doctor/visit/:visitId" element={<RequireRole role="doctor"><VisitReadPage /></RequireRole>} />
             <Route path="/doctor/favorites" element={<RequireRole role="doctor"><Favorites /></RequireRole>} />
