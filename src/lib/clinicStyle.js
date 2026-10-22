@@ -310,3 +310,5 @@ export function requiresPaymentPrompt(profile) {
   const clinicId = clinicIdOf(profile)
   return !!(clinicId && PROMPT_PAYMENT_CLINICS[clinicId])
 }
+
+// cache-bust: 20261022171013
