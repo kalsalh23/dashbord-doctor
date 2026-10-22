@@ -94,7 +94,7 @@ function PatientProfileGate() {
 
 // واجهة المدفوعات محذوفة من عيادة د. نزار (قالب nizar) — أي دخول للرابط يعود للوحة اليوم
 function PaymentsGate() {
-  const { settings, settingsReady } = useApp()
+  const { settings, settingsReady, profile } = useApp()
   if (!settingsReady || !profile) return <Spinner />
   if (settings?.prescription_template === 'nizar') return <Navigate to="/doctor" replace />
   return <DentalPayments />
