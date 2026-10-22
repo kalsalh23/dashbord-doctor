@@ -7,7 +7,7 @@ import { Button, Card, Modal, PageHeader, Spinner, Toggle } from '../../componen
 import { useSchedules } from '../../lib/hooks'
 import { timeToMin, getWeekday, todayStr, formatDateShort } from '../../lib/format'
 import { buildSlots } from '../../lib/slots'
-import { isFatimaClinic, isFadwaClinic } from '../../lib/clinicStyle'
+import { isFatimaClinic, isFadwaClinic, isRanimClinic } from '../../lib/clinicStyle'
 
 /**
  * أوقات دوامي — عيادة الدكتورة فاطمة سالم الجاموس وعيادة الدكتورة فدوى الرحال
@@ -27,6 +27,7 @@ export default function ClinicWorkingHours() {
   const nav = useNavigate()
   const isFatima = isFatimaClinic(profile)
   const isFadwa = isFadwaClinic(profile)
+  const isRanim = isRanimClinic(profile)
   const [schedules, reload] = useSchedules()
   const [edits, setEdits] = useState({}) // { [weekday]: { active?, start?, end? } } — فوق القيم المحفوظة
   const [appts, setAppts] = useState([])
@@ -191,7 +192,7 @@ export default function ClinicWorkingHours() {
     }
   }
 
-  if (!isFatima && !isFadwa) {
+  if (!isFatima && !isFadwa && !isRanim) {
     nav('/doctor')
     return null
   }
