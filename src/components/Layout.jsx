@@ -538,9 +538,9 @@ export default function Layout() {
           </nav>
         )}
 
-        {/* شريط الحبّات العائم — عيادة النساء والتوليد (تصميم خاص بها) */}
+        {/* شريط الحبّات العائم — عيادة النساء والتوليد (تصميم خاص بها) — الشاشات الكبيرة فقط */}
         {isObgynNav && (
-          <nav className={`clinic-nav sticky ${headerTop} z-20 border-b border-primary-100 bg-white/90 backdrop-blur`}>
+          <nav className={`clinic-nav sticky ${headerTop} z-20 hidden border-b border-primary-100 bg-white/90 backdrop-blur lg:block`}>
             <div className="ob-pill-nav">
               {navItems.map((item) => (
                 <NavLink

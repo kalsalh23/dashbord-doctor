@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Baby, CalendarPlus, Droplets, Filter, Search, Stethoscope, UserPlus, Users,
+  Baby, CalendarHeart, CalendarPlus, Filter, Search, Stethoscope, UserPlus, Users,
 } from 'lucide-react'
 import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, Field, Input, Modal, Spinner } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
-import { ageFrom, formatDateShort } from '../../lib/format'
+import { ageFrom, daysBetween, formatDateShort, todayStr } from '../../lib/format'
 import { friendlyDbError } from '../../lib/hooks'
-import { gaLabel, gpaLabel, pregnancyStatus, riskLevel } from '../../lib/obgyn'
+import { gaLabel, pregnancyStatus, riskLevel } from '../../lib/obgyn'
 
 /**
  * عرض المريضات في عيادة النساء والتوليد — بطاقات بدل الجدول العام:
@@ -82,17 +82,29 @@ export default function ObgynPatients({ receptionMode = false }) {
     if (term) {
       rows = rows.filter((p) => (p.full_name || '').includes(term) || (p.phone || '').includes(term))
     }
+    const today = todayStr()
     const decorated = rows.map((p) => {
       const ob = obData[p.id]
       const st = pregnancyStatus(ob || {})
       const risk = ob ? riskLevel({ ...ob, gestational_age: st.ga }) : { cls: 'slate', label: '—' }
-      return { ...p, ob, st, risk }
+      const fu = nextFollowUp[p.id] || ''
+      const daysToReview = fu ? daysBetween(today, fu) : null
+      // نسبة امتلاء الشريط: التقدّم من آخر زيارة حتى موعد المراجعة القادمة
+      const last = lastVisit[p.id]
+      let fill = 0
+      if (fu && last) {
+        const span = Math.max(1, daysBetween(last, fu))
+        fill = Math.min(100, Math.max(6, Math.round((daysBetween(last, today) / span) * 100)))
+      } else if (fu) {
+        fill = 40
+      }
+      return { ...p, ob, st, risk, nextFollowUp: fu, daysToReview, reviewFill: fill }
     })
     if (filter === 'pregnant') return decorated.filter((p) => p.st.pregnant)
     if (filter === 'notPregnant') return decorated.filter((p) => !p.st.pregnant)
     if (filter === 'risk') return decorated.filter((p) => p.risk.cls === 'rose')
     return decorated
-  }, [patients, q, filter, obData])
+  }, [patients, q, filter, obData, nextFollowUp, lastVisit])
 
   const counts = useMemo(() => {
     const all = (patients || []).map((p) => {
@@ -236,39 +248,33 @@ export default function ObgynPatients({ receptionMode = false }) {
                       {gaLabel(p.st.ga)}
                     </span>
                   )}
+                  {p.risk.cls === 'rose' && (
+                    <span className="ob-chip !border-rose-200 !bg-rose-50 !text-rose-700">{p.risk.label}</span>
+                  )}
                 </div>
 
-                {/* تفاصيل宛若ية */}
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {p.ob && (
-                    <>
-                      <span className="ob-chip">
-                        <Droplets size={10} />
-                        {p.ob.blood_group ? `فصيلة ${p.ob.blood_group}${p.ob.rh ? ` (${p.ob.rh === 'NEGATIVE' ? '−' : '+'})` : ''}` : 'فصيلة غير محددة'}
-                      </span>
-                      <span className="ob-chip">{gpaLabel(p.ob.gravida, p.ob.para, p.ob.abortions)} (G-P-A)</span>
-                    </>
-                  )}
-                  {p.risk.cls !== 'slate' && (
-                    <span
-                      className={`ob-chip ${
-                        p.risk.cls === 'rose'
-                          ? '!border-rose-200 !bg-rose-50 !text-rose-700'
-                          : p.risk.cls === 'amber'
-                            ? '!border-amber-200 !bg-amber-50 !text-amber-700'
-                            : '!border-emerald-200 !bg-emerald-50 !text-emerald-700'
-                      }`}
-                    >
-                      {p.risk.label}
+                {/* شريط المراجعة القادمة — يحدّد موعد المتابعة ويملأ تدريجياً */}
+                <div className="mt-3">
+                  <div className="flex items-center justify-between gap-2 text-[11px]">
+                    <span className="flex items-center gap-1 font-bold text-slate-500">
+                      <CalendarHeart size={11} />
+                      المراجعة القادمة
                     </span>
+                    <span className={`font-black ${p.nextFollowUp ? 'text-primary-800' : 'text-slate-400'}`}>
+                      {p.nextFollowUp ? formatDateShort(p.nextFollowUp) : 'لم تُحدَّد'}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className={`h-full rounded-full transition-all ${p.nextFollowUp ? 'bg-primary-500' : 'bg-slate-200'}`}
+                      style={{ width: `${p.reviewFill}%` }}
+                    />
+                  </div>
+                  {p.nextFollowUp && p.daysToReview != null && (
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      {p.daysToReview >= 0 ? `بعد ${p.daysToReview} يوم` : `متأخرة ${Math.abs(p.daysToReview)} يوم`}
+                    </p>
                   )}
-                  {p.st.edd && <span className="ob-chip">الولادة المتوقعة {formatDateShort(p.st.edd)}</span>}
-                </div>
-
-                {/* آخر زيارة والمتابعة */}
-                <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-2.5 text-[11px] text-slate-500">
-                  <span>آخر زيارة: {lastVisit[p.id] ? formatDateShort(lastVisit[p.id]) : '—'}</span>
-                  {nextFollowUp[p.id] && <span>المتابعة: {formatDateShort(nextFollowUp[p.id])}</span>}
                 </div>
 
                 <div className="mt-3 flex gap-2">

@@ -7,7 +7,6 @@ import { useApp } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, EmptyState, Spinner } from '../../components/ui'
 import BookingModal from '../../components/BookingModal'
-import SketchCanvas from '../../components/SketchCanvas'
 import { ageFrom, formatDateShort, todayStr } from '../../lib/format'
 import {
   bmiLabel, bmiOf, eddFromLmp, gaLabel, gestationalAge, gpaLabel,
@@ -290,7 +289,7 @@ export default function ObgynPatientProfile() {
 
                       {findings.length > 0 && (
                         <div>
-                          <p className="mb-1 font-bold text-slate-400">نتائج المخطط</p>
+                          <p className="mb-1 font-bold text-slate-400">نتائج الفحص</p>
                           <ul className="space-y-1">
                             {findings.map((f, i) => (
                               <li key={i} className="flex items-center gap-2">
@@ -300,15 +299,7 @@ export default function ObgynPatientProfile() {
                             ))}
                           </ul>
                         </div>
-                      )}
-
-                      {sd.sketch && (
-                        <div>
-                          <p className="mb-1 font-bold text-slate-400">الرسم اليدوي</p>
-                          <SketchCanvas value={sd.sketch} readOnly height={180} className="max-w-md" />
-                        </div>
-                      )}
-                    </div>
+                      )}                    </div>
                   )}
                 </li>
               )

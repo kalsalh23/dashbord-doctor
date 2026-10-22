@@ -7,6 +7,7 @@ import { Card, Badge, APPT_STATUS, Button, EmptyState, SkeletonRows, Avatar, Tab
 import BookingModal from '../../components/BookingModal'
 import AppointmentActions from '../../components/AppointmentActions'
 import { useSchedules } from '../../lib/hooks'
+import { isRanimClinic } from '../../lib/clinicStyle'
 import { todayStr, addDays, formatDateLong, dayLabel, getWeekday, timeToMin } from '../../lib/format'
 import { slotsForDay, breakRanges } from '../../lib/slots'
 
@@ -19,6 +20,8 @@ export default function Appointments() {
   const [booking, setBooking] = useState(false)
   const [moving, setMoving] = useState(null)
   const nav = useNavigate()
+  // عيادة النساء والتوليد: واجهة مواعيد بلا تبويب «المنتهية» — المواعيد الجارية فقط
+  const simpleList = isRanimClinic(profile)
 
   const load = useCallback(async () => {
     if (!profile?.clinic_id) return
@@ -54,7 +57,6 @@ export default function Appointments() {
     if (filter === 'done') list = list.filter((a) => ['completed', 'cancelled', 'no_show'].includes(a.status))
     return [...list].sort((a, b) => timeToMin(a.start_time) - timeToMin(b.start_time))
   }, [appts, filter])
-
   const breaks = breakRanges(day.schedule, settings)
   const bookedMap = useMemo(() => {
     const m = {}
@@ -98,11 +100,13 @@ export default function Appointments() {
         <Tabs
           value={filter}
           onChange={setFilter}
-          tabs={[
-            { value: 'all', label: 'الكل', count: counts.all },
-            { value: 'active', label: 'النشطة', count: counts.all - counts.completed },
-            { value: 'done', label: 'المنتهية', count: counts.completed + counts.cancelled },
-          ]}
+          tabs={simpleList
+            ? [{ value: 'all', label: 'الكل', count: counts.all }]
+            : [
+              { value: 'all', label: 'الكل', count: counts.all },
+              { value: 'active', label: 'النشطة', count: counts.all - counts.completed },
+              { value: 'done', label: 'المنتهية', count: counts.completed + counts.cancelled },
+            ]}
         />
       </div>
 

@@ -7,13 +7,12 @@ import {
 import { useApp, audit } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { Button, Card, Field, Input, Modal, Select, Spinner, Textarea } from '../../components/ui'
-import ObgynChart from '../../components/ObgynChart'
 import { ageFrom, formatDateShort, todayStr } from '../../lib/format'
 import { fmtPrice } from '../../lib/dental'
 import { friendlyDbError } from '../../lib/hooks'
 import {
   addWeeks, bmiLabel, bmiOf, eddFromLmp, gaLabel, gestationalAge, gpaLabel,
-  nextFollowupWeeks, obgynAlerts, pregnancyStatus, riskLevel,
+  nextFollowupWeeks, obgynAlerts, pregnancyStatus, riskLevel, OBGYN_DEFAULT_CATALOG,
 } from '../../lib/obgyn'
 
 const EMPTY_OB = {
@@ -71,7 +70,6 @@ const EMPTY_MED = { name: '', dosage: '', duration: '', instructions: '' }
 const STEPS = [
   { key: 'history', label: 'التاريخ' },
   { key: 'exam', label: 'الفحص' },
-  { key: 'draw', label: 'الرسومات' },
   { key: 'plan', label: 'التشخيص والمتابعة' },
   { key: 'meds', label: 'الأدوية' },
 ]
@@ -88,9 +86,6 @@ export default function ObgynConsultation() {
   const [loading, setLoading] = useState(true)
 
   const [ob, setOb] = useState(EMPTY_OB)
-  const [findings, setFindings] = useState([])
-  const [sketch, setSketch] = useState(null)
-  const [chartTab, setChartTab] = useState('pelvis')
   const [pregnancies, setPregnancies] = useState([])
   const [complaint, setComplaint] = useState('')
   const [symptoms, setSymptoms] = useState('')
@@ -100,7 +95,6 @@ export default function ObgynConsultation() {
   const [nextVisit, setNextVisit] = useState('')
   const [meds, setMeds] = useState([{ ...EMPTY_MED }])
   const [favorites, setFavorites] = useState([])
-  const [pricebook, setPricebook] = useState(null)
   const [paidNow, setPaidNow] = useState('')
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -145,7 +139,6 @@ export default function ObgynConsultation() {
       if (prev?.specialty_data?.obgyn) {
         const d = prev.specialty_data.obgyn
         setOb((o) => ({ ...o, ...d }))
-        setFindings(Array.isArray(prev.specialty_data.findings) ? prev.specialty_data.findings : [])
         setPregnancies(Array.isArray(prev.specialty_data.pregnancies) ? prev.specialty_data.pregnancies : [])
       }
       if (appt && ['arrived', 'waiting'].includes(appt.status)) {
@@ -169,16 +162,6 @@ export default function ObgynConsultation() {
       .order('created_at')
       .then(({ data }) => setFavorites(data || []))
   }, [profile?.id])
-
-  /* ---------- جدول أسعار الفحوصات ---------- */
-  useEffect(() => {
-    if (!profile?.clinic_id) return
-    supabase
-      .from('dental_pricebook')
-      .select('category, treatment, price, color')
-      .eq('clinic_id', profile.clinic_id)
-      .then(({ data }) => setPricebook(data || []))
-  }, [profile?.clinic_id])
 
   /* ---------- حسابات ---------- */
   const ga = useMemo(() => gestationalAge(ob.lmp), [ob.lmp])
@@ -221,9 +204,7 @@ export default function ObgynConsultation() {
     try {
       const specialtyData = {
         obgyn: { ...ob, gestational_age: ga, edd, bmi },
-        findings,
         pregnancies,
-        sketch,
         gpa: gpaLabel(ob.gravida, ob.para, ob.abortions),
       }
       const { data: visit, error: vErr } = await supabase
@@ -333,8 +314,8 @@ export default function ObgynConsultation() {
           </span>
           <h1 className="text-lg font-bold">تم إنهاء كشف {patient.full_name}</h1>
           <p className="mt-1 text-xs text-white/80">
-            {status.pregnant ? `${gaLabel(ga)} — ${findings.length} نتيجة على المخطط` : `${findings.length} نتيجة على المخطط`}
-            {sketch ? ' · حُفظ الرسم اليدوي' : ''}
+            {status.pregnant ? `${gaLabel(ga)} — متابعة حمل` : 'تم تسجيل التشخيص والمتابعة'}
+            {ga?.weeks ? ` · الولادة المتوقعة ${formatDateShort(edd)}` : ''}
           </p>
         </div>
         <div className="flex flex-wrap justify-center gap-2">
@@ -713,30 +694,25 @@ export default function ObgynConsultation() {
         )}
 
         {step === 2 && (
-          <Card
-            title="الرسومات أثناء الكشف"
-            subtitle="اضغط على أي منطقة في الرسم التشريحي لتسجيل النتيجة، وارسم باليد ما تريدين توضيحه"
-          >
-            <ObgynChart
-              patientId={patient.id}
-              findings={findings}
-              onFindingsChange={setFindings}
-              pricebook={pricebook}
-              sketch={sketch}
-              onSketchChange={setSketch}
-              tab={chartTab}
-              onTabChange={setChartTab}
-            />
-          </Card>
-        )}
-
-        {step === 3 && (
           <>
             <Card title="التشخيص والخطة العلاجية">
               <div className="space-y-3">
                 <Field label="التشخيص" required>
                   <Textarea value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} rows={2} placeholder="اكتب التشخيص — مثال: حمل طبيعي من الأسبوع 24" />
                 </Field>
+                {/* اختصارات التشخيص — من كتالوج النساء والتوليد */}
+                <div className="-mt-1 flex flex-wrap gap-1.5">
+                  {OBGYN_DEFAULT_CATALOG.flatMap((g) => g.items).slice(0, 14).map((it) => (
+                    <button
+                      key={it.treatment}
+                      type="button"
+                      onClick={() => setDiagnosis((d) => (d ? `${d}، ${it.treatment}` : it.treatment))}
+                      className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-600 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-800"
+                    >
+                      {it.treatment}
+                    </button>
+                  ))}
+                </div>
                 <Field label="الخطة العلاجية">
                   <Textarea value={plan} onChange={(e) => setPlan(e.target.value)} rows={3} placeholder="المتابعة، التحاليل المطلوبة، Medication، موعد المراجعة" />
                 </Field>
@@ -768,7 +744,7 @@ export default function ObgynConsultation() {
           </>
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <Card
             title="الأدوية الموصوفة"
             actions={

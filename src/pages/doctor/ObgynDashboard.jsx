@@ -335,27 +335,6 @@ export default function ObgynDashboard() {
               </ul>
             )}
           </Card>
-
-          <Card title="روابط سريعة">
-            <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" variant="secondary" onClick={() => nav('/doctor/patients')}>
-                <Users size={14} />
-                المريضات
-              </Button>
-              <Button size="sm" variant="secondary" onClick={() => nav('/doctor/archive')}>
-                <ClipboardList size={14} />
-                الأرشيف
-              </Button>
-              <Button size="sm" variant="secondary" onClick={() => nav('/doctor/today-log')}>
-                <HeartPulse size={14} />
-                سجلي
-              </Button>
-              <Button size="sm" variant="secondary" onClick={() => nav('/doctor/payments')}>
-                <ClipboardList size={14} />
-                الدفعات
-              </Button>
-            </div>
-          </Card>
         </aside>
       </div>
 

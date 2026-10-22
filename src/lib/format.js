@@ -23,6 +23,12 @@ export function addDays(str, n) {
   return toLocalISO(d)
 }
 
+/** عدد الأيام بين تاريخين (سالب إذا كان التاريخ الثاني سابقاً) */
+export function daysBetween(fromStr, toStr) {
+  if (!fromStr || !toStr) return null
+  return Math.round((parseDate(toStr) - parseDate(fromStr)) / 86400000)
+}
+
 export function getWeekday(dateStr) {
   return parseDate(dateStr).getDay()
 }

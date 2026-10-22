@@ -101,9 +101,8 @@ export const RANIM_DOCTOR_NAV_ORDER = [
   '/doctor/schedule',
   '/doctor/patients',
   '/doctor/archive',
-  '/doctor/expenses',
+  '/doctor/hours',
   '/doctor/today-log',
-  '/doctor/payments',
   '/doctor/favorites',
   '/doctor/settings',
 ]
@@ -183,9 +182,10 @@ const NO_PATIENTS_PAGE_CLINICS = {
  * واجهة «مواعيدي» بأسلوب موحّد (مواعيد الجارية فقط — بلا تبويب
  * «قيد الكشف» ولا «المنتهية» — وأزرار مرتبة بمقاس واحد):
  *   عيادة د. فاطمة سالم الجاموس وعيادة د. فدوى الرحال
+ *   وعيادة د. رنيم النبهان (النساء والتوليد)
  * ============================================================ */
 export function usesSimpleAppointments(profile) {
-  return !!(isFatimaClinic(profile) || isFadwaClinic(profile))
+  return !!(isFatimaClinic(profile) || isFadwaClinic(profile) || isRanimClinic(profile))
 }
 
 /* ============================================================
@@ -194,7 +194,7 @@ export function usesSimpleAppointments(profile) {
  *   عيادة د. فاطمة سالم الجاموس وعيادة د. فدوى الرحال
  * ============================================================ */
 export function usesClinicWorkingHours(profile) {
-  return !!(isFatimaClinic(profile) || isFadwaClinic(profile))
+  return !!(isFatimaClinic(profile) || isFadwaClinic(profile) || isRanimClinic(profile))
 }
 
 /* ============================================================
