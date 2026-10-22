@@ -132,6 +132,56 @@ export function isFadwaClinic(profile) {
 }
 
 /* ============================================================
+ * عيادة الدكتورة رندة مصطفى الشيخ علي — اختصاص الغدد والسكري
+ *   واجهة مستقلة تماماً عن بقية العيادات:
+ *   - لوحة ألوان عميقة (أحمر داكن/برتقالي دافئ) — تعبّر عن السكري والغدد
+ *   - شريط تنقل علوي زجاجي على شكل حبّات (بلا الشريط الجانبي)
+ *   - لوحة يوم مصممة لمرضى السكري: قراءة السكر + تنبيهات مخاطر
+ *   - كشف بـ«شريان السكري»: سكر دم، HbA1c، ضغط، وزن، BMI، فحص الأقدام، الرؤية
+ *   - عرض المرضى ببطاقات (السكري /不正常 / مخاطر) بدل الجدول العام
+ * ============================================================ */
+export const RANDA_CLINIC_ID = 'a3f8c210-4b67-4e9a-b3d1-5c7e9f2a8b14'
+
+const RANDA_THEME_CLINICS = {
+  [RANDA_CLINIC_ID]: 'عيادة الدكتورة رندة مصطفى الشيخ علي',
+}
+
+/** صنف CSS للوحة عيادة الدكتورة رندة */
+export const clinicRandaThemeClass = (profile) =>
+  profile?.clinic_id && RANDA_THEME_CLINICS[profile.clinic_id] ? 'clinic-theme-randa' : ''
+
+/** هل هذه العيادة هي عيادة الدكتورة رندة؟ */
+export function isRandaClinic(profile) {
+  return !!profile?.clinic_id && !!RANDA_THEME_CLINICS[profile.clinic_id]
+}
+
+/**
+ * الاسم المختصر — يظهر في الشريط العلوي على الجوال
+ * («عيادة الدكتورة رندة مصطفى الشيخ علي» طويلة فيقصّ أزرار الإشعارات والحساب)
+ */
+export const RANDA_SHORT_CLINIC_NAME = 'د. رندة الشيخ علي'
+
+/**
+ * ترتيب واجهات عيادة الدكتورة رندة — ترتيب فريد لها وحدها
+ * (يُطبّق في Layout.jsx مباشرة)
+ */
+export const RANDA_DOCTOR_NAV_ORDER = [
+  '/doctor',
+  '/doctor/schedule',
+  '/doctor/hours',
+  '/doctor/patients',
+  '/doctor/archive',
+  '/doctor/today-log',
+  '/doctor/favorites',
+  '/doctor/settings',
+]
+
+/** هل تُستخدم واجبة الغدد والسكري (ال嘣 + العرض) في هذه العيادة؟ */
+export function usesEndocrineFlow(profile) {
+  return isRandaClinic(profile)
+}
+
+/* ============================================================
  * ترتيب واجهات عيادة الدكتورة فاطمة — ترتيب فريد لها وحدها
  * (يُطبّق في Layout.jsx مباشرة لأهمية الأيقونات)
  * ============================================================ */
@@ -158,6 +208,7 @@ const NO_ACCOUNT_SWITCH_CLINICS = {
   [FADWA_CLINIC_ID]: 'عيادة الدكتورة فدوى الرحال',
   [RANIM_CLINIC_ID]: 'عيادة الدكتورة رنيم النبهان',
   '8b2dcc6e-5143-4960-93b5-94dab7258e9c': 'عيادة الدكتورة رنيم النبهان',
+  [RANDA_CLINIC_ID]: 'عيادة الدكتورة رندة مصطفى الشيخ علي',
 }
 
 /** هل يُخفى زر تبديل الحساب في هذه العيادة؟ */

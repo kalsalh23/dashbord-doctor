@@ -278,6 +278,114 @@
   box-shadow: 0 4px 12px -4px rgb(var(--p500) / 0.55);
 }
 
+/* ============================================================
+   عيادة الدكتورة رندة مصطفى الشيخ علي — اختصاص الغدد والسكري
+   لوحة مستقلة تماماً: حمر داكن/برتقالي دافئ (السكري والغدد)
+   ============================================================ */
+.clinic-theme-randa {
+  --p50: 255 247 240;
+  --p100: 255 236 226;
+  --p200: 254 215 191;
+  --p300: 251 180 142;
+  --p400: 249 134 78;
+  --p500: 234 88 12;
+  --p600: 194 65 12;
+  --p700: 155 52 10;
+  --p800: 124 45 10;
+  --p900: 99 37 10;
+  --bg: 255 248 243;
+  --glucose-rose: 225 29 72;
+  --glucose-amber: 217 119 6;
+  --glucose-emerald: 16 124 65;
+  --glucose-slate: 100 116 139;
+}
+
+/* ترويسة العيادة: تدرّج حمر/برتقالي دافئ */
+.clinic-theme-randa .clinic-topbar {
+  background-image: linear-gradient(to left, rgb(var(--p50) / 0.92), rgb(255 255 255 / 0.95));
+  border-bottom: 2px solid rgb(var(--p300));
+}
+.clinic-theme-randa .clinic-brand {
+  background-image: linear-gradient(135deg, rgb(var(--p500)), rgb(var(--p800)));
+  box-shadow: 0 6px 16px -6px rgb(var(--p800) / 0.7);
+}
+
+/* ش/navigation حبّات زجاجية — مثل عيادة النساء والتوليد */
+.randa-pill-nav {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.6rem 1rem;
+  scrollbar-width: none;
+}
+.randa-pill-nav::-webkit-scrollbar {
+  display: none;
+}
+.randa-pill {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--p200));
+  background: rgb(255 255 255 / 0.85);
+  padding: 0.45rem 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: rgb(var(--p700));
+  transition: all 0.15s ease;
+}
+.randa-pill:hover {
+  border-color: rgb(var(--p400));
+  background: rgb(var(--p50));
+}
+.randa-pill.is-active {
+  background-image: linear-gradient(135deg, rgb(var(--p600)), rgb(var(--p800)));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 16px -8px rgb(var(--p800) / 0.9);
+}
+
+/* بطاقة سكر — تدرّج حسب قيمة السكر */
+.randa-gauge {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: 0 2px 4px rgb(var(--p900) / 0.06), 0 14px 34px -18px rgb(var(--p900) / 0.3);
+}
+.randa-gauge-bar {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to left, rgb(var(--glucose-emerald)), rgb(var(--glucose-amber)) 60%, rgb(var(--glucose-rose)));
+  opacity: 0.18;
+}
+.randa-gauge-val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+/* شريط مخاطر السكري */
+.randa-risk-rose {
+  border-left: 3px solid rgb(var(--glucose-rose));
+  background: rgb(253 242 242);
+}
+.randa-risk-amber {
+  border-left: 3px solid rgb(var(--glucose-amber));
+  background: rgb(255 247 237);
+}
+.randa-risk-emerald {
+  border-left: 3px solid rgb(var(--glucose-emerald));
+  background: rgb(240 253 244);
+}
+
+/* حقل سكر — يُلمس بـ input[type=number] */
+.randa-glucose-input {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  text-align: center;
+}
+
 html {
     @apply text-slate-800;
   }

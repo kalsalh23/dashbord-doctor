@@ -95,6 +95,24 @@ export const SPECIALTIES = [
       { key: 'temperature', label: 'الحرارة' },
     ],
   },
+{
+    key: 'endocrine', label: 'الغدد والسكري', icon: 'Droplet',
+    examLabel: 'الفحص السريري',
+    fields: [
+      { key: 'blood_glucose', label: 'سكر الدم (مجم/دل)' },
+      { key: 'hba1c', label: 'السكر التراكمي HbA1c (%)' },
+      { key: 'blood_pressure', label: 'ضغط الدم' },
+      { key: 'weight', label: 'الوزن (كغ)' },
+      { key: 'height', label: 'الطول (سم)' },
+      { key: 'bmi', label: 'كتلة الجسم BMI' },
+      { key: 'thyroid', label: 'وظيفة الغدة الدرقية' },
+      { key: 'kidney', label: 'وظيفة الكلى (كرياتينين/BUN)' },
+      { key: 'lipid', label: 'الدهون (كوليسترول/تريجلاسريد)' },
+      { key: 'foot_exam', label: 'هام فحص الأقدام' },
+      { key: 'vision', label: 'الرأي' },
+      { key: 'notes', label: 'ملاحظات' },
+    ],
+  },
   {
     key: 'chest', label: 'الصدر والتنفسية', icon: 'Wind',
     fields: [

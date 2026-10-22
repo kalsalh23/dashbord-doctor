@@ -13,6 +13,7 @@ import {
   clinicFatimaThemeClass, isFatimaClinic, FATIMA_DOCTOR_NAV_ORDER, FATIMA_SHORT_CLINIC_NAME,
   clinicFadwaThemeClass, isFadwaClinic, clinicRanimThemeClass, isRanimClinic,
   RANIM_DOCTOR_NAV_ORDER, RANIM_SHORT_CLINIC_NAME,
+  clinicRandaThemeClass, isRandaClinic, RANDA_DOCTOR_NAV_ORDER, RANDA_SHORT_CLINIC_NAME,
 } from '../lib/clinicStyle'
 import { playAlert, unlockAudio } from '../lib/alert'
 import AccountSwitcher from './AccountSwitcher'
@@ -305,11 +306,15 @@ function Brand({ mobile = false }) {
   const fatima = isFatimaClinic(profile)
   // عيادة الدكتورة رنيم: نفس الفكرة — الاسم مختصر على الجوال
   const ranim = isRanimClinic(profile)
-  const compact = mobile && (fatima || ranim)
+  // عيادة الدكتورة رندة: الاسم مختصر على الجوال
+  const randa = isRandaClinic(profile)
+  const compact = mobile && (fatima || ranim || randa)
   const clinicName = compact
     ? fatima
       ? FATIMA_SHORT_CLINIC_NAME
-      : RANIM_SHORT_CLINIC_NAME
+      : ranim
+        ? RANIM_SHORT_CLINIC_NAME
+        : RANDA_SHORT_CLINIC_NAME
     : (profile?.clinic?.name || 'نظام إدارة العيادة')
   return (
     <div className="flex min-w-0 items-center gap-2.5">
@@ -407,6 +412,13 @@ export default function Layout() {
     byPath['/doctor/hours'] = { to: '/doctor/hours', label: 'أوقات دوامي', icon: Clock }
     navItems = FATIMA_DOCTOR_NAV_ORDER.map((path) => byPath[path]).filter(Boolean)
   }
+  // عيادة الدكتورة رندة مصطفى الشيخ علي: ترتيب واجهات فريد لها وحدها
+  if (APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && isRandaClinic(profile)) {
+    const byPath = Object.fromEntries(navItems.map((i) => [i.to, i]))
+    // واجهة «أوقات دوامي» — تحدّد أيام الدوام وأوقاتها التي تُبنى منها مواعيد الحجز
+    byPath['/doctor/hours'] = { to: '/doctor/hours', label: 'أوقات دوامي', icon: Clock }
+    navItems = RANDA_DOCTOR_NAV_ORDER.map((path) => byPath[path]).filter(Boolean)
+  }
   // مدير النظام وهو داخل لوحة الإدارة: يرى قائمة اللوحة فقط
   if (APP_SCOPE !== 'owner' && isSuper && loc.pathname.startsWith('/super')) {
     navItems = NAV.super
@@ -457,6 +469,8 @@ export default function Layout() {
   const fadwaThemeClass = clinicFadwaThemeClass(profile)
   // عيادة الدكتورة رنيم: لوحة بترولية عميقة — لعيادتها وحدها
   const ranimThemeClass = clinicRanimThemeClass(profile)
+  // عيادة الدكتورة رندة: لوحة حمر/برتقالي دافئ للسكري والغدد — لعيادتها وحدها
+  const randaThemeClass = clinicRandaThemeClass(profile)
   // عيادة الدكتورة فاطمة: شريط علوي أنحف على الجوال (الاسم الكامل طويل)
   const fatimaCompact = isFatimaClinic(profile)
   const headerH = fatimaCompact ? 'h-12 lg:h-14' : 'h-14'
@@ -465,7 +479,7 @@ export default function Layout() {
   const mainPad = fatimaCompact ? 'px-3 pb-24 pt-4 sm:px-6 lg:pb-8' : 'px-4 pb-24 pt-5 sm:px-6 lg:pb-8'
 
   return (
-    <div className={`flex min-h-screen ${themeClass} ${fatimaThemeClass} ${fadwaThemeClass} ${ranimThemeClass}`}>
+    <div className={`flex min-h-screen ${themeClass} ${fatimaThemeClass} ${fadwaThemeClass} ${ranimThemeClass} ${randaThemeClass}`}>
       {/* -------- desktop sidebar (right in RTL) -------- */}
       {!isDentalNav && !isObgynNav && (
         <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-s border-slate-200 bg-white lg:flex">

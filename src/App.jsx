@@ -2,7 +2,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { AppProvider, useApp } from './lib/store'
 import { APP_SCOPE } from './lib/scope'
-import { isNizarStyle, usesClinicWorkingHours, isRanimClinic } from './lib/clinicStyle'
+import { isNizarStyle, usesClinicWorkingHours, isRanimClinic, isRandaClinic } from './lib/clinicStyle'
 import Layout from './components/Layout'
 import { Toasts, Spinner } from './components/ui'
 import Login from './pages/Login'
@@ -39,6 +39,10 @@ import RiamNewRecord from './pages/doctor/RiamNewRecord'
 import DentalDashboard from './pages/doctor/DentalDashboard'
 import SuperPanel from './pages/super/SuperPanel'
 import Treatments from './pages/doctor/Treatments'
+import RandaDashboard from './pages/doctor/RandaDashboard'
+import RandaPatients from './pages/doctor/RandaPatients'
+import RandaPatientProfile from './pages/doctor/RandaPatientProfile'
+import RandaConsultation from './pages/doctor/RandaConsultation'
 
 function FullSpinner() {
   return (
@@ -58,6 +62,10 @@ function ConsultationSwitch() {
   if (isRanimClinic(profile)) {
     return <ObgynConsultation appointmentId={appointmentId} patientId={patientId} />
   }
+  // عيادة الغدد والسكري — واجهة كشف مخصصة للسكري والغدد
+  if (isRandaClinic(profile)) {
+    return <RandaConsultation appointmentId={appointmentId} patientId={patientId} />
+  }
   if (specialtyKey === 'dentistry') {
     return <DentalConsultation appointmentId={appointmentId} patientId={patientId} />
   }
@@ -75,6 +83,8 @@ function ConsultationSwitch() {
 function PatientsGate() {
   const { profile } = useApp()
   if (isRanimClinic(profile)) return <ObgynPatients />
+  // عيادة الغدد والسكري — بطاقات السكر
+  if (isRandaClinic(profile)) return <RandaPatients />
   return <Patients doctorMode />
 }
 
@@ -82,6 +92,8 @@ function PatientsGate() {
 function ReceptionPatientsGate() {
   const { profile } = useApp()
   if (isRanimClinic(profile)) return <ObgynPatients receptionMode />
+  // عيادة الغدد والسكري — بطاقات السكر
+  if (isRandaClinic(profile)) return <RandaPatients receptionMode />
   return <Patients />
 }
 
@@ -89,6 +101,8 @@ function ReceptionPatientsGate() {
 function PatientProfileGate() {
   const { profile } = useApp()
   if (isRanimClinic(profile)) return <ObgynPatientProfile />
+  // عيادة الغدد والسكري — ملف مريض السكري
+  if (isRandaClinic(profile)) return <RandaPatientProfile />
   return <PatientProfile />
 }
 
@@ -207,6 +221,8 @@ function DoctorHome() {
   const specialtyKey = profile?.specialty_key || profile?.clinic?.specialty_key || 'general'
   // عيادة النساء والتوليد — لوحة يوم مصممة للحوامل والمتابعات
   if (isRanimClinic(profile)) return <ObgynDashboard />
+  // عيادة الغدد والسكري (د. رندة) — لوحة يوم لمرضى السكري
+  if (isRandaClinic(profile)) return <RandaDashboard />
   if (specialtyKey === 'dentistry') return <DentalDashboard />
   return <DoctorDashboard />
 }
@@ -242,6 +258,12 @@ function AppRoutes() {
             <Route path="/doctor/schedule" element={<RequireRole role="doctor"><Schedule /></RequireRole>} />
             <Route path="/doctor/patients" element={<RequireRole role="doctor"><PatientsGate /></RequireRole>} />
             <Route path="/doctor/patients/:id" element={<RequireRole role="doctor"><PatientProfileGate /></RequireRole>} />
+            {/* عيادة الغدد والسكري — مرضى السكري (بطاقات glucose + ملف مريض مخصص) */}
+            <Route path="/doctor/randa/patients" element={<RequireRole role="doctor"><RandaPatients /></RequireRole>} />
+            <Route path="/doctor/randa/patients/:id" element={<RequireRole role="doctor"><RandaPatientProfile /></RequireRole>} />
+            <Route path="/doctor/randa/consultation" element={<RequireRole role="doctor"><RandaConsultation /></RequireRole>} />
+            <Route path="/doctor/randa/consultation/:appointmentId" element={<RequireRole role="doctor"><RandaConsultation /></RequireRole>} />
+            <Route path="/doctor/randa/consultation/new/:patientId" element={<RequireRole role="doctor"><RandaConsultation /></RequireRole>} />
             <Route path="/doctor/archive" element={<RequireRole role="doctor"><PatientArchive /></RequireRole>} />
             <Route path="/doctor/visit/:visitId" element={<RequireRole role="doctor"><VisitReadPage /></RequireRole>} />
             <Route path="/doctor/favorites" element={<RequireRole role="doctor"><Favorites /></RequireRole>} />
