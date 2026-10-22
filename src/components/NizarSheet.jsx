@@ -108,7 +108,7 @@ export default function NizarSheet({ patient, visit, meds = [], onTopEdit = null
 export function NizarSurgicalInstructions() {
   return (
     <div className="prescription-sheet relative flex flex-col overflow-hidden bg-white" style={{ fontFamily: '"IBM Plex Sans Arabic", serif' }}>
-      <div className="h-3 w-full bg-blue-600" />
+      <div className="h-6 w-full bg-blue-600" />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-12 py-8">
         <h2 className="mb-6 text-center text-lg font-bold">تعليمات العمل الجراحي</h2>
         <div className="space-y-4">
@@ -124,7 +124,7 @@ export function NizarSurgicalInstructions() {
           <img src="/par.png" alt="par" className="mx-auto mt-4 max-h-60 object-contain" />
         </div>
       </div>
-      <div className="h-3 w-full bg-blue-600" />
+      <div className="h-6 w-full bg-blue-600" />
     </div>
   )
 }
