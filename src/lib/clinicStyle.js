@@ -147,7 +147,7 @@ const RANDA_THEME_CLINICS = {
 }
 
 /** صنف CSS للوحة عيادة الدكتورة رندة — استُبدلت الهوية البصرية بالافتراضية */
-export const clinicRandaThemeClass = () => ''
+export const clinicRandaThemeClass = () => 'clinic-theme-randa-new'
 
 /** هل هذه العيادة هي عيادة الدكتورة رندة؟ */
 export function isRandaClinic(profile) {
