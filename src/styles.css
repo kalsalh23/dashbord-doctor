@@ -637,3 +637,5 @@ html.printing #print-clone .prescription-sheet > div:first-child:not(:last-child
 html.printing #print-clone .prescription-sheet > div:last-child:not(:first-child) {
 
 
+  flex: 0 0 auto !important;
+}
