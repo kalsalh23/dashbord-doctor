@@ -473,10 +473,11 @@ export default function Layout() {
   const randaThemeClass = clinicRandaThemeClass(profile)
   // عيادة الدكتورة فاطمة: شريط علوي أنحف على الجوال (الاسم الكامل طويل)
   const fatimaCompact = isFatimaClinic(profile)
-  const headerH = fatimaCompact ? 'h-12 lg:h-14' : 'h-14'
-  const headerTop = fatimaCompact ? 'top-12 lg:top-14' : 'top-14'
-  const headerPad = fatimaCompact ? 'px-3 sm:px-6' : 'px-4 sm:px-6'
-  const mainPad = fatimaCompact ? 'px-3 pb-24 pt-4 sm:px-6 lg:pb-8' : 'px-4 pb-24 pt-5 sm:px-6 lg:pb-8'
+  const randaCompact = isRandaClinic(profile)
+  const headerH = (fatimaCompact || randaCompact) ? 'h-12 lg:h-14' : 'h-14'
+  const headerTop = (fatimaCompact || randaCompact) ? 'top-12 lg:top-14' : 'top-14'
+  const headerPad = (fatimaCompact || randaCompact) ? 'px-3 sm:px-6' : 'px-4 sm:px-6'
+  const mainPad = (fatimaCompact || randaCompact) ? 'px-3 pb-24 pt-4 sm:px-6 lg:pb-8' : 'px-4 pb-24 pt-5 sm:px-6 lg:pb-8'
 
   return (
     <div className={`flex min-h-screen ${themeClass} ${fatimaThemeClass} ${fadwaThemeClass} ${ranimThemeClass} ${randaThemeClass}`}>
@@ -504,12 +505,16 @@ export default function Layout() {
       {/* -------- main column -------- */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* top bar */}
-        <header className={`clinic-topbar sticky top-0 z-30 flex ${headerH} items-center justify-between gap-2 border-b border-slate-200 bg-white/95 backdrop-blur sm:gap-3 ${headerPad}`}>
+        <header className={`clinic-topbar sticky top-0 z-30 flex ${headerH} items-center justify-between gap-2 border-b backdrop-blur sm:gap-3 ${headerPad} border-slate-200 bg-white/95`}>
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 lg:flex-none">
             {!isHomePage && (
               <button
                 onClick={() => nav(-1)}
-                className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-800"
+                className={`flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 shadow-sm transition-colors ${
+                  randaCompact
+                    ? 'back-btn border-white/30 bg-white/15 text-white hover:bg-white/25'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                }`}
                 aria-label="رجوع للصفحة السابقة"
                 title="رجوع"
               >
@@ -520,7 +525,7 @@ export default function Layout() {
             <div className="min-w-0 flex-1 lg:hidden">
               <Brand mobile />
             </div>
-            <p className="hidden text-xs font-medium text-slate-400 lg:block">{formatDateLong(todayStr())}</p>
+            <p className={`hidden text-xs font-medium lg:block text-slate-400`}>{formatDateLong(todayStr())}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             {APP_SCOPE !== 'owner' && effectiveRole === 'doctor' && !hidesAccountSwitcher(profile) && <AccountSwitcher compact />}

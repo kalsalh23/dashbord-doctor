@@ -146,9 +146,8 @@ const RANDA_THEME_CLINICS = {
   [RANDA_CLINIC_ID]: 'عيادة الدكتورة رندة مصطفى الشيخ علي',
 }
 
-/** صنف CSS للوحة عيادة الدكتورة رندة */
-export const clinicRandaThemeClass = (profile) =>
-  profile?.clinic_id && RANDA_THEME_CLINICS[profile.clinic_id] ? 'clinic-theme-randa' : ''
+/** صنف CSS للوحة عيادة الدكتورة رندة — استُبدلت الهوية البصرية بالافتراضية */
+export const clinicRandaThemeClass = () => ''
 
 /** هل هذه العيادة هي عيادة الدكتورة رندة؟ */
 export function isRandaClinic(profile) {
@@ -236,7 +235,7 @@ const NO_PATIENTS_PAGE_CLINICS = {
  *   وعيادة د. رنيم النبهان (النساء والتوليد)
  * ============================================================ */
 export function usesSimpleAppointments(profile) {
-  return !!(isFatimaClinic(profile) || isFadwaClinic(profile) || isRanimClinic(profile))
+  return !!(isFatimaClinic(profile) || isFadwaClinic(profile) || isRanimClinic(profile) || isRandaClinic(profile))
 }
 
 /* ============================================================
@@ -245,7 +244,7 @@ export function usesSimpleAppointments(profile) {
  *   عيادة د. فاطمة سالم الجاموس وعيادة د. فدوى الرحال
  * ============================================================ */
 export function usesClinicWorkingHours(profile) {
-  return !!(isFatimaClinic(profile) || isFadwaClinic(profile) || isRanimClinic(profile))
+  return !!(isFatimaClinic(profile) || isFadwaClinic(profile) || isRanimClinic(profile) || isRandaClinic(profile))
 }
 
 /* ============================================================
