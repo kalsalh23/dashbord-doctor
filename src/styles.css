@@ -426,25 +426,24 @@
 }
 
 html {
-    @apply text-slate-800;
-  }
-  body {
-    /* خلفية ناعمة بلون العيادة — تريح العين وتناسق اللوحة */
-    background-color: rgb(var(--bg));
-    @apply antialiased;
-  }
-  input,
-  select,
-  textarea {
-    @apply text-sm;
-  }
-  /* latin digits inside number-ish inputs stay readable */
-  input[type='time'],
-  input[type='date'],
-  input[type='number'] {
-    direction: ltr;
-    text-align: right;
-  }
+  @apply text-slate-800;
+}
+body {
+  /* خلفية ناعمة بلون العيادة — تريح العين وتناسق اللوحة */
+  background-color: rgb(var(--bg));
+  @apply antialiased;
+}
+input,
+select,
+textarea {
+  @apply text-sm;
+}
+/* latin digits inside number-ish inputs stay readable */
+input[type='time'],
+input[type='date'],
+input[type='number'] {
+  direction: ltr;
+  text-align: right;
 }
 
 @layer components {
