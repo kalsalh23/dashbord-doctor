@@ -349,65 +349,7 @@
 .clinic-theme-randa .clinic-topbar .back-btn:hover {
   background: rgba(255,255,255,0.25) !important;
 }
-/* هوية بصرية جديدة لعيادة د. رندة (غدد وسكري) - مبسطة وعملية */
-.clinic-theme-randa-new {
-  --p50: 254 242 242;
-  --p100: 254 226 226;
-  --p200: 252 165 165;
-  --p300: 248 113 113;
-  --p400: 239 68 68;
-  --p500: 220 38 38;
-  --p600: 185 28 28;
-  --p700: 153 27 27;
-  --p800: 127 29 29;
-  --p900: 69 10 10;
-  --bg: 254 251 251;
-}
-.clinic-theme-randa-new .clinic-topbar {
-  background: linear-gradient(90deg, rgb(var(--p800)) 0%, rgb(var(--p700)) 50%, rgb(var(--p600)) 100%) !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(127,29,29,0.2) !important;
-}
-.clinic-theme-randa-new .clinic-topbar .clinic-nav,
-.clinic-theme-randa-new .clinic-topbar .clinic-brand { color: #fff !important; }
-.clinic-theme-randa-new .clinic-brand { background: rgba(255,255,255,0.16) !important; }
-.clinic-theme-randa-new .clinic-topbar h1,
-.clinic-theme-randa-new .clinic-topbar p,
-.clinic-theme-randa-new .clinic-topbar .text-white\/70,
-.clinic-theme-randa-new .clinic-topbar .text-white\/80,
-.clinic-theme-randa-new .clinic-topbar .text-slate-400,
-.clinic-theme-randa-new .clinic-topbar .text-slate-500,
-.clinic-theme-randa-new .clinic-topbar .text-slate-600,
-.clinic-theme-randa-new .clinic-topbar .text-slate-700,
-.clinic-theme-randa-new .clinic-topbar .text-slate-800,
-.clinic-theme-randa-new .clinic-topbar .text-slate-900,
-.clinic-theme-randa-new .clinic-topbar .text-primary-800,
-.clinic-theme-randa-new .clinic-topbar .text-primary-700,
-.clinic-theme-randa-new .clinic-topbar .text-primary-600 { color: #fff !important; }
-.clinic-theme-randa-new .clinic-topbar .back-btn {
-  color: #fff !important;
-  background: rgba(255,255,255,0.14) !important;
-  border-color: rgba(255,255,255,0.24) !important;
-}
-.clinic-theme-randa-new .clinic-topbar .back-btn:hover { background: rgba(255,255,255,0.26) !important; }
-.clinic-theme-randa-new aside nav .bg-primary-50 { background: rgb(var(--p50)) !important; }
-.clinic-theme-randa-new aside nav .text-primary-800 { color: rgb(var(--p800)) !important; }
-.clinic-theme-randa-new .bg-primary-700 { background: rgb(var(--p600)) !important; }
-.clinic-theme-randa-new .hover\:bg-primary-800:hover { background: rgb(var(--p700)) !important; }
-.clinic-theme-randa-new .text-primary-700 { color: rgb(var(--p600)) !important; }
-.clinic-theme-randa-new .border-primary-700 { border-color: rgb(var(--p600)) !important; }
-.clinic-theme-randa-new .ring-primary-700 { --tw-ring-color: rgb(var(--p600)) !important; }
-.clinic-theme-randa-new input:focus,
-.clinic-theme-randa-new select:focus,
-.clinic-theme-randa-new textarea:focus {
-  border-color: rgb(var(--p500)) !important;
-  box-shadow: 0 0 0 1px rgba(220,38,38,0.25) !important;
-}
-.clinic-theme-randa-new .btn-primary,
-.clinic-theme-randa-new button[type="submit"].bg-primary-700 {
-  background: rgb(var(--p600)) !important;
-}
-.clinic-theme-randa-new .btn-primary:hover { background: rgb(var(--p700)) !important; }
+
 
   display: flex;
   gap: 0.5rem;
@@ -697,7 +639,5 @@ html.printing #print-clone .prescription-sheet > div:last-child:not(:first-child
   flex: 0 0 auto !important;
 }
 
-  /* طباعة قالب نزار مع حقول موضوعة مطلقاً */
-  html.printing #print-clone .prescription-sheet .absolute {
-    position: absolute !important;
-  }
+  
+
