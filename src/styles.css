@@ -300,14 +300,57 @@
   --glucose-slate: 100 116 139;
 }
 
-/* ترويسة العيادة: تدرّج حمر/برتقالي دافئ */
+/* ترويسة العيادة: تدرّج حمر/برتقالي دافئ — ملء كامل */
 .clinic-theme-randa .clinic-topbar {
-  background-image: linear-gradient(to left, rgb(var(--p50) / 0.92), rgb(255 255 255 / 0.95));
+  background-image: linear-gradient(135deg, rgb(var(--p800)), rgb(var(--p500)));
   border-bottom: 2px solid rgb(var(--p300));
 }
+.clinic-theme-randa .clinic-topbar .clinic-nav,
+.clinic-theme-randa .clinic-topbar .clinic-brand {
+  background: transparent;
+}
 .clinic-theme-randa .clinic-brand {
-  background-image: linear-gradient(135deg, rgb(var(--p500)), rgb(var(--p800)));
+  background-image: linear-gradient(135deg, rgb(var(--p400)), rgb(var(--p700)));
   box-shadow: 0 6px 16px -6px rgb(var(--p800) / 0.7);
+}
+/* نصوص الترويسة باللون الأبيض على الخلفية الداكنة */
+.clinic-theme-randa .clinic-topbar h1,
+.clinic-theme-randa .clinic-topbar p,
+.clinic-theme-randa .clinic-topbar .text-white\/70,
+.clinic-theme-randa .clinic-topbar .text-white\/80,
+.clinic-theme-randa .clinic-topbar .text-slate-400,
+.clinic-theme-randa .clinic-topbar .text-slate-500,
+.clinic-theme-randa .clinic-topbar .text-slate-600,
+.clinic-theme-randa .clinic-topbar .text-slate-700,
+.clinic-theme-randa .clinic-topbar .text-slate-800,
+.clinic-theme-randa .clinic-topbar .text-slate-900,
+.clinic-theme-randa .clinic-topbar .text-primary-800,
+.clinic-theme-randa .clinic-topbar .text-primary-700,
+.clinic-theme-randa .clinic-topbar .text-primary-600 {
+  color: #fff !important;
+}
+.clinic-theme-randa .clinic-topbar .text-white\/70 { color: rgba(255,255,255,0.7) !important; }
+.clinic-theme-randa .clinic-topbar .text-white\/80 { color: rgba(255,255,255,0.8) !important; }
+.clinic-theme-randa .clinic-topbar .text-slate-400 { color: rgba(255,255,255,0.6) !important; }
+.clinic-theme-randa .clinic-topbar .text-slate-500 { color: rgba(255,255,255,0.7) !important; }
+.clinic-theme-randa .clinic-topbar .text-slate-600 { color: rgba(255,255,255,0.8) !important; }
+.clinic-theme-randa .clinic-topbar .text-slate-700 { color: #fff !important; }
+.clinic-theme-randa .clinic-topbar .text-slate-800 { color: #fff !important; }
+.clinic-theme-randa .clinic-topbar .text-slate-900 { color: #fff !important; }
+.clinic-theme-randa .clinic-topbar .text-primary-800 { color: #fff !important; }
+.clinic-theme-randa .clinic-topbar .text-primary-700 { color: #fff !important; }
+.clinic-theme-randa .clinic-topbar .text-primary-600 { color: #fff !important; }
+/* زر الرجوع في الترويسة الداكنة */
+.clinic-theme-randa .clinic-topbar .back-btn {
+  background: rgba(255,255,255,0.15) !important;
+  border-color: rgba(255,255,255,0.3) !important;
+  color: #fff !important;
+}
+.clinic-theme-randa .clinic-topbar .back-btn:hover {
+  background: rgba(255,255,255,0.25) !important;
+}
+.clinic-theme-randa .clinic-topbar .back-btn span {
+  color: #fff !important;
 }
 
 /* ش/navigation حبّات زجاجية — مثل عيادة النساء والتوليد */

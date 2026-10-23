@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Baby, CalendarDays, CalendarHeart, ClipboardList, Flame,
+  Baby, Calendar, CalendarDays, CalendarHeart, ClipboardList, Flame,
   HeartPulse, Siren, Stethoscope, Users, Activity,
 } from 'lucide-react'
 import { useApp, audit } from '../../lib/store'
