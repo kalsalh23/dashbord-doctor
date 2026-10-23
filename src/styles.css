@@ -637,33 +637,3 @@ html.printing #print-clone .prescription-sheet > div:first-child:not(:last-child
 html.printing #print-clone .prescription-sheet > div:last-child:not(:first-child) {
 
 
-/* هوية بصرية لعيادة الدكتورة رندة شيخ علي */
-.clinic-theme-randa-lite .clinic-topbar {
-  background: linear-gradient(90deg, #7f1d1d 0%, #991b1b 100%) !important;
-  border: none !important;
-}
-.clinic-theme-randa-lite .clinic-topbar h1,
-.clinic-theme-randa-lite .clinic-topbar p,
-.clinic-theme-randa-lite .clinic-topbar .text-white\/70,
-.clinic-theme-randa-lite .clinic-topbar .text-white\/80,
-.clinic-theme-randa-lite .clinic-topbar .text-slate-400,
-.clinic-theme-randa-lite .clinic-topbar .text-slate-500,
-.clinic-theme-randa-lite .clinic-topbar .text-slate-600,
-.clinic-theme-randa-lite .clinic-topbar .text-slate-700,
-.clinic-theme-randa-lite .clinic-topbar .text-slate-800,
-.clinic-theme-randa-lite .clinic-topbar .text-slate-900,
-.clinic-theme-randa-lite .clinic-brand { color: #fff !important; }
-.clinic-theme-randa-lite .clinic-brand { background: rgba(255,255,255,0.16) !important; }
-.clinic-theme-randa-lite .clinic-topbar .back-btn {
-  color: #fff !important;
-  background: rgba(255,255,255,0.14) !important;
-  border-color: transparent !important;
-}
-.clinic-theme-randa-lite aside nav .bg-primary-50 { background: #fef2f2 !important; }
-.clinic-theme-randa-lite aside nav .text-primary-800 { color: #991b1b !important; }
-.clinic-theme-randa-lite .bg-primary-700 { background: #b91c1c !important; }
-.clinic-theme-randa-lite .hover\:bg-primary-800:hover { background: #991b1b !important; }
-.clinic-theme-randa-lite .text-primary-700 { color: #b91c1c !important; }
-.clinic-theme-randa-lite .border-primary-700 { border-color: #b91c1c !important; }
-
-
