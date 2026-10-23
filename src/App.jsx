@@ -118,7 +118,7 @@ function PaymentsGate() {
 function WorkingHoursGate() {
   const { settings, settingsReady, profile } = useApp()
   if (!settingsReady || !profile) return <Spinner />
-  // عيادتا د. فاطمة ود. فدوى: واجهة «أوقات دوامي» الخاصة بها — تتحكم بأوقات الحجز في عيادتها
+  if (isRandaClinic(profile)) return <ClinicWorkingHours />
   if (usesClinicWorkingHours(profile)) return <ClinicWorkingHours />
   if (!isNizarStyle(profile, settings)) return <Navigate to="/doctor" replace />
   return <NizarWorkingHours />
